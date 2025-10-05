@@ -30,6 +30,9 @@ export default {
       minHeight: {
         content: 'calc(100vh - 66px)'
       },
+      spacing: {
+        '100': '100px'
+      },
       colors: {
         error: '#FB324A',
         background: {
