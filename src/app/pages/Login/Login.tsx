@@ -2,7 +2,7 @@ import { ConfigProvider, Input } from 'antd'
 import styles from './Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
-import { LoginRequest } from '@/app/types/User/Request/loginReq'
+import { LoginRequest } from '@/app/types/User/Request/User/loginReq'
 import { userService } from '@/app/services/user.service'
 import { CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 
