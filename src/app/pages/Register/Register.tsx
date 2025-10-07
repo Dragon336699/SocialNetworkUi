@@ -1,4 +1,5 @@
-import { ConfigProvider, Input } from 'antd'
+import { useState } from 'react'
+import { ConfigProvider, Input, Spin } from 'antd'
 import styles from '../Login/Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
@@ -13,15 +14,20 @@ const Register: React.FC = () => {
     formState: { errors }
   } = useForm<RegisterRequest>()
 
+  const [loading, setLoading] = useState(false)
+
   const onRegisterSubmit = async (data: RegisterRequest) => {
     try {
+      setLoading(true)
       const res = await userService.register(data)
-
-      console.log(res)
+      console.log('Đăng ký thành công:', res)
     } catch (err) {
       console.error('Lỗi đăng kí:', err)
+    } finally {
+      setLoading(false)
     }
   }
+
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg`}>
@@ -47,7 +53,13 @@ const Register: React.FC = () => {
                 control={control}
                 rules={{ required: 'First name is required' }}
                 render={({ field }) => (
-                  <Input {...field} size='large' placeholder='First Name' className={`${styles.loginInput}`} />
+                  <Input
+                    {...field}
+                    size='large'
+                    disabled={loading}
+                    placeholder='First Name'
+                    className={`${styles.loginInput}`}
+                  />
                 )}
               />
               {errors.firstName && <p className='text-red-500 text-sm pt-1 pl-5'>{errors.firstName.message}</p>}
@@ -59,7 +71,13 @@ const Register: React.FC = () => {
                 control={control}
                 rules={{ required: 'Last name is required' }}
                 render={({ field }) => (
-                  <Input {...field} size='large' placeholder='Last Name' className={`${styles.loginInput}`} />
+                  <Input
+                    {...field}
+                    size='large'
+                    disabled={loading}
+                    placeholder='Last Name'
+                    className={`${styles.loginInput}`}
+                  />
                 )}
               />
               {errors.lastName && <p className='text-red-500 text-sm pt-1 pl-5'>{errors.lastName.message}</p>}
@@ -81,6 +99,7 @@ const Register: React.FC = () => {
                     {...field}
                     size='large'
                     placeholder='Email'
+                    disabled={loading}
                     prefix={<UserOutlined />}
                     className={`${styles.loginInput}`}
                   />
@@ -94,12 +113,25 @@ const Register: React.FC = () => {
                 name='password'
                 control={control}
                 rules={{
-                  required: 'Password is required'
+                  required: 'Password is required',
+                  validate: (value) => {
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters long'
+                    }
+                    if (!/[A-Z]/.test(value)) {
+                      return 'Password must contain at least one uppercase letter'
+                    }
+                    if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+                      return 'Password must contain at least one special character'
+                    }
+                    return true
+                  }
                 }}
                 render={({ field }) => (
                   <Input.Password
                     {...field}
                     size='large'
+                    disabled={loading}
                     placeholder='Password'
                     prefix={<LockOutlined />}
                     className={`${styles.loginInput}`}
@@ -121,6 +153,7 @@ const Register: React.FC = () => {
                   <Input.Password
                     {...field}
                     size='large'
+                    disabled={loading}
                     placeholder='Confirm Password'
                     prefix={<LockOutlined />}
                     className={`${styles.loginInput}`}
@@ -135,18 +168,23 @@ const Register: React.FC = () => {
         </ConfigProvider>
 
         <div className={styles.inputBox}>
-          <input
+          <button
             form='registerForm'
             type='submit'
-            className={`${styles.inputSubmit} w-full cursor-pointer font-medium`}
-            value='Register'
-          />
+            className={`${styles.inputSubmit} w-full cursor-pointer font-medium flex justify-center items-center gap-2`}
+            disabled={loading}
+          >
+            {loading ? <Spin size='small' /> : 'Register'}
+          </button>
         </div>
 
         <div className='text-center register'>
           <span>
             Already have an account?{' '}
-            <a className='font-medium hover:underline' href='/login'>
+            <a
+              className={`font-medium hover:underline ${loading ? 'pointer-events-none opacity-60' : ''}`}
+              href='/login'
+            >
               Login
             </a>
           </span>
