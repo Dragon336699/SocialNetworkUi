@@ -178,7 +178,7 @@ const Register: React.FC = () => {
           </button>
         </div>
 
-        <div className='text-center register'>
+        <div className='text-center text-white/65 register'>
           <span>
             Already have an account?{' '}
             <a
