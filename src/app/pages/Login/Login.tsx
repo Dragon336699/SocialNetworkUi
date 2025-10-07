@@ -90,7 +90,7 @@ const Login: React.FC = () => {
             <label htmlFor='remember'>Remember me</label>
           </div>
           <div className={styles.forgot}>
-            <a className='hover:underline' href='#'>
+            <a className='hover:underline' href='/forgot-password'>
               Forgot password?
             </a>
           </div>
