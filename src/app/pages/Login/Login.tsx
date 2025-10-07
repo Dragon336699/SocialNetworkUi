@@ -4,8 +4,10 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { LoginRequest } from '@/app/types/User/Request/loginReq'
 import { userService } from '@/app/services/user.service'
+import { CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 
 const Login: React.FC = () => {
+  const goolgeClientId = '45298468389-dg5oe6b4ghpfogdddidgsmq5s8g8i7b2.apps.googleusercontent.com'
   const {
     control,
     handleSubmit,
@@ -17,6 +19,14 @@ const Login: React.FC = () => {
       const loginData = await userService.login(data)
 
       console.log(loginData)
+    } catch (err) {
+      console.error('Lỗi login:', err)
+    }
+  }
+  const onGooleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      const gooleLoginData = await userService.googleLogin({ googleToken: credentialResponse.credential ?? '' })
+      console.log(gooleLoginData)
     } catch (err) {
       console.error('Lỗi login:', err)
     }
@@ -82,7 +92,6 @@ const Login: React.FC = () => {
             </div>
           </form>
         </ConfigProvider>
-
         <div className={`${styles.rememberForgot} flex justify-between`}>
           <div className={styles.rememberMe}>
             <input type='checkbox' id='remember' />
@@ -94,7 +103,6 @@ const Login: React.FC = () => {
             </a>
           </div>
         </div>
-
         <div className={styles.inputBox}>
           <input
             form='loginForm'
@@ -103,7 +111,9 @@ const Login: React.FC = () => {
             value='Login'
           />
         </div>
-
+        <GoogleOAuthProvider clientId={goolgeClientId}>
+          <GoogleLogin onSuccess={onGooleLoginSuccess} />
+        </GoogleOAuthProvider>
         <div className='text-center register'>
           <span>
             Don't have an account?{' '}
