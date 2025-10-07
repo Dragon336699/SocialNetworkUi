@@ -3,8 +3,8 @@ import { ConfigProvider, Input, Spin } from 'antd'
 import styles from '../Login/Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
-import { RegisterRequest } from '@/app/types/User/Request/User/loginReq'
 import { userService } from '@/app/services/user.service'
+import { RegisterRequest } from '@/app/types/User/Request/User/registerReq'
 
 const Register: React.FC = () => {
   const {
