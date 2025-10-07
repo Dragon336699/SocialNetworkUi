@@ -4,6 +4,8 @@ import { UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { LoginRequest } from '@/app/types/User/Request/loginReq'
 import { userService } from '@/app/services/user.service'
+import ChangePasswordPopup from '../ChangePassword/ChangePassword'
+import { useState } from 'react'
 
 const Login: React.FC = () => {
   const {
@@ -11,6 +13,8 @@ const Login: React.FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<LoginRequest>()
+
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
 
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
@@ -21,6 +25,15 @@ const Login: React.FC = () => {
       console.error('Lỗi login:', err)
     }
   }
+
+  const handleOpenChangePassword = () => {
+    setIsChangePasswordVisible(true) 
+  }
+
+  const handleCloseChangePassword = () => {
+    setIsChangePasswordVisible(false) 
+  }
+  
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg`}>
@@ -113,6 +126,18 @@ const Login: React.FC = () => {
             </a>
           </span>
         </div>
+
+        {/* Test Change Password */}
+        <div className='text-center change-password'>
+          <span>
+            Want to change password?{' '}
+            <a className='font-medium hover:underline' onClick={handleOpenChangePassword}>
+              Change Password
+            </a>
+          </span>
+        </div>
+
+        <ChangePasswordPopup visible={isChangePasswordVisible} onClose={handleCloseChangePassword} />
       </div>
     </div>
   )

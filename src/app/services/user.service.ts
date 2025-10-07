@@ -1,5 +1,5 @@
 import { apiClient } from '../environments/axiosClient'
-import { LoginRequest, RequestOTPRequest, VerifyOTPRequest, ResetPasswordRequest } from '../types/User/Request/loginReq'
+import { LoginRequest, RequestOTPRequest, VerifyOTPRequest, ResetPasswordRequest, ChangePasswordRequest } from '../types/User/Request/loginReq'
 import { LoginResponse, BaseResponse, VerifyOTPResponse } from '../types/User/Response/loginResponse'
 
 export const userService = {
@@ -28,6 +28,11 @@ export const userService = {
       'user/forgetPassword/resetPassword',
       resetPasswordRequest
     )
+    return response
+  },
+
+  async changePassword(changePasswordRequest: ChangePasswordRequest): Promise<BaseResponse> {
+    const { data: response } = await apiClient.post<BaseResponse>('user/changePassword', changePasswordRequest)
     return response
   }
 }
