@@ -8,7 +8,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path='/register' element={<Register />}></Route>
-        <Route path='/EmailConfirm/:status' element={<EmailConfirm />}></Route>
+        <Route path='/emailConfirm/:status' element={<EmailConfirm />}></Route>
         <Route path='/login' element={<Login />}></Route>
       </Routes>
     </BrowserRouter>
