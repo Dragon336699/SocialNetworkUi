@@ -4,7 +4,7 @@ import { LockOutlined, UserOutlined, MailOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { useState, useEffect } from 'react'
 import { userService } from '@/app/services/user.service'
-import { RequestOTPRequest, VerifyOTPRequest, ResetPasswordRequest } from '@/app/types/User/Request/User/loginReq'
+import { RequestOTPRequest, ResetPasswordRequest, VerifyOTPRequest } from '@/app/types/User/Request/User/otpReq'
 
 const ForgotPassword: React.FC = () => {
   const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email')
