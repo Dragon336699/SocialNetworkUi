@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ConfigProvider, Input, Spin } from 'antd'
+import { ConfigProvider, Input, message, Spin } from 'antd'
 import styles from '../Login/Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { userService } from '@/app/services/user.service'
 import { RegisterRequest } from '@/app/types/User/Request/User/registerReq'
+import { useNavigate } from 'react-router-dom'
 
 const Register: React.FC = () => {
   const {
@@ -15,14 +16,19 @@ const Register: React.FC = () => {
   } = useForm<RegisterRequest>()
 
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const onRegisterSubmit = async (data: RegisterRequest) => {
     try {
       setLoading(true)
       const res = await userService.register(data)
-      console.log('Đăng ký thành công:', res)
+      if (res.message) {
+        message.success('Đăng kí tài khoản thành công!')
+        navigate('/login')
+      }
     } catch (err) {
-      console.error('Lỗi đăng kí:', err)
+      console.error(err)
+      message.error('Đăng kí tài khoản thất bại!')
     } finally {
       setLoading(false)
     }

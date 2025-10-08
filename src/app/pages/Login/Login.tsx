@@ -1,4 +1,4 @@
-import { ConfigProvider, Input } from 'antd'
+import { ConfigProvider, Input, message } from 'antd'
 import styles from './Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
@@ -17,18 +17,23 @@ const Login: React.FC = () => {
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
       const loginData = await userService.login(data)
-
-      console.log(loginData)
+      if (loginData.message) {
+        message.success('Đăng nhập thành công!')
+      }
     } catch (err) {
       console.error('Lỗi login:', err)
+      message.error('Đăng nhập thất bại!')
     }
   }
   const onGooleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       const gooleLoginData = await userService.googleLogin({ googleToken: credentialResponse.credential ?? '' })
-      console.log(gooleLoginData)
+      if (gooleLoginData.message) {
+        message.success('Đăng nhập thành công!')
+      }
     } catch (err) {
       console.error('Lỗi login:', err)
+      message.error('Đăng nhập thất bại!')
     }
   }
   return (
