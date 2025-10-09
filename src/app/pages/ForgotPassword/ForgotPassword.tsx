@@ -130,8 +130,8 @@ const ForgotPassword: React.FC = () => {
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg`}>
-        <div className={`${styles.loginHeader} absolute flex items-center justify-center`}>
-          <span className='select-none' style={{ fontSize: '16px' }}>
+        <div className={`${styles.loginHeader} absolute flex items-center justify-center`} style={{ width: '240px' }}>
+          <span className='select-none' style={{ fontSize: '24px' }}>
             {step === 'email' ? 'Forgot Password' : step === 'otp' ? 'Verify OTP' : 'Reset Password'}
           </span>
         </div>
@@ -273,7 +273,7 @@ const ForgotPassword: React.FC = () => {
           )}
         </ConfigProvider>
 
-        <div className='text-center login'>
+        <div className='text-center text-white/65 login'>
           <span>
             Back to login page?{' '}
             <a className='font-medium hover:underline' href='/login'>

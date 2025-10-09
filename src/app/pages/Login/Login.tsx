@@ -119,7 +119,7 @@ const Login: React.FC = () => {
         <GoogleOAuthProvider clientId={goolgeClientId}>
           <GoogleLogin onSuccess={onGooleLoginSuccess} />
         </GoogleOAuthProvider>
-        <div className='text-center register'>
+        <div className='text-center text-white/65 register'>
           <span>
             Don't have an account?{' '}
             <a className='font-medium hover:underline' href='/register'>
