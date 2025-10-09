@@ -1,9 +1,10 @@
 import { apiClient } from '../environments/axiosClient'
-import { LoginRequest, RequestOTPRequest, VerifyOTPRequest, ResetPasswordRequest, ChangePasswordRequest } from '../types/User/Request/loginReq'
 import { LoginResponse, BaseResponse, VerifyOTPResponse } from '../types/User/Response/loginResponse'
 import { GoogleLoginRequest } from '../types/User/Request/User/googleLoginReq'
-import { RequestOTPRequest, ResetPasswordRequest, VerifyOTPRequest } from '../types/User/Request/User/otpReq'
 import { RegisterRequest } from '../types/User/Request/User/registerReq'
+import { LoginRequest } from '../types/User/Request/User/loginReq'
+import { RequestOTPRequest, VerifyOTPRequest } from '../types/User/Request/User/otpReq'
+import { ChangePasswordRequest, ResetPasswordRequest } from '../types/User/Request/User/passwordReq'
 
 export const userService = {
   async login(loginRequest: LoginRequest): Promise<LoginResponse> {
@@ -37,10 +38,13 @@ export const userService = {
   async changePassword(changePasswordRequest: ChangePasswordRequest): Promise<BaseResponse> {
     const { data: response } = await apiClient.post<BaseResponse>('user/changePassword', changePasswordRequest)
     return response
+  },
+
   async register(registerRequest: RegisterRequest): Promise<LoginResponse> {
     const { data } = await apiClient.post<LoginResponse>('user/register', registerRequest)
     return data
   },
+
   async googleLogin(request: GoogleLoginRequest): Promise<LoginResponse> {
     const { data } = await apiClient.post<LoginResponse>('user/googleLogin', request)
     return data
