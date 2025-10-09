@@ -5,6 +5,8 @@ import { Controller, useForm } from 'react-hook-form'
 import { LoginRequest } from '@/app/types/User/Request/User/loginReq'
 import { userService } from '@/app/services/user.service'
 import { CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
+import ChangePasswordPopup from '../ChangePassword/ChangePassword'
+import { useState } from 'react'
 
 const Login: React.FC = () => {
   const goolgeClientId = '45298468389-dg5oe6b4ghpfogdddidgsmq5s8g8i7b2.apps.googleusercontent.com'
@@ -13,6 +15,8 @@ const Login: React.FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<LoginRequest>()
+
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
 
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
@@ -36,6 +40,15 @@ const Login: React.FC = () => {
       message.error('Đăng nhập thất bại!')
     }
   }
+
+  const handleOpenChangePassword = () => {
+    setIsChangePasswordVisible(true) 
+  }
+
+  const handleCloseChangePassword = () => {
+    setIsChangePasswordVisible(false) 
+  }
+  
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg max-md:!px-9`}>
@@ -127,6 +140,18 @@ const Login: React.FC = () => {
             </a>
           </span>
         </div>
+
+        {/* Test Change Password */}
+        <div className='text-center change-password'>
+          <span>
+            Want to change password?{' '}
+            <a className='font-medium hover:underline' onClick={handleOpenChangePassword}>
+              Change Password
+            </a>
+          </span>
+        </div>
+
+        <ChangePasswordPopup visible={isChangePasswordVisible} onClose={handleCloseChangePassword} />
       </div>
     </div>
   )
