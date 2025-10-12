@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { userService } from '@/app/services/user.service'
 import styles from '../Login/Login.module.css'
-import { ChangePasswordRequest } from '@/app/types/User/Request/loginReq'
+import { ChangePasswordRequest } from '@/app/types/User/Request/User/passwordReq'
 
 interface ChangePasswordPopupProps {
   visible: boolean
