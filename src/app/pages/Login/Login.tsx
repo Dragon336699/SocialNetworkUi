@@ -2,11 +2,11 @@ import { ConfigProvider, Input, message } from 'antd'
 import styles from './Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
-import { LoginRequest } from '@/app/types/User/Request/User/loginReq'
-import { userService } from '@/app/services/user.service'
 import { CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 import ChangePasswordPopup from '../ChangePassword/ChangePassword'
 import { useState } from 'react'
+import { LoginRequest } from '@/app/types/User/Requests/loginReq'
+import { userService } from '@/app/services/user.service'
 
 const Login: React.FC = () => {
   const goolgeClientId = '45298468389-dg5oe6b4ghpfogdddidgsmq5s8g8i7b2.apps.googleusercontent.com'
@@ -42,13 +42,13 @@ const Login: React.FC = () => {
   }
 
   const handleOpenChangePassword = () => {
-    setIsChangePasswordVisible(true) 
+    setIsChangePasswordVisible(true)
   }
 
   const handleCloseChangePassword = () => {
-    setIsChangePasswordVisible(false) 
+    setIsChangePasswordVisible(false)
   }
-  
+
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg max-md:!px-9`}>

@@ -1,14 +1,18 @@
 import { apiClient } from '../environments/axiosClient'
-import { LoginResponse, BaseResponse, VerifyOTPResponse } from '../types/User/Response/loginResponse'
-import { GoogleLoginRequest } from '../types/User/Request/User/googleLoginReq'
-import { RegisterRequest } from '../types/User/Request/User/registerReq'
-import { LoginRequest } from '../types/User/Request/User/loginReq'
-import { RequestOTPRequest, VerifyOTPRequest } from '../types/User/Request/User/otpReq'
-import { ChangePasswordRequest, ResetPasswordRequest } from '../types/User/Request/User/passwordReq'
+import { BaseResponse } from '../types/Base/Responses/baseResponse'
+import { VerifyOTPResponse } from '../types/OTP/Responses/otpResponse'
+import { GoogleLoginRequest } from '../types/User/Requests/googleLoginReq'
+import { LoginRequest } from '../types/User/Requests/loginReq'
+import { RequestOTPRequest, VerifyOTPRequest } from '../types/User/Requests/otpReq'
+import { ChangePasswordRequest, ResetPasswordRequest } from '../types/User/Requests/passwordReq'
+import { RegisterRequest } from '../types/User/Requests/registerReq'
+import { UserDto } from '../types/User/user.dto'
 
 export const userService = {
-  async login(loginRequest: LoginRequest): Promise<LoginResponse> {
-    const { data } = await apiClient.post<LoginResponse>('user/login', loginRequest)
+  async login(loginRequest: LoginRequest): Promise<BaseResponse> {
+    const { data } = await apiClient.post<BaseResponse>('user/login', loginRequest, {
+      withCredentials: true
+    })
     return data
   },
 
@@ -36,17 +40,35 @@ export const userService = {
   },
 
   async changePassword(changePasswordRequest: ChangePasswordRequest): Promise<BaseResponse> {
-    const { data: response } = await apiClient.post<BaseResponse>('user/changePassword', changePasswordRequest)
+    const { data: response } = await apiClient.post<BaseResponse>('user/changePassword', changePasswordRequest, {
+      withCredentials: true
+    })
     return response
   },
 
-  async register(registerRequest: RegisterRequest): Promise<LoginResponse> {
-    const { data } = await apiClient.post<LoginResponse>('user/register', registerRequest)
+  async register(registerRequest: RegisterRequest): Promise<BaseResponse> {
+    const { data } = await apiClient.post<BaseResponse>('user/register', registerRequest)
     return data
   },
 
-  async googleLogin(request: GoogleLoginRequest): Promise<LoginResponse> {
-    const { data } = await apiClient.post<LoginResponse>('user/googleLogin', request)
+  async googleLogin(request: GoogleLoginRequest): Promise<BaseResponse> {
+    const { data } = await apiClient.post<BaseResponse>('user/googleLogin', request, {
+      withCredentials: true
+    })
     return data
+  },
+
+  async getUserInfoByToken(): Promise<{ data: BaseResponse | UserDto; status: number }> {
+    const response = await apiClient.get<BaseResponse | UserDto>('user/getUserInfo', {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
+  },
+
+  async getUserInfoByUserName(userName: string): Promise<{ data: BaseResponse | UserDto; status: number }> {
+    const response = await apiClient.get<BaseResponse | UserDto>(`user/getUserInfoByUserName?userName=${userName}`, {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
   }
 }

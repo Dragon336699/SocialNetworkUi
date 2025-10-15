@@ -4,8 +4,8 @@ import styles from '../Login/Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { userService } from '@/app/services/user.service'
-import { RegisterRequest } from '@/app/types/User/Request/User/registerReq'
 import { useNavigate } from 'react-router-dom'
+import { RegisterRequest } from '@/app/types/User/Requests/registerReq'
 
 const Register: React.FC = () => {
   const {
