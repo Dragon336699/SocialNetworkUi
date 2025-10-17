@@ -1,6 +1,6 @@
 import { chatService } from '@/app/services/chat.service'
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, ConfigProvider, Input, List, message, Skeleton, Tooltip } from 'antd'
+import { Avatar, ConfigProvider, Divider, Input, List, message, Skeleton, Tooltip } from 'antd'
 import { PhoneOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faCheckDouble, faEllipsisVertical, faPaperclip } from '@fortawesome/free-solid-svg-icons'
@@ -12,14 +12,27 @@ import { SendMessageRequest } from '@/app/types/Message/Requests/MessageReq'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import InfiniteScroll from 'react-infinite-scroll-component'
 
 const Inbox: React.FC = () => {
+  const firstMessageRef = useRef<HTMLDivElement | null>(null)
   const { receiverUserName } = useParams()
   const [userInfo, setUserInfo] = useState<UserDto | null>(null)
   const [receiverInfo, setReceiverInfo] = useState<UserDto | null>(null)
   const messageEndRef = useRef<HTMLDivElement | null>(null)
   const [text, setText] = useState('')
+  const [skipMessages, setSkipMessages] = useState(0)
+  const [takeMessages, setTakeMessages] = useState(20)
   const [messages, setMessages] = useState<MessageDto[]>([])
+
+  const loadMoreMessage = () => {
+    const firstVisible = firstMessageRef.current
+    if (!firstVisible) return
+    const oldTopId = firstVisible?.id
+    setSkipMessages(skipMessages + 20)
+    const element = document.getElementById(oldTopId || '')
+    element?.scrollIntoView({ block: 'start' })
+  }
 
   const handleSendMessage = () => {
     const sendMessageRequest: SendMessageRequest = {
@@ -40,6 +53,18 @@ const Inbox: React.FC = () => {
       .catch((err) => {
         message.error(err)
       })
+
+    chatService.getUpdatedMessage((newestMessage: MessageDto) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((m: MessageDto) =>
+          m.id === newestMessage.id ? { ...m, ...(newestMessage as MessageDto) } : m
+        )
+      )
+      const container = document.getElementById('scrollableDiv')
+      if (container) {
+        container.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    })
   }
 
   const fetchUserInfo = async () => {
@@ -70,15 +95,21 @@ const Inbox: React.FC = () => {
     }
   }
 
-  const getMessages = async () => {
+  const getMessages = async (firstTime: boolean) => {
     try {
-      const response = await messageService.getMessages(userInfo?.id || '', receiverUserName || '')
+      const response = await messageService.getMessages(
+        userInfo?.id || '',
+        receiverUserName || '',
+        skipMessages,
+        takeMessages
+      )
       if (response.status === 400) {
         const base = response.data as BaseResponse
         message.error(base.message)
       } else if (response.status === 200) {
         const dataResponse = response.data as ResponseHasData<MessageDto[]>
-        setMessages(dataResponse.data as MessageDto[])
+        if (firstTime) setMessages([...messages, ...(dataResponse.data as MessageDto[])])
+        else setMessages([...(dataResponse.data as MessageDto[]), ...messages])
       }
     } catch (err) {
       message.error('Error while getting user infomation!')
@@ -86,12 +117,19 @@ const Inbox: React.FC = () => {
   }
 
   useEffect(() => {
-    fetchUserInfo()
     chatService.start().then(() => {
-      chatService.onReceivePrivateMessage((message) => {
-        console.log(`${message}`)
+      chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
+        setMessages([...messages, newReceivedMessage])
+        const updateMessageStatus = await chatService.acknowledgeMessage(newReceivedMessage.id)
+        if (!updateMessageStatus) return
       })
     })
+
+    chatService.offReceivePrivateMessage()
+  })
+
+  useEffect(() => {
+    fetchUserInfo()
   }, [])
 
   useEffect(() => {
@@ -102,13 +140,14 @@ const Inbox: React.FC = () => {
 
   useEffect(() => {
     if (userInfo && receiverUserName && receiverInfo) {
-      getMessages()
+      if (skipMessages == 0) getMessages(true)
+      else getMessages(false)
     }
-  }, [userInfo, receiverInfo, receiverUserName])
+  }, [userInfo, receiverInfo, receiverUserName, skipMessages])
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [])
   return (
     <div className='h-screen bg-[#212123] overflow-hidden'>
       <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
@@ -157,64 +196,85 @@ const Inbox: React.FC = () => {
           </div>
           {/* Body */}
 
-          <div className='h-[100%] overflow-y-auto flex flex-col justify-end'>
-            <List
-              className='overflow-y-auto'
-              dataSource={messages}
-              renderItem={(item) => {
-                const isMe = item.senderId == userInfo?.id
-                return (
-                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px]`} key={item.id}>
-                    {!isMe && (
-                      <a href='#' className='mr-2'>
-                        <Avatar src={receiverInfo?.avatarUrl}>K</Avatar>
-                      </a>
-                    )}
-                    {item.status === 'Sent' && isMe && (
-                      <ConfigProvider
-                        theme={{
-                          token: {
-                            colorBgSpotlight: 'transparent',
-                            colorTextLightSolid: '#8f8f8fff',
-                            boxShadowSecondary: 'none'
-                          }
-                        }}
-                      >
-                        <Tooltip placement='left' title={item.status}>
-                          <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheck} />
-                        </Tooltip>
-                      </ConfigProvider>
-                    )}
-                    {item.status === 'Delivered' && isMe && (
-                      <ConfigProvider
-                        theme={{
-                          token: {
-                            colorBgSpotlight: 'transparent',
-                            colorTextLightSolid: '#8f8f8fff',
-                            boxShadowSecondary: 'none'
-                          }
-                        }}
-                      >
-                        <Tooltip placement='left' title={item.status}>
-                          <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheckDouble} />
-                        </Tooltip>
-                      </ConfigProvider>
-                    )}
-                    <p
-                      className={`${isMe ? 'bg-sky-400' : 'bg-gray-300'} p-[12px] rounded-[20px] max-w-[50%] break-all cursor-default`}
+          <div id='scrollableDiv' className='h-[100%] overflow-y-auto flex flex-col-reverse'>
+            <InfiniteScroll
+              dataLength={messages.length}
+              next={loadMoreMessage}
+              hasMore={true}
+              style={{ display: 'flex', flexDirection: 'column-reverse' }}
+              inverse={true}
+              loader={<div></div>}
+              endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
+              scrollableTarget='scrollableDiv'
+            >
+              <List
+                className='overflow-y-auto'
+                dataSource={messages}
+                renderItem={(item, index) => {
+                  const isMe = item.senderId == userInfo?.id
+                  const isFirst = index === 18
+                  return (
+                    <div
+                      id={`msg-${item.id}`}
+                      ref={isFirst ? firstMessageRef : null}
+                      className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px]`}
+                      key={item.id}
                     >
-                      {item.content}
-                    </p>
-                    {isMe && (
-                      <a href='#' className='ml-2'>
-                        <Avatar src={userInfo?.avatarUrl}></Avatar>
-                      </a>
-                    )}
-                    <div ref={messageEndRef}></div>
-                  </div>
-                )
-              }}
-            />
+                      {!isMe && (
+                        <a href='#' className='mr-2'>
+                          <Avatar src={receiverInfo?.avatarUrl}>K</Avatar>
+                        </a>
+                      )}
+                      {item.status === 'Sent' && isMe && (
+                        <ConfigProvider
+                          theme={{
+                            token: {
+                              colorBgSpotlight: 'transparent',
+                              colorTextLightSolid: '#8f8f8fff',
+                              boxShadowSecondary: 'none'
+                            }
+                          }}
+                        >
+                          {index == messages.length - 1 && (
+                            <Tooltip placement='left' title={item.status}>
+                              <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheck} />
+                            </Tooltip>
+                          )}
+                        </ConfigProvider>
+                      )}
+                      {item.status === 'Delivered' && isMe && (
+                        <ConfigProvider
+                          theme={{
+                            token: {
+                              colorBgSpotlight: 'transparent',
+                              colorTextLightSolid: '#8f8f8fff',
+                              boxShadowSecondary: 'none'
+                            }
+                          }}
+                        >
+                          {index == messages.length - 1 && (
+                            <Tooltip placement='left' title={item.status}>
+                              <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheckDouble} />
+                            </Tooltip>
+                          )}
+                        </ConfigProvider>
+                      )}
+                      <p
+                        className={`${isMe ? 'bg-sky-400' : 'bg-gray-300'} p-[12px] rounded-[20px] max-w-[50%] break-all cursor-default`}
+                      >
+                        {item.content}
+                      </p>
+                      {isMe && (
+                        <a href='#' className='ml-2'>
+                          <Avatar src={userInfo?.avatarUrl}></Avatar>
+                        </a>
+                      )}
+                      <div ref={messageEndRef}></div>
+                    </div>
+                  )
+                }}
+              />
+            </InfiniteScroll>
           </div>
           <div>
             <Input
