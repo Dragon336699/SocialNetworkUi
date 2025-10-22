@@ -15,7 +15,7 @@ function App() {
         <Route path='/emailConfirm/:status' element={<EmailConfirm />}></Route>
         <Route path='/register' element={<Register />}></Route>
         <Route path='/' element={<Layout />}>
-          <Route path='inbox/:receiverUserName' element={<Chat />}></Route>
+          <Route path='inbox/:conversationId' element={<Chat />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>

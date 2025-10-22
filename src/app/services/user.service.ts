@@ -70,5 +70,12 @@ export const userService = {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
+  },
+
+  async getUserInfoById(userId: string): Promise<{ data: BaseResponse | UserDto; status: number }> {
+    const response = await apiClient.get<BaseResponse | UserDto>(`user/getUserInfoById?userId=${userId}`, {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
   }
 }

@@ -4,6 +4,7 @@ import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 import { SendMessageResponse } from '../types/Message/Responses/messageResponses'
 import { MessageDto } from '../types/Message/messge.dto'
 import { Message } from 'postcss'
+import { UpdateStatusMessageRequest } from '../types/Message/Requests/updateStatusMessageReq'
 let connection: HubConnection | null = null
 
 export const chatService = {
@@ -53,14 +54,14 @@ export const chatService = {
     }
   },
 
-  async acknowledgeMessage(messageId: string): Promise<boolean | null> {
+  async updateMessageStatus(request: UpdateStatusMessageRequest): Promise<boolean | null> {
     if (!connection) {
       console.log('Connection not ready yet!')
       return null
     }
     try {
-      const updateMessageStatus = await connection.invoke<boolean>('AcknowledgeMessage', messageId)
-      return updateMessageStatus
+      const status = await connection.invoke<boolean>('UpdateMessageStatus', request)
+      return status
     } catch (err) {
       return null
     }

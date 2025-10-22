@@ -1,5 +1,5 @@
 export interface SendMessageRequest {
   senderId: string
-  receiverId: string
+  conversationId: string
   content: string
 }

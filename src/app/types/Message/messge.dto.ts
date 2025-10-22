@@ -1,4 +1,5 @@
 import { MessageAttachment } from '../MessageAttachment/messageAttachment.dto'
+import { UserDto } from '../User/user.dto'
 
 export interface MessageDto {
   id: string
@@ -6,7 +7,6 @@ export interface MessageDto {
   status: string
   createdAt: Date
   updatedAt: Date
-  senderId: string
-  receiverId: string
+  sender: UserDto
   messageAttachments: MessageAttachment[]
 }
