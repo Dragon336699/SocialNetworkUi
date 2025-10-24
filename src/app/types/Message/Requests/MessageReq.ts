@@ -1,5 +1,6 @@
 export interface SendMessageRequest {
   senderId: string
   conversationId: string
-  content: string
+  content: string | null
+  files: File[] | null
 }

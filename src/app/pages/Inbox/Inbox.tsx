@@ -1,21 +1,24 @@
 import { chatService } from '@/app/services/chat.service'
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, ConfigProvider, Divider, Input, List, message, Skeleton, Tooltip } from 'antd'
+import { Avatar, ConfigProvider, Divider, Input, List, message, Skeleton, Tooltip, Image } from 'antd'
 import { PhoneOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCheck,
   faCheckDouble,
+  faCircleStop,
   faEllipsisVertical,
   faEye,
   faImage,
-  faPaperclip
+  faMicrophone,
+  faPaperclip,
+  faPause,
+  faPlay
 } from '@fortawesome/free-solid-svg-icons'
 import { userService } from '@/app/services/user.service'
 import { useParams } from 'react-router-dom'
 import { messageService } from '@/app/services/message.service'
 import { MessageDto } from '@/app/types/Message/messge.dto'
-import { SendMessageRequest } from '@/app/types/Message/Requests/MessageReq'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
@@ -24,6 +27,9 @@ import { conversationService } from '@/app/services/conversation.service'
 import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
 import { ConversationUsreDto } from '@/app/types/ConversationUser/conversationUser.dto'
 import { conversationUserService } from '@/app/services/conversation.user.service'
+import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
+import WaveSurfer from 'wavesurfer.js'
+import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 
 const Inbox: React.FC = () => {
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
@@ -42,6 +48,43 @@ const Inbox: React.FC = () => {
   const [messages, setMessages] = useState<MessageDto[]>([])
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagesPreview, setImagesPreview] = useState<string[]>([])
+  const recorderRef = useRef<RecordRTC | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [isRecording, setIsRecording] = useState<boolean>(false)
+  const waveformRef = useRef(null)
+  const wavesurferRef = useRef<WaveSurfer | null>(null)
+  const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
+
+  const startRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    streamRef.current = stream
+    recorderRef.current = new RecordRTC(stream, {
+      type: 'audio',
+      mimeType: 'audio/wav', // Định dạng đầu ra
+      recorderType: StereoAudioRecorder,
+      desiredSampRate: 16000 // Tần số lấy mẫu
+    })
+    recorderRef.current.startRecording()
+    setIsRecording(true)
+  }
+
+  const stopRecording = () => {
+    recorderRef.current?.stopRecording(() => {
+      const blob = recorderRef.current?.getBlob()
+      if (blob) {
+        setAudioUrl(URL.createObjectURL(blob))
+        setAudioBlob(blob)
+      }
+      streamRef.current?.getTracks().forEach((track) => track.stop())
+      setIsRecording(false)
+    })
+  }
+
+  const togglePreviewRecord = () => {
+    wavesurferRef.current?.playPause()
+  }
 
   const loadMoreMessage = () => {
     const firstVisible = firstMessageRef.current
@@ -53,39 +96,63 @@ const Inbox: React.FC = () => {
   }
 
   const handleSendMessage = () => {
-    const sendMessageRequest: SendMessageRequest = {
-      senderId: userInfo?.id || '',
-      conversationId: conversationId || '',
-      content: text
-    }
-    if (text.trim() !== '') {
-      onSendMessage(sendMessageRequest)
-      setText('')
+    const formData = new FormData()
+    formData.append('senderId', userInfo?.id || '')
+    formData.append('conversationId', conversationId || '')
+    formData.append('content', text)
+    if (imageFiles.length !== 0 && audioUrl === null) {
+      imageFiles.forEach((file) => {
+        formData.append('files', file)
+      })
+      formData.append('fileType', 'Image')
+      onSendMessage(formData)
+      if (text.trim() !== '') {
+        setText('')
+      }
+      setImageFiles([])
+      setImagesPreview([])
+    } else if (audioUrl !== null && audioBlob !== null && imageFiles.length === 0) {
+      formData.append('files', new File([audioBlob], `${userInfo?.id}_${Date.now()}_voice.wav`, { type: 'audio/wav' }))
+      formData.append('fileType', 'Voice')
+      setAudioBlob(null)
+      setAudioUrl(null)
+      onSendMessage(formData)
+      if (text.trim() !== '') {
+        setText('')
+      }
+    } else if (imageFiles.length === 0 && audioUrl === null) {
+      if (text.trim() !== '') {
+        onSendMessage(formData)
+        setText('')
+      }
+    } else {
+      message.error('Can not send image and voice at the same time')
     }
   }
 
-  const onSendMessage = (sendMessageRequest: SendMessageRequest) => {
-    chatService
-      .onSendPrivateMessage(sendMessageRequest)
-      .then((sendMessageReponse) => {
-        if (!sendMessageReponse?.status) message.error(sendMessageReponse?.message)
-        else setMessages([...messages, sendMessageReponse.newMessage])
-      })
-      .catch((err) => {
-        message.error(err)
-      })
-
-    chatService.getUpdatedMessage((newestMessage: MessageDto) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((m: MessageDto) =>
-          m.id === newestMessage.id ? { ...m, ...(newestMessage as MessageDto) } : m
-        )
-      )
-      const container = document.getElementById('scrollableDiv')
-      if (container) {
-        container.scrollTo({ top: 0, behavior: 'smooth' })
+  const onSendMessage = async (sendMessageRequest: FormData) => {
+    try {
+      const sendMessageReponse = await messageService.sendMessage(sendMessageRequest)
+      if (sendMessageReponse.status === 400) {
+        const res = sendMessageReponse.data as BaseResponse
+        message.error(res.message)
+      } else if (sendMessageReponse.status === 200) {
+        const res = sendMessageReponse.data as ResponseHasData<MessageDto>
+        setMessages([...messages, res.data as MessageDto])
       }
-    })
+    } catch (err) {
+      message.error('Error while getting user infomation!')
+    }
+
+    // chatService
+    //   .onSendPrivateMessage(sendMessageRequest)
+    //   .then((sendMessageReponse) => {
+    //     if (!sendMessageReponse?.status) message.error(sendMessageReponse?.message)
+    //     else setMessages([...messages, sendMessageReponse.newMessage])
+    //   })
+    //   .catch((err) => {
+    //     message.error(err)
+    //   })
   }
 
   const fetchUserInfo = async () => {
@@ -175,6 +242,7 @@ const Inbox: React.FC = () => {
     setImagesPreview(previewUrls)
   }
 
+  // Handle seen
   useEffect(() => {
     if (!newestMessageRef.current) return
     if (document.visibilityState !== 'visible') return
@@ -183,8 +251,7 @@ const Inbox: React.FC = () => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (document.visibilityState !== 'visible') return
-        console.log(isInputFocused)
-
+        console.log(entry.isIntersecting && isChatFocused)
         if (
           ((entry.isIntersecting && isChatFocused) || (entry.isIntersecting && isInputFocused)) &&
           messages[messages.length - 1].sender.id !== userInfo?.id
@@ -207,6 +274,7 @@ const Inbox: React.FC = () => {
     return () => observer.disconnect()
   }, [messages, isChatFocused, isInputFocused])
 
+  // Handle nhận
   useEffect(() => {
     chatService.start().then(() => {
       chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
@@ -222,9 +290,22 @@ const Inbox: React.FC = () => {
     chatService.offReceivePrivateMessage()
   })
 
+  // Lấy dữ liệu user, conversation và cho thẻ chat được focus
   useEffect(() => {
     fetchUserInfo()
     fetchConversation()
+
+    chatService.getUpdatedMessage((newestMessage: MessageDto) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((m: MessageDto) =>
+          m.id === newestMessage.id ? { ...m, ...(newestMessage as MessageDto) } : m
+        )
+      )
+      // const container = document.getElementById('scrollableDiv')
+      // if (container) {
+      //   container.scrollTo({ top: 0, behavior: 'smooth' })
+      // }
+    })
 
     const textingArea = document.getElementById('scrollableDiv')
     if (!textingArea) return
@@ -242,18 +323,21 @@ const Inbox: React.FC = () => {
     }
   }, [])
 
+  // Lấy dữ liệu conversation
   useEffect(() => {
     if (conversationId) {
       fetchConversation()
     }
   }, [conversationId])
 
+  // Lấy thông tin user trong conversation
   useEffect(() => {
     if (conversation) {
       fetchConversationUsers()
     }
   }, [conversation])
 
+  // Load thêm message khi kéo lên trên
   useEffect(() => {
     if (userInfo && conversationId) {
       if (skipMessages == 0) getMessages(true)
@@ -261,14 +345,17 @@ const Inbox: React.FC = () => {
     }
   }, [userInfo, conversationId, skipMessages])
 
+  // Kéo xuống tin nhắn dưới cùng
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
+  // Lấy thông tin tất cả người nhận
   useEffect(() => {
     fetchReceiversInfo()
   }, [conversation, conversationUsers])
 
+  // Gửi tin nhắn (Không cho gửi liên tục)
   useEffect(() => {
     if (!text) return
 
@@ -278,6 +365,36 @@ const Inbox: React.FC = () => {
 
     return () => clearTimeout(timeout)
   }, [text])
+
+  // Xử lý preview voice
+  useEffect(() => {
+    if (!waveformRef.current) return
+
+    wavesurferRef.current = WaveSurfer.create({
+      container: waveformRef.current,
+      waveColor: 'rgba(167, 167, 167, 1)',
+      progressColor: 'rgba(89, 89, 89, 1)',
+      barWidth: 3,
+      barGap: 2,
+      barRadius: 2,
+      height: 40,
+      width: 121
+    })
+
+    wavesurferRef.current.load(audioUrl || '')
+
+    wavesurferRef.current.on('play', () => setPreviewVoicePlaying(true))
+    wavesurferRef.current.on('pause', () => setPreviewVoicePlaying(false))
+
+    // Khi user click vào waveform → play
+    wavesurferRef.current.once('interaction', () => {
+      wavesurferRef.current?.play()
+    })
+
+    return () => {
+      wavesurferRef.current?.destroy()
+    }
+  }, [audioUrl])
   return (
     <div className='h-screen bg-[#212123] overflow-hidden'>
       <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
@@ -357,67 +474,110 @@ const Inbox: React.FC = () => {
                           <Avatar src={item.sender?.avatarUrl}></Avatar>
                         </a>
                       )}
-                      {item.status === 'Sent' && isMe && (
-                        <ConfigProvider
-                          theme={{
-                            token: {
-                              colorBgSpotlight: 'transparent',
-                              colorTextLightSolid: '#8f8f8fff',
-                              boxShadowSecondary: 'none'
-                            }
-                          }}
+
+                      <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
+                        <div
+                          className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
                         >
-                          {index == messages.length - 1 && (
-                            <Tooltip placement='left' title={item.status}>
-                              <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheck} />
-                            </Tooltip>
+                          {item.status === 'Sent' && isMe && (
+                            <ConfigProvider
+                              theme={{
+                                token: {
+                                  colorBgSpotlight: 'transparent',
+                                  colorTextLightSolid: '#8f8f8fff',
+                                  boxShadowSecondary: 'none'
+                                }
+                              }}
+                            >
+                              {index == messages.length - 1 && (
+                                <Tooltip placement='left' title={item.status}>
+                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
+                                </Tooltip>
+                              )}
+                            </ConfigProvider>
                           )}
-                        </ConfigProvider>
-                      )}
-                      {item.status === 'Delivered' && isMe && (
-                        <ConfigProvider
-                          theme={{
-                            token: {
-                              colorBgSpotlight: 'transparent',
-                              colorTextLightSolid: '#8f8f8fff',
-                              boxShadowSecondary: 'none'
-                            }
-                          }}
-                        >
-                          {index == messages.length - 1 && (
-                            <Tooltip placement='left' title={item.status}>
-                              <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faCheckDouble} />
-                            </Tooltip>
+                          {item.status === 'Delivered' && isMe && (
+                            <ConfigProvider
+                              theme={{
+                                token: {
+                                  colorBgSpotlight: 'transparent',
+                                  colorTextLightSolid: '#8f8f8fff',
+                                  boxShadowSecondary: 'none'
+                                }
+                              }}
+                            >
+                              {index == messages.length - 1 && (
+                                <Tooltip placement='left' title={item.status}>
+                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
+                                </Tooltip>
+                              )}
+                            </ConfigProvider>
                           )}
-                        </ConfigProvider>
-                      )}
-                      {item.status === 'Seen' && isMe && (
-                        <ConfigProvider
-                          theme={{
-                            token: {
-                              colorBgSpotlight: 'transparent',
-                              colorTextLightSolid: '#8f8f8fff',
-                              boxShadowSecondary: 'none'
-                            }
-                          }}
-                        >
-                          {index == messages.length - 1 && (
-                            <Tooltip placement='left' title={item.status}>
-                              {/* <Avatar size={16} src={receiverInfo?.avatarUrl}></Avatar> */}
-                              <FontAwesomeIcon className='mr-[8px] mb-[6px] opacity-[0.4]' icon={faEye} />
-                            </Tooltip>
+                          {item.status === 'Seen' && isMe && (
+                            <ConfigProvider
+                              theme={{
+                                token: {
+                                  colorBgSpotlight: 'transparent',
+                                  colorTextLightSolid: '#8f8f8fff',
+                                  boxShadowSecondary: 'none'
+                                }
+                              }}
+                            >
+                              {index == messages.length - 1 && (
+                                <Tooltip placement='left' title={item.status}>
+                                  {/* <Avatar size={16} src={receiverInfo?.avatarUrl}></Avatar> */}
+                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
+                                </Tooltip>
+                              )}
+                            </ConfigProvider>
                           )}
-                        </ConfigProvider>
-                      )}
-                      <p
-                        ref={index == messages.length - 1 ? newestMessageRef : null}
-                        className={`${isMe ? 'bg-sky-400' : 'bg-gray-300'} p-[12px] rounded-[20px] max-w-[50%] break-all cursor-default`}
-                      >
-                        {item.content}
-                      </p>
+                          {item.content !== '' && (
+                            <p
+                              ref={index == messages.length - 1 ? newestMessageRef : null}
+                              className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                            >
+                              {item.content}
+                            </p>
+                          )}
+                        </div>
+
+                        {item.messageAttachments.length !== 0 && (
+                          <div
+                            className='flex flex-col gap-1 max-w-[100%]'
+                            ref={index == messages.length - 1 ? newestMessageRef : null}
+                          >
+                            <div className='flex gap-2 flex-wrap'>
+                              {item.messageAttachments.map((att, index) => {
+                                switch (att.fileType) {
+                                  case 'Image':
+                                    return (
+                                      <Image
+                                        className='rounded-[28px]'
+                                        key={index}
+                                        width={150}
+                                        height={150}
+                                        src={att.fileUrl}
+                                        alt={`attachment-${index}`}
+                                      />
+                                    )
+                                  case 'Voice':
+                                    return (
+                                      <div className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}>
+                                        <VoiceWave key={item.id} url={att.fileUrl}></VoiceWave>
+                                      </div>
+                                    )
+                                  default:
+                                    return <p>Error</p>
+                                }
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {isMe && (
                         <a href='#' className='ml-2'>
-                          <Avatar src={userInfo?.avatarUrl}></Avatar>
+                          <Avatar className='select-none' src={userInfo.avatarUrl}></Avatar>
                         </a>
                       )}
                       <div ref={messageEndRef}></div>
@@ -428,16 +588,40 @@ const Inbox: React.FC = () => {
             </InfiniteScroll>
           </div>
           <div>
+            <div className='flex flex-wrap gap-2 mb-[8px]'>
+              {imagesPreview.map((image, index) => (
+                <Image className='rounded-[20px] select-none' key={index} width={90} height={90} src={image} />
+              ))}
+              {audioUrl && (
+                <div className='p-4 bg-gray-100 rounded-2xl shadow-md w-full max-w-md mx-auto flex items-center gap-3'>
+                  {!previewVoicePlaying && (
+                    <FontAwesomeIcon className='cursor-pointer' onClick={togglePreviewRecord} icon={faPlay} />
+                  )}
+                  {previewVoicePlaying && (
+                    <FontAwesomeIcon className='cursor-pointer' onClick={togglePreviewRecord} icon={faPause} />
+                  )}
+                  <div ref={waveformRef}></div>
+                </div>
+              )}
+            </div>
             <Input
               className='p-[12px] rounded-[20px]'
               size='large'
               placeholder='Your message'
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
-              suffix={<SendOutlined className='cursor-pointer' />}
+              suffix={
+                <div className='flex gap-2'>
+                  {!isRecording && (
+                    <FontAwesomeIcon onClick={startRecording} className='cursor-pointer' icon={faMicrophone} />
+                  )}
+                  {isRecording && <FontAwesomeIcon onClick={stopRecording} icon={faCircleStop} />}
+                  <SendOutlined className='cursor-pointer' />
+                </div>
+              }
               prefix={
                 <div>
-                  <FontAwesomeIcon className='cursor-pointer' icon={faPaperclip} />
+                  <FontAwesomeIcon className='cursor-pointer mr-2' icon={faPaperclip} />
                   <label htmlFor='imageFileInput'>
                     <FontAwesomeIcon className='cursor-pointer' icon={faImage} />
                     <input id='imageFileInput' hidden type='file' multiple onChange={handleImagesFileChange} />
