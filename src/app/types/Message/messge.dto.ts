@@ -8,5 +8,7 @@ export interface MessageDto {
   createdAt: Date
   updatedAt: Date
   sender: UserDto
+  repliedMessageId: string | null
+  repliedMessage: MessageDto | null
   messageAttachments: MessageAttachment[]
 }

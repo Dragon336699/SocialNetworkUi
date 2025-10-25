@@ -3,7 +3,6 @@ import { CHAT_HUB_URL } from '../environments/environment'
 import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 import { SendMessageResponse } from '../types/Message/Responses/messageResponses'
 import { MessageDto } from '../types/Message/messge.dto'
-import { Message } from 'postcss'
 import { UpdateStatusMessageRequest } from '../types/Message/Requests/updateStatusMessageReq'
 let connection: HubConnection | null = null
 

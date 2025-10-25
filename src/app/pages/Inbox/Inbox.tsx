@@ -13,7 +13,8 @@ import {
   faMicrophone,
   faPaperclip,
   faPause,
-  faPlay
+  faPlay,
+  faReply
 } from '@fortawesome/free-solid-svg-icons'
 import { userService } from '@/app/services/user.service'
 import { useParams } from 'react-router-dom'
@@ -43,6 +44,7 @@ const Inbox: React.FC = () => {
   const [receivers, setReceivers] = useState<UserDto[]>([])
   const messageEndRef = useRef<HTMLDivElement | null>(null)
   const [text, setText] = useState('')
+  const [repliedMessageId, setRepliedMessageId] = useState<string | null>(null)
   const [skipMessages, setSkipMessages] = useState(0)
   const [takeMessages, setTakeMessages] = useState(20)
   const [messages, setMessages] = useState<MessageDto[]>([])
@@ -100,6 +102,8 @@ const Inbox: React.FC = () => {
     formData.append('senderId', userInfo?.id || '')
     formData.append('conversationId', conversationId || '')
     formData.append('content', text)
+    if (repliedMessageId !== null) formData.append('repliedMessageId', repliedMessageId)
+    // Gửi ảnh và text
     if (imageFiles.length !== 0 && audioUrl === null) {
       imageFiles.forEach((file) => {
         formData.append('files', file)
@@ -111,7 +115,9 @@ const Inbox: React.FC = () => {
       }
       setImageFiles([])
       setImagesPreview([])
-    } else if (audioUrl !== null && audioBlob !== null && imageFiles.length === 0) {
+    }
+    // Gửi voice
+    else if (audioUrl !== null && audioBlob !== null && imageFiles.length === 0) {
       formData.append('files', new File([audioBlob], `${userInfo?.id}_${Date.now()}_voice.wav`, { type: 'audio/wav' }))
       formData.append('fileType', 'Voice')
       setAudioBlob(null)
@@ -120,7 +126,9 @@ const Inbox: React.FC = () => {
       if (text.trim() !== '') {
         setText('')
       }
-    } else if (imageFiles.length === 0 && audioUrl === null) {
+    }
+    // Gửi text
+    else if (imageFiles.length === 0 && audioUrl === null) {
       if (text.trim() !== '') {
         onSendMessage(formData)
         setText('')
@@ -128,6 +136,7 @@ const Inbox: React.FC = () => {
     } else {
       message.error('Can not send image and voice at the same time')
     }
+    setRepliedMessageId(null)
   }
 
   const onSendMessage = async (sendMessageRequest: FormData) => {
@@ -139,6 +148,9 @@ const Inbox: React.FC = () => {
       } else if (sendMessageReponse.status === 200) {
         const res = sendMessageReponse.data as ResponseHasData<MessageDto>
         setMessages([...messages, res.data as MessageDto])
+        setTimeout(() => {
+          newestMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        }, 100)
       }
     } catch (err) {
       message.error('Error while getting user infomation!')
@@ -479,66 +491,103 @@ const Inbox: React.FC = () => {
                         <div
                           className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
                         >
-                          {item.status === 'Sent' && isMe && (
-                            <ConfigProvider
-                              theme={{
-                                token: {
-                                  colorBgSpotlight: 'transparent',
-                                  colorTextLightSolid: '#8f8f8fff',
-                                  boxShadowSecondary: 'none'
-                                }
-                              }}
-                            >
-                              {index == messages.length - 1 && (
-                                <Tooltip placement='left' title={item.status}>
-                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
-                                </Tooltip>
-                              )}
-                            </ConfigProvider>
-                          )}
-                          {item.status === 'Delivered' && isMe && (
-                            <ConfigProvider
-                              theme={{
-                                token: {
-                                  colorBgSpotlight: 'transparent',
-                                  colorTextLightSolid: '#8f8f8fff',
-                                  boxShadowSecondary: 'none'
-                                }
-                              }}
-                            >
-                              {index == messages.length - 1 && (
-                                <Tooltip placement='left' title={item.status}>
-                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
-                                </Tooltip>
-                              )}
-                            </ConfigProvider>
-                          )}
-                          {item.status === 'Seen' && isMe && (
-                            <ConfigProvider
-                              theme={{
-                                token: {
-                                  colorBgSpotlight: 'transparent',
-                                  colorTextLightSolid: '#8f8f8fff',
-                                  boxShadowSecondary: 'none'
-                                }
-                              }}
-                            >
-                              {index == messages.length - 1 && (
-                                <Tooltip placement='left' title={item.status}>
-                                  {/* <Avatar size={16} src={receiverInfo?.avatarUrl}></Avatar> */}
-                                  <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
-                                </Tooltip>
-                              )}
-                            </ConfigProvider>
-                          )}
-                          {item.content !== '' && (
-                            <p
-                              ref={index == messages.length - 1 ? newestMessageRef : null}
-                              className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
-                            >
-                              {item.content}
-                            </p>
-                          )}
+                          <div className='flex flex-col gap-1'>
+                            {item.repliedMessageId !== null && item.repliedMessage !== null && (
+                              <p
+                                className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                              >
+                                {item.repliedMessage.content}
+                              </p>
+                            )}
+                            {item.content !== '' && (
+                              <div
+                                className='flex flex-col items-end gap-1'
+                                ref={index == messages.length - 1 ? newestMessageRef : null}
+                              >
+                                <ConfigProvider
+                                  theme={{
+                                    components: {
+                                      Tooltip: {
+                                        colorBgSpotlight: 'transparent',
+                                        colorTextLightSolid: '#8f8f8fff',
+                                        boxShadowSecondary: 'none'
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Tooltip
+                                    placement='left'
+                                    title={
+                                      <FontAwesomeIcon
+                                        onClick={() => setRepliedMessageId(item.id)}
+                                        className='cursor-pointer'
+                                        icon={faReply}
+                                      />
+                                    }
+                                  >
+                                    <p
+                                      className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                                    >
+                                      {item.content}
+                                    </p>
+                                  </Tooltip>
+                                </ConfigProvider>
+
+                                {item.status === 'Sent' && isMe && (
+                                  <ConfigProvider
+                                    theme={{
+                                      token: {
+                                        colorBgSpotlight: 'transparent',
+                                        colorTextLightSolid: '#8f8f8fff',
+                                        boxShadowSecondary: 'none'
+                                      }
+                                    }}
+                                  >
+                                    {index == messages.length - 1 && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
+                                      </Tooltip>
+                                    )}
+                                  </ConfigProvider>
+                                )}
+                                {item.status === 'Delivered' && isMe && (
+                                  <ConfigProvider
+                                    theme={{
+                                      token: {
+                                        colorBgSpotlight: 'transparent',
+                                        colorTextLightSolid: '#8f8f8fff',
+                                        boxShadowSecondary: 'none'
+                                      }
+                                    }}
+                                  >
+                                    {index == messages.length - 1 && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
+                                      </Tooltip>
+                                    )}
+                                  </ConfigProvider>
+                                )}
+                                {item.status === 'Seen' && isMe && (
+                                  <ConfigProvider
+                                    theme={{
+                                      token: {
+                                        colorBgSpotlight: 'transparent',
+                                        colorTextLightSolid: '#8f8f8fff',
+                                        boxShadowSecondary: 'none'
+                                      }
+                                    }}
+                                  >
+                                    {index == messages.length - 1 && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        {/* <Avatar size={16} src={receiverInfo?.avatarUrl}></Avatar> */}
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
+                                      </Tooltip>
+                                    )}
+                                  </ConfigProvider>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {item.messageAttachments.length !== 0 && (
@@ -604,6 +653,7 @@ const Inbox: React.FC = () => {
                 </div>
               )}
             </div>
+            {repliedMessageId !== null && <p>{repliedMessageId}</p>}
             <Input
               className='p-[12px] rounded-[20px]'
               size='large'
