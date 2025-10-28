@@ -12,5 +12,17 @@ export const conversationService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+  async getAllConversationsByUser(): Promise<{
+    data: BaseResponse | ResponseHasData<ConversationDto[]>
+    status: number
+  }> {
+    const response = await apiClient.get<BaseResponse | ResponseHasData<ConversationDto[]>>(
+      `conversation/getAllConversationsByUser`,
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

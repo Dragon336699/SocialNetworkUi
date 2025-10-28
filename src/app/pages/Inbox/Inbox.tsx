@@ -13,6 +13,7 @@ import {
   faMicrophone,
   faPaperclip,
   faPause,
+  faPenToSquare,
   faPlay,
   faReply
 } from '@fortawesome/free-solid-svg-icons'
@@ -26,17 +27,17 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { conversationService } from '@/app/services/conversation.service'
 import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
-import { ConversationUsreDto } from '@/app/types/ConversationUser/conversationUser.dto'
 import { conversationUserService } from '@/app/services/conversation.user.service'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import WaveSurfer from 'wavesurfer.js'
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
+import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
 
 const Inbox: React.FC = () => {
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
   const newestMessageRef = useRef<HTMLDivElement | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
-  const [conversationUsers, setConversationUsers] = useState<ConversationUsreDto[]>([])
+  const [conversationUsers, setConversationUsers] = useState<ConversationUserDto[]>([])
   const [isChatFocused, setIsChatFocused] = useState(false)
   const [isInputFocused, setIsInputFocused] = useState(false)
   const { conversationId } = useParams()
@@ -58,6 +59,7 @@ const Inbox: React.FC = () => {
   const waveformRef = useRef(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
+  const [conversations, setConversations] = useState<ConversationDto[]>([])
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -196,6 +198,21 @@ const Inbox: React.FC = () => {
     }
   }
 
+  const fetchAllConversations = async () => {
+    try {
+      const response = await conversationService.getAllConversationsByUser()
+      if (response.status === 400) {
+        const base = response.data as BaseResponse
+        message.error(base.message)
+      } else if (response.status === 200) {
+        const conversationUsersRes = response.data as ResponseHasData<ConversationDto[]>
+        setConversations(conversationUsersRes.data as ConversationDto[])
+      }
+    } catch (err) {
+      message.error('Error while getting list conversations')
+    }
+  }
+
   const fetchConversationUsers = async () => {
     try {
       const response = await conversationUserService.getConversationUser({
@@ -207,8 +224,8 @@ const Inbox: React.FC = () => {
         const base = response.data as BaseResponse
         message.error(base.message)
       } else if (response.status === 200) {
-        const conversationUsersRes = response.data as ResponseHasData<ConversationUsreDto[]>
-        setConversationUsers(conversationUsersRes.data as ConversationUsreDto[])
+        const conversationUsersRes = response.data as ResponseHasData<ConversationUserDto[]>
+        setConversationUsers(conversationUsersRes.data as ConversationUserDto[])
       }
     } catch (err) {
       message.error('Error while getting conversation infomation!')
@@ -306,6 +323,9 @@ const Inbox: React.FC = () => {
   useEffect(() => {
     fetchUserInfo()
     fetchConversation()
+    fetchAllConversations()
+    // Kéo xuống tin nhắn dưới cùng
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 
     chatService.getUpdatedMessage((newestMessage: MessageDto) => {
       setMessages((prevMessages) =>
@@ -357,11 +377,6 @@ const Inbox: React.FC = () => {
     }
   }, [userInfo, conversationId, skipMessages])
 
-  // Kéo xuống tin nhắn dưới cùng
-  useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
-
   // Lấy thông tin tất cả người nhận
   useEffect(() => {
     fetchReceiversInfo()
@@ -411,6 +426,7 @@ const Inbox: React.FC = () => {
     <div className='h-screen bg-[#212123] overflow-hidden'>
       <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
         <div className='w-[25%] m-[20px]'>
+          <FontAwesomeIcon className='float-right mb-2 cursor-pointer' icon={faPenToSquare} />
           <ConfigProvider
             theme={{
               components: {
@@ -431,6 +447,34 @@ const Inbox: React.FC = () => {
               prefix={<SearchOutlined className='text-lg' />}
             />
           </ConfigProvider>
+          <div className='mt-4'>
+            {conversations.map((conversation) => (
+              <div
+                className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
+              >
+                <Avatar
+                  draggable='false'
+                  className='select-none'
+                  size={48}
+                  src={conversation.conversationUsers[0].user.avatarUrl}
+                ></Avatar>
+                <div className='flex flex-col justify-around overflow-hidden'>
+                  <p className='text-lg font-medium select-none truncate'>
+                    {conversation.conversationUsers[0].nickName}
+                  </p>
+                  <span className='text-xs opacity-50 truncate select-none'>
+                    {conversation.newestMessage?.senderId === userInfo?.id &&
+                    conversation.newestMessage?.messageAttachments.length === 0
+                      ? 'You: '
+                      : ''}
+                    {conversation.newestMessage?.content === ''
+                      ? conversation.newestMessage.sender.firstName + ' sent attachments'
+                      : conversation.newestMessage?.content}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className='w-[100%] m-[12px] flex flex-col justify-between'>
           {/* Header */}
@@ -516,7 +560,7 @@ const Inbox: React.FC = () => {
                                   }}
                                 >
                                   <Tooltip
-                                    placement='left'
+                                    placement={isMe ? 'left' : 'right'}
                                     title={
                                       <FontAwesomeIcon
                                         onClick={() => setRepliedMessageId(item.id)}

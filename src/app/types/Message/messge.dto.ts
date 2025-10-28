@@ -7,6 +7,7 @@ export interface MessageDto {
   status: string
   createdAt: Date
   updatedAt: Date
+  senderId: string
   sender: UserDto
   repliedMessageId: string | null
   repliedMessage: MessageDto | null
