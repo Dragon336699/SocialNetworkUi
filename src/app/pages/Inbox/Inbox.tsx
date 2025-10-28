@@ -15,7 +15,8 @@ import {
   faPause,
   faPenToSquare,
   faPlay,
-  faReply
+  faReply,
+  faXmark
 } from '@fortawesome/free-solid-svg-icons'
 import { userService } from '@/app/services/user.service'
 import { useParams } from 'react-router-dom'
@@ -32,6 +33,7 @@ import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import WaveSurfer from 'wavesurfer.js'
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
+import Item from 'antd/es/list/Item'
 
 const Inbox: React.FC = () => {
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
@@ -45,7 +47,7 @@ const Inbox: React.FC = () => {
   const [receivers, setReceivers] = useState<UserDto[]>([])
   const messageEndRef = useRef<HTMLDivElement | null>(null)
   const [text, setText] = useState('')
-  const [repliedMessageId, setRepliedMessageId] = useState<string | null>(null)
+  const [repliedMessagePreview, setRepliedMessagePreview] = useState<MessageDto | null>(null)
   const [skipMessages, setSkipMessages] = useState(0)
   const [takeMessages, setTakeMessages] = useState(20)
   const [messages, setMessages] = useState<MessageDto[]>([])
@@ -104,7 +106,7 @@ const Inbox: React.FC = () => {
     formData.append('senderId', userInfo?.id || '')
     formData.append('conversationId', conversationId || '')
     formData.append('content', text)
-    if (repliedMessageId !== null) formData.append('repliedMessageId', repliedMessageId)
+    if (repliedMessagePreview !== null) formData.append('repliedMessageId', repliedMessagePreview.id)
     // Gửi ảnh và text
     if (imageFiles.length !== 0 && audioUrl === null) {
       imageFiles.forEach((file) => {
@@ -138,7 +140,7 @@ const Inbox: React.FC = () => {
     } else {
       message.error('Can not send image and voice at the same time')
     }
-    setRepliedMessageId(null)
+    setRepliedMessagePreview(null)
   }
 
   const onSendMessage = async (sendMessageRequest: FormData) => {
@@ -535,14 +537,54 @@ const Inbox: React.FC = () => {
                         <div
                           className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
                         >
-                          <div className='flex flex-col gap-1'>
-                            {item.repliedMessageId !== null && item.repliedMessage !== null && (
+                          <div className={`flex ${isMe ? '' : 'items-start'} flex-col gap-1 items-end`}>
+                            {(() => {
+                              if (item.repliedMessage !== null && item.repliedMessage.content !== '') {
+                                return (
+                                  <p
+                                    className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
+                                  >
+                                    {item.repliedMessage.content}
+                                  </p>
+                                )
+                              } else if (
+                                item.repliedMessage !== null &&
+                                item.repliedMessage.content === '' &&
+                                item.repliedMessage.messageAttachments.length > 0 &&
+                                item.repliedMessage.messageAttachments[0].fileType === 'Image'
+                              ) {
+                                return item.repliedMessage.messageAttachments.map((img, index) => (
+                                  <Image
+                                    className='rounded-[28px]'
+                                    key={index}
+                                    width={150}
+                                    height={150}
+                                    src={img.fileUrl}
+                                    alt={`attachment-${index}`}
+                                  />
+                                ))
+                              } else if (
+                                item.repliedMessage !== null &&
+                                item.repliedMessage.content === '' &&
+                                item.repliedMessage.messageAttachments.length > 0 &&
+                                item.repliedMessage.messageAttachments[0].fileType !== 'Image'
+                              ) {
+                                return (
+                                  <p
+                                    className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
+                                  >
+                                    Attachment
+                                  </p>
+                                )
+                              }
+                            })()}
+                            {/* {item.repliedMessage !== null && item.repliedMessage.content !== '' && (
                               <p
-                                className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                                className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
                               >
                                 {item.repliedMessage.content}
                               </p>
-                            )}
+                            )} */}
                             {item.content !== '' && (
                               <div
                                 className='flex flex-col items-end gap-1'
@@ -563,7 +605,7 @@ const Inbox: React.FC = () => {
                                     placement={isMe ? 'left' : 'right'}
                                     title={
                                       <FontAwesomeIcon
-                                        onClick={() => setRepliedMessageId(item.id)}
+                                        onClick={() => setRepliedMessagePreview(item)}
                                         className='cursor-pointer'
                                         icon={faReply}
                                       />
@@ -644,14 +686,37 @@ const Inbox: React.FC = () => {
                                 switch (att.fileType) {
                                   case 'Image':
                                     return (
-                                      <Image
-                                        className='rounded-[28px]'
-                                        key={index}
-                                        width={150}
-                                        height={150}
-                                        src={att.fileUrl}
-                                        alt={`attachment-${index}`}
-                                      />
+                                      <ConfigProvider
+                                        theme={{
+                                          components: {
+                                            Tooltip: {
+                                              colorBgSpotlight: 'transparent',
+                                              colorTextLightSolid: '#8f8f8fff',
+                                              boxShadowSecondary: 'none'
+                                            }
+                                          }
+                                        }}
+                                      >
+                                        <Tooltip
+                                          placement={isMe ? 'left' : 'right'}
+                                          title={
+                                            <FontAwesomeIcon
+                                              onClick={() => setRepliedMessagePreview(item)}
+                                              className='cursor-pointer'
+                                              icon={faReply}
+                                            />
+                                          }
+                                        >
+                                          <Image
+                                            className='rounded-[28px]'
+                                            key={index}
+                                            width={150}
+                                            height={150}
+                                            src={att.fileUrl}
+                                            alt={`attachment-${index}`}
+                                          />
+                                        </Tooltip>
+                                      </ConfigProvider>
                                     )
                                   case 'Voice':
                                     return (
@@ -697,7 +762,45 @@ const Inbox: React.FC = () => {
                 </div>
               )}
             </div>
-            {repliedMessageId !== null && <p>{repliedMessageId}</p>}
+            {repliedMessagePreview !== null && (
+              <div className='bg-[#8fd8d2] px-[10px] py-[12px] rounded-[20px] mb-2 overflow-hidden'>
+                <div className='flex justify-between'>
+                  <p className='text-sm'>Replying to {repliedMessagePreview.sender.firstName}</p>
+                  <FontAwesomeIcon
+                    className='cursor-pointer'
+                    onClick={() => {
+                      setRepliedMessagePreview(null)
+                    }}
+                    icon={faXmark}
+                  />
+                </div>
+
+                {(() => {
+                  if (
+                    repliedMessagePreview.content === '' &&
+                    repliedMessagePreview.messageAttachments[0].fileType === 'Image'
+                  ) {
+                    return repliedMessagePreview.messageAttachments.map((img, index) => (
+                      <Image
+                        className='rounded-[28px]'
+                        key={index}
+                        width={150}
+                        height={150}
+                        src={img.fileUrl}
+                        alt={`attachment-${index}`}
+                      />
+                    ))
+                  } else if (
+                    repliedMessagePreview.content === '' &&
+                    repliedMessagePreview.messageAttachments[0].fileType !== 'Image'
+                  ) {
+                    return <p>Attachment</p>
+                  } else {
+                    return <span className='ml-2 text-xs text-[#000000ab]'>{repliedMessagePreview.content}</span>
+                  }
+                })()}
+              </div>
+            )}
             <Input
               className='p-[12px] rounded-[20px]'
               size='large'
