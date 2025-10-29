@@ -19,7 +19,7 @@ import {
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
 import { userService } from '@/app/services/user.service'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { messageService } from '@/app/services/message.service'
 import { MessageDto } from '@/app/types/Message/messge.dto'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
@@ -36,6 +36,7 @@ import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUs
 import Item from 'antd/es/list/Item'
 
 const Inbox: React.FC = () => {
+  const navigate = useNavigate()
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
   const newestMessageRef = useRef<HTMLDivElement | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
@@ -196,7 +197,7 @@ const Inbox: React.FC = () => {
         setConversation(conversationData.data as ConversationDto)
       }
     } catch (err) {
-      message.error('Error while getting conversation infomation!')
+      return
     }
   }
 
@@ -230,7 +231,7 @@ const Inbox: React.FC = () => {
         setConversationUsers(conversationUsersRes.data as ConversationUserDto[])
       }
     } catch (err) {
-      message.error('Error while getting conversation infomation!')
+      message.error('Error while getting conversation user infomation!')
     }
   }
 
@@ -271,6 +272,10 @@ const Inbox: React.FC = () => {
 
     const previewUrls = selectedFiles.map((file) => URL.createObjectURL(file))
     setImagesPreview(previewUrls)
+  }
+
+  const navigateToInbox = (conversationId: string) => {
+    navigate(`/Inbox/${conversationId}`)
   }
 
   // Handle seen
@@ -324,7 +329,7 @@ const Inbox: React.FC = () => {
   // Lấy dữ liệu user, conversation và cho thẻ chat được focus
   useEffect(() => {
     fetchUserInfo()
-    fetchConversation()
+    if (conversationId) fetchConversation()
     fetchAllConversations()
     // Kéo xuống tin nhắn dưới cùng
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -449,46 +454,60 @@ const Inbox: React.FC = () => {
               prefix={<SearchOutlined className='text-lg' />}
             />
           </ConfigProvider>
-          <div className='mt-4'>
-            {conversations.map((conversation) => (
-              <div
-                className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
-              >
-                <Avatar
-                  draggable='false'
-                  className='select-none'
-                  size={48}
-                  src={conversation.conversationUsers[0].user.avatarUrl}
-                ></Avatar>
-                <div className='flex flex-col justify-around overflow-hidden'>
-                  <p className='text-lg font-medium select-none truncate'>
-                    {conversation.conversationUsers[0].nickName}
-                  </p>
-                  <span className='text-xs opacity-50 truncate select-none'>
-                    {conversation.newestMessage?.senderId === userInfo?.id &&
-                    conversation.newestMessage?.messageAttachments.length === 0
-                      ? 'You: '
-                      : ''}
-                    {conversation.newestMessage?.content === ''
-                      ? conversation.newestMessage.sender.firstName + ' sent attachments'
-                      : conversation.newestMessage?.content}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className='mt-4 flex flex-col gap-3'>
+            {/* List cuộc trò chuyện */}
+            {conversations.length === 0
+              ? Array.from({ length: 10 }).map((_, i) => (
+                  <Skeleton className='mb-3' key={i} active avatar paragraph={{ rows: 1 }} />
+                ))
+              : conversations.map((conversation) => (
+                  <div
+                    onClick={() => navigateToInbox(conversation.id)}
+                    className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
+                  >
+                    <Avatar
+                      draggable='false'
+                      className='select-none'
+                      size={48}
+                      src={conversation.conversationUsers[0].user.avatarUrl}
+                    ></Avatar>
+                    <div className='flex flex-col justify-around overflow-hidden'>
+                      <p className='text-lg font-medium select-none truncate'>
+                        {conversation.type === 'Personal'
+                          ? conversation.conversationUsers[0].nickName
+                          : conversation.conversationName}
+                      </p>
+                      <span className='text-xs opacity-50 truncate select-none'>
+                        {conversation.newestMessage?.senderId === userInfo?.id &&
+                        conversation.newestMessage?.messageAttachments.length === 0
+                          ? 'You: '
+                          : ''}
+                        {conversation.newestMessage?.content === ''
+                          ? conversation.newestMessage.sender.firstName + ' sent attachments'
+                          : conversation.newestMessage?.content}
+                      </span>
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
         <div className='w-[100%] m-[12px] flex flex-col justify-between'>
           {/* Header */}
           <div className='flex justify-between py-0 px-[16px]'>
             <div className='flex flex-col'>
-              {conversationUsers.length !== 0 && conversation?.type === 'Personal' ? (
-                <h3 className='text-xl font-medium'>
-                  {conversationUsers.find((u) => u.userId !== userInfo?.id)?.nickName}
-                </h3>
-              ) : (
-                <Skeleton active paragraph={{ rows: 0 }} />
-              )}
+              {(() => {
+                if (conversationUsers.length === 0) {
+                  return <Skeleton active paragraph={{ rows: 0 }} />
+                } else if (conversationUsers.length !== 0 && conversation?.type === 'Personal') {
+                  return (
+                    <h3 className='text-xl font-medium'>
+                      {conversationUsers.find((u) => u.userId !== userInfo?.id)?.nickName}
+                    </h3>
+                  )
+                } else if (conversationUsers.length !== 0 && conversation?.type === 'Group') {
+                  return <h3 className='text-xl font-medium'>{conversation.conversationName}</h3>
+                }
+              })()}
               {conversationUsers.length !== 0 && conversation?.type === 'Personal' ? (
                 <span className='text-xs opacity-50'>{receivers.find((u) => u.id !== userInfo?.id)?.status}</span>
               ) : (
@@ -578,13 +597,6 @@ const Inbox: React.FC = () => {
                                 )
                               }
                             })()}
-                            {/* {item.repliedMessage !== null && item.repliedMessage.content !== '' && (
-                              <p
-                                className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
-                              >
-                                {item.repliedMessage.content}
-                              </p>
-                            )} */}
                             {item.content !== '' && (
                               <div
                                 className='flex flex-col items-end gap-1'
@@ -801,37 +813,39 @@ const Inbox: React.FC = () => {
                 })()}
               </div>
             )}
-            <Input
-              className='p-[12px] rounded-[20px]'
-              size='large'
-              placeholder='Your message'
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
-              suffix={
-                <div className='flex gap-2'>
-                  {!isRecording && (
-                    <FontAwesomeIcon onClick={startRecording} className='cursor-pointer' icon={faMicrophone} />
-                  )}
-                  {isRecording && <FontAwesomeIcon onClick={stopRecording} icon={faCircleStop} />}
-                  <SendOutlined className='cursor-pointer' />
-                </div>
-              }
-              prefix={
-                <div>
-                  <FontAwesomeIcon className='cursor-pointer mr-2' icon={faPaperclip} />
-                  <label htmlFor='imageFileInput'>
-                    <FontAwesomeIcon className='cursor-pointer' icon={faImage} />
-                    <input id='imageFileInput' hidden type='file' multiple onChange={handleImagesFileChange} />
-                  </label>
-                </div>
-              }
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onPressEnter={(e) => {
-                e.preventDefault()
-                handleSendMessage()
-              }}
-            />
+            {conversation !== null ? (
+              <Input
+                className='p-[12px] rounded-[20px]'
+                size='large'
+                placeholder='Your message'
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                suffix={
+                  <div className='flex gap-2'>
+                    {!isRecording && (
+                      <FontAwesomeIcon onClick={startRecording} className='cursor-pointer' icon={faMicrophone} />
+                    )}
+                    {isRecording && <FontAwesomeIcon onClick={stopRecording} icon={faCircleStop} />}
+                    <SendOutlined onClick={() => handleSendMessage()} className='cursor-pointer' />
+                  </div>
+                }
+                prefix={
+                  <div>
+                    <FontAwesomeIcon className='cursor-pointer mr-2' icon={faPaperclip} />
+                    <label htmlFor='imageFileInput'>
+                      <FontAwesomeIcon className='cursor-pointer' icon={faImage} />
+                      <input id='imageFileInput' hidden type='file' multiple onChange={handleImagesFileChange} />
+                    </label>
+                  </div>
+                }
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onPressEnter={(e) => {
+                  e.preventDefault()
+                  handleSendMessage()
+                }}
+              />
+            ) : null}
           </div>
         </div>
       </div>
