@@ -31,5 +31,22 @@ export const messageService = {
       headers: isFormData ? { 'Content-Type': 'multiple/form-data' } : undefined
     })
     return { data: response.data, status: response.status }
+  },
+
+  async reactionMessage(
+    messageId: string,
+    reaction: string
+  ): Promise<{ data: BaseResponse | ResponseHasData<MessageDto>; status: number }> {
+    const response = await apiClient.post<BaseResponse | ResponseHasData<MessageDto>>(
+      'message/reaction',
+      {
+        messageId,
+        reaction
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

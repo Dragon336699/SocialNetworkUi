@@ -9,12 +9,14 @@ import {
   faCircleStop,
   faEllipsisVertical,
   faEye,
+  faFaceSmile,
   faImage,
   faMicrophone,
   faPaperclip,
   faPause,
   faPenToSquare,
   faPlay,
+  faPlus,
   faReply,
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
@@ -33,7 +35,8 @@ import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import WaveSurfer from 'wavesurfer.js'
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
-import Item from 'antd/es/list/Item'
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
 
 const Inbox: React.FC = () => {
   const navigate = useNavigate()
@@ -63,6 +66,12 @@ const Inbox: React.FC = () => {
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
   const [conversations, setConversations] = useState<ConversationDto[]>([])
+
+  const reactions = ['👍', '❤️', '😂', '😮', '😢']
+  const reactionBarRef = useRef<HTMLDivElement>(null)
+  const pickerEmotionRef = useRef<HTMLDivElement>(null)
+  const [messageReactionBar, setMessageReactionBar] = useState<string | null>(null)
+  const [fullyReactionSelection, setfullyReactionSelection] = useState<string | null>(null)
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -160,16 +169,6 @@ const Inbox: React.FC = () => {
     } catch (err) {
       message.error('Error while getting user infomation!')
     }
-
-    // chatService
-    //   .onSendPrivateMessage(sendMessageRequest)
-    //   .then((sendMessageReponse) => {
-    //     if (!sendMessageReponse?.status) message.error(sendMessageReponse?.message)
-    //     else setMessages([...messages, sendMessageReponse.newMessage])
-    //   })
-    //   .catch((err) => {
-    //     message.error(err)
-    //   })
   }
 
   const fetchUserInfo = async () => {
@@ -310,6 +309,29 @@ const Inbox: React.FC = () => {
     return () => observer.disconnect()
   }, [messages, isChatFocused, isInputFocused])
 
+  // Gửi reaction
+  const handleSendReaction = async (messageId: string, reaction: string) => {
+    try {
+      const sendMessageReponse = await messageService.reactionMessage(messageId, reaction)
+      if (sendMessageReponse.status === 400) {
+        setMessageReactionBar(null)
+        const res = sendMessageReponse.data as BaseResponse
+        message.error(res.message)
+      } else if (sendMessageReponse.status === 200) {
+        setMessageReactionBar(null)
+        setfullyReactionSelection(null)
+        const res = sendMessageReponse.data as ResponseHasData<MessageDto>
+        const updatedMessage = res.data as MessageDto
+        setMessages((prev) => prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m)))
+        setTimeout(() => {
+          newestMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        }, 100)
+      }
+    } catch (err) {
+      message.error('Error while getting user infomation!')
+    }
+  }
+
   // Handle nhận
   useEffect(() => {
     chatService.start().then(() => {
@@ -340,10 +362,6 @@ const Inbox: React.FC = () => {
           m.id === newestMessage.id ? { ...m, ...(newestMessage as MessageDto) } : m
         )
       )
-      // const container = document.getElementById('scrollableDiv')
-      // if (container) {
-      //   container.scrollTo({ top: 0, behavior: 'smooth' })
-      // }
     })
 
     const textingArea = document.getElementById('scrollableDiv')
@@ -359,6 +377,26 @@ const Inbox: React.FC = () => {
     return () => {
       textingArea.removeEventListener('focus', handleFocus)
       textingArea.removeEventListener('blur', handleBlur)
+    }
+  }, [])
+
+  // Xử lý click của reaction bar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        reactionBarRef.current &&
+        !reactionBarRef.current.contains(event.target as Node) &&
+        pickerEmotionRef &&
+        !pickerEmotionRef.current?.contains(event.target as Node)
+      ) {
+        setMessageReactionBar(null)
+        setfullyReactionSelection(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
 
@@ -556,7 +594,7 @@ const Inbox: React.FC = () => {
                         <div
                           className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
                         >
-                          <div className={`flex ${isMe ? '' : 'items-start'} flex-col gap-1 items-end`}>
+                          <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
                             {(() => {
                               if (item.repliedMessage !== null && item.repliedMessage.content !== '') {
                                 return (
@@ -599,7 +637,7 @@ const Inbox: React.FC = () => {
                             })()}
                             {item.content !== '' && (
                               <div
-                                className='flex flex-col items-end gap-1'
+                                className='flex flex-col items-end gap-1 relative'
                                 ref={index == messages.length - 1 ? newestMessageRef : null}
                               >
                                 <ConfigProvider
@@ -616,21 +654,78 @@ const Inbox: React.FC = () => {
                                   <Tooltip
                                     placement={isMe ? 'left' : 'right'}
                                     title={
-                                      <FontAwesomeIcon
-                                        onClick={() => setRepliedMessagePreview(item)}
-                                        className='cursor-pointer'
-                                        icon={faReply}
-                                      />
+                                      <div className='flex gap-2'>
+                                        <FontAwesomeIcon
+                                          onClick={() => setMessageReactionBar(item.id)}
+                                          className='cursor-pointer'
+                                          icon={faFaceSmile}
+                                        />
+                                        <FontAwesomeIcon
+                                          onClick={() => setRepliedMessagePreview(item)}
+                                          className='cursor-pointer'
+                                          icon={faReply}
+                                        />
+                                      </div>
                                     }
                                   >
                                     <p
-                                      className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                                      className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} relative inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
                                     >
                                       {item.content}
                                     </p>
                                   </Tooltip>
-                                </ConfigProvider>
 
+                                  {/* Hiện reaction ở mỗi message */}
+                                  {item.messageReactionUsers.length !== 0 && (
+                                    <div
+                                      className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'} flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
+                                    >
+                                      {[...new Set(item.messageReactionUsers.map((u) => u.reaction))]
+                                        .slice(0, 4)
+                                        .map((emoji) => (
+                                          <div key={emoji}>{emoji}</div>
+                                        ))}
+                                      {item.messageReactionUsers.length > 1 && (
+                                        <p className='text-white'>{item.messageReactionUsers.length}</p>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Hiện list Reaction */}
+                                  {messageReactionBar === item.id && (
+                                    <div
+                                      ref={reactionBarRef}
+                                      className={`z-[100] flex gap-2 bg-black text-white rounded-[20px] py-[10px] px-[16px] absolute ${isMe ? 'left-[-160px]' : 'right-[-160px]'} top-[-50px]`}
+                                    >
+                                      {reactions.map((reaction) => (
+                                        <div
+                                          onClick={() => handleSendReaction(item.id, reaction)}
+                                          className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'
+                                        >
+                                          {reaction}
+                                        </div>
+                                      ))}
+                                      <div className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>
+                                        <FontAwesomeIcon
+                                          onClick={() => setfullyReactionSelection(item.id)}
+                                          icon={faPlus}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </ConfigProvider>
+                                {fullyReactionSelection === item.id && (
+                                  <div
+                                    className={`absolute ${isMe ? '' : 'left-[20vw]'} bottom-[15vh]`}
+                                    ref={pickerEmotionRef}
+                                  >
+                                    <Picker
+                                      previewPosition='none'
+                                      data={data}
+                                      onEmojiSelect={(emoji: any) => handleSendReaction(item.id, emoji.native)}
+                                    />
+                                  </div>
+                                )}
                                 {item.status === 'Sent' && isMe && (
                                   <ConfigProvider
                                     theme={{
@@ -698,37 +793,46 @@ const Inbox: React.FC = () => {
                                 switch (att.fileType) {
                                   case 'Image':
                                     return (
-                                      <ConfigProvider
-                                        theme={{
-                                          components: {
-                                            Tooltip: {
-                                              colorBgSpotlight: 'transparent',
-                                              colorTextLightSolid: '#8f8f8fff',
-                                              boxShadowSecondary: 'none'
+                                      <div className='flex flex-col'>
+                                        <ConfigProvider
+                                          theme={{
+                                            components: {
+                                              Tooltip: {
+                                                colorBgSpotlight: 'transparent',
+                                                colorTextLightSolid: '#8f8f8fff',
+                                                boxShadowSecondary: 'none'
+                                              }
                                             }
-                                          }
-                                        }}
-                                      >
-                                        <Tooltip
-                                          placement={isMe ? 'left' : 'right'}
-                                          title={
-                                            <FontAwesomeIcon
-                                              onClick={() => setRepliedMessagePreview(item)}
-                                              className='cursor-pointer'
-                                              icon={faReply}
-                                            />
-                                          }
+                                          }}
                                         >
-                                          <Image
-                                            className='rounded-[28px]'
-                                            key={index}
-                                            width={150}
-                                            height={150}
-                                            src={att.fileUrl}
-                                            alt={`attachment-${index}`}
-                                          />
-                                        </Tooltip>
-                                      </ConfigProvider>
+                                          <Tooltip
+                                            placement={isMe ? 'left' : 'right'}
+                                            title={
+                                              <div className='flex gap-2'>
+                                                <FontAwesomeIcon
+                                                  onClick={() => setMessageReactionBar(item.id)}
+                                                  className='cursor-pointer'
+                                                  icon={faFaceSmile}
+                                                />
+                                                <FontAwesomeIcon
+                                                  onClick={() => setRepliedMessagePreview(item)}
+                                                  className='cursor-pointer'
+                                                  icon={faReply}
+                                                />
+                                              </div>
+                                            }
+                                          >
+                                            <Image
+                                              className='rounded-[28px]'
+                                              key={index}
+                                              width={150}
+                                              height={150}
+                                              src={att.fileUrl}
+                                              alt={`attachment-${index}`}
+                                            />
+                                          </Tooltip>
+                                        </ConfigProvider>
+                                      </div>
                                     )
                                   case 'Voice':
                                     return (
