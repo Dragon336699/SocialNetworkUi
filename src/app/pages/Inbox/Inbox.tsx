@@ -274,7 +274,7 @@ const Inbox: React.FC = () => {
   }
 
   const navigateToInbox = (conversationId: string) => {
-    navigate(`/Inbox/${conversationId}`)
+    window.location.href = `/Inbox/${conversationId}`
   }
 
   // Handle seen
@@ -323,9 +323,6 @@ const Inbox: React.FC = () => {
         const res = sendMessageReponse.data as ResponseHasData<MessageDto>
         const updatedMessage = res.data as MessageDto
         setMessages((prev) => prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m)))
-        setTimeout(() => {
-          newestMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-        }, 100)
       }
     } catch (err) {
       message.error('Error while getting user infomation!')
@@ -581,7 +578,7 @@ const Inbox: React.FC = () => {
                     <div
                       id={`msg-${item.id}`}
                       ref={isFirst ? firstMessageRef : null}
-                      className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px]`}
+                      className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
                       key={item.id}
                     >
                       {!isMe && (
@@ -635,10 +632,10 @@ const Inbox: React.FC = () => {
                                 )
                               }
                             })()}
-                            {item.content !== '' && (
+                            {(item.content !== '' || item.messageAttachments.length !== 0) && (
                               <div
-                                className='flex flex-col items-end gap-1 relative'
-                                ref={index == messages.length - 1 ? newestMessageRef : null}
+                                className='flex flex-col items-end gap-2 relative'
+                                ref={index === messages.length - 1 ? newestMessageRef : null}
                               >
                                 <ConfigProvider
                                   theme={{
@@ -668,17 +665,59 @@ const Inbox: React.FC = () => {
                                       </div>
                                     }
                                   >
-                                    <p
-                                      className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300 float-left'} relative inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end`}
+                                    <div
+                                      className={`${item.messageAttachments.length !== 0 && item.content != '' ? 'flex flex-col-reverse gap-2' : ''} relative inline-block rounded-[20px] break-all cursor-default self-end float-left'
+                                      }`}
                                     >
-                                      {item.content}
-                                    </p>
+                                      {/* Hiện content nếu có */}
+                                      {item.content !== '' && (
+                                        <p
+                                          className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300'} p-[12px] rounded-[20px]`}
+                                        >
+                                          {item.content}
+                                        </p>
+                                      )}
+
+                                      {/* Hiện attachment nếu có */}
+                                      {item.messageAttachments.length !== 0 && (
+                                        <div className='flex gap-2 flex-wrap mt-2'>
+                                          {item.messageAttachments.map((att, index) => {
+                                            switch (att.fileType) {
+                                              case 'Image':
+                                                return (
+                                                  <Image
+                                                    key={index}
+                                                    className='rounded-[28px]'
+                                                    width={150}
+                                                    height={150}
+                                                    src={att.fileUrl}
+                                                    alt={`attachment-${index}`}
+                                                  />
+                                                )
+                                              case 'Voice':
+                                                return (
+                                                  <div
+                                                    key={index}
+                                                    className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}
+                                                  >
+                                                    <VoiceWave url={att.fileUrl} />
+                                                  </div>
+                                                )
+                                              default:
+                                                return <p key={index}>Error</p>
+                                            }
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
                                   </Tooltip>
 
-                                  {/* Hiện reaction ở mỗi message */}
+                                  {/* Hiện reaction summary */}
                                   {item.messageReactionUsers.length !== 0 && (
                                     <div
-                                      className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'} flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
+                                      className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${
+                                        index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'
+                                      } flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
                                     >
                                       {[...new Set(item.messageReactionUsers.map((u) => u.reaction))]
                                         .slice(0, 4)
@@ -695,10 +734,13 @@ const Inbox: React.FC = () => {
                                   {messageReactionBar === item.id && (
                                     <div
                                       ref={reactionBarRef}
-                                      className={`z-[100] flex gap-2 bg-black text-white rounded-[20px] py-[10px] px-[16px] absolute ${isMe ? 'left-[-160px]' : 'right-[-160px]'} top-[-50px]`}
+                                      className={`z-[100] flex gap-2 bg-black text-white rounded-[20px] py-[10px] px-[16px] absolute ${
+                                        isMe ? 'left-[-160px]' : 'right-[-160px]'
+                                      } top-[-50px]`}
                                     >
                                       {reactions.map((reaction) => (
                                         <div
+                                          key={reaction}
                                           onClick={() => handleSendReaction(item.id, reaction)}
                                           className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'
                                         >
@@ -714,6 +756,8 @@ const Inbox: React.FC = () => {
                                     </div>
                                   )}
                                 </ConfigProvider>
+
+                                {/* Emoji Picker */}
                                 {fullyReactionSelection === item.id && (
                                   <div
                                     className={`absolute ${isMe ? '' : 'left-[20vw]'} bottom-[15vh]`}
@@ -726,7 +770,9 @@ const Inbox: React.FC = () => {
                                     />
                                   </div>
                                 )}
-                                {item.status === 'Sent' && isMe && (
+
+                                {/* Trạng thái gửi tin nhắn */}
+                                {isMe && index === messages.length - 1 && (
                                   <ConfigProvider
                                     theme={{
                                       token: {
@@ -736,43 +782,18 @@ const Inbox: React.FC = () => {
                                       }
                                     }}
                                   >
-                                    {index == messages.length - 1 && (
+                                    {item.status === 'Sent' && (
                                       <Tooltip placement='left' title={item.status}>
                                         <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
                                       </Tooltip>
                                     )}
-                                  </ConfigProvider>
-                                )}
-                                {item.status === 'Delivered' && isMe && (
-                                  <ConfigProvider
-                                    theme={{
-                                      token: {
-                                        colorBgSpotlight: 'transparent',
-                                        colorTextLightSolid: '#8f8f8fff',
-                                        boxShadowSecondary: 'none'
-                                      }
-                                    }}
-                                  >
-                                    {index == messages.length - 1 && (
+                                    {item.status === 'Delivered' && (
                                       <Tooltip placement='left' title={item.status}>
                                         <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
                                       </Tooltip>
                                     )}
-                                  </ConfigProvider>
-                                )}
-                                {item.status === 'Seen' && isMe && (
-                                  <ConfigProvider
-                                    theme={{
-                                      token: {
-                                        colorBgSpotlight: 'transparent',
-                                        colorTextLightSolid: '#8f8f8fff',
-                                        boxShadowSecondary: 'none'
-                                      }
-                                    }}
-                                  >
-                                    {index == messages.length - 1 && (
+                                    {item.status === 'Seen' && (
                                       <Tooltip placement='left' title={item.status}>
-                                        {/* <Avatar size={16} src={receiverInfo?.avatarUrl}></Avatar> */}
                                         <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
                                       </Tooltip>
                                     )}
@@ -782,71 +803,6 @@ const Inbox: React.FC = () => {
                             )}
                           </div>
                         </div>
-
-                        {item.messageAttachments.length !== 0 && (
-                          <div
-                            className='flex flex-col gap-1 max-w-[100%]'
-                            ref={index == messages.length - 1 ? newestMessageRef : null}
-                          >
-                            <div className='flex gap-2 flex-wrap'>
-                              {item.messageAttachments.map((att, index) => {
-                                switch (att.fileType) {
-                                  case 'Image':
-                                    return (
-                                      <div className='flex flex-col'>
-                                        <ConfigProvider
-                                          theme={{
-                                            components: {
-                                              Tooltip: {
-                                                colorBgSpotlight: 'transparent',
-                                                colorTextLightSolid: '#8f8f8fff',
-                                                boxShadowSecondary: 'none'
-                                              }
-                                            }
-                                          }}
-                                        >
-                                          <Tooltip
-                                            placement={isMe ? 'left' : 'right'}
-                                            title={
-                                              <div className='flex gap-2'>
-                                                <FontAwesomeIcon
-                                                  onClick={() => setMessageReactionBar(item.id)}
-                                                  className='cursor-pointer'
-                                                  icon={faFaceSmile}
-                                                />
-                                                <FontAwesomeIcon
-                                                  onClick={() => setRepliedMessagePreview(item)}
-                                                  className='cursor-pointer'
-                                                  icon={faReply}
-                                                />
-                                              </div>
-                                            }
-                                          >
-                                            <Image
-                                              className='rounded-[28px]'
-                                              key={index}
-                                              width={150}
-                                              height={150}
-                                              src={att.fileUrl}
-                                              alt={`attachment-${index}`}
-                                            />
-                                          </Tooltip>
-                                        </ConfigProvider>
-                                      </div>
-                                    )
-                                  case 'Voice':
-                                    return (
-                                      <div className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}>
-                                        <VoiceWave key={item.id} url={att.fileUrl}></VoiceWave>
-                                      </div>
-                                    )
-                                  default:
-                                    return <p>Error</p>
-                                }
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
                       {isMe && (
