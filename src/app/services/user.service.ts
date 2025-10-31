@@ -1,5 +1,6 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
+import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import { VerifyOTPResponse } from '../types/OTP/Responses/otpResponse'
 import { GoogleLoginRequest } from '../types/User/Requests/googleLoginReq'
 import { LoginRequest } from '../types/User/Requests/loginReq'
@@ -74,6 +75,13 @@ export const userService = {
 
   async getUserInfoById(userId: string): Promise<{ data: BaseResponse | UserDto; status: number }> {
     const response = await apiClient.get<BaseResponse | UserDto>(`user/getUserInfoById?userId=${userId}`, {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
+  },
+
+  async searchUsers(keyword: string): Promise<{ data: BaseResponse | ResponseHasData<UserDto[]>; status: number }> {
+    const response = await apiClient.get<BaseResponse | ResponseHasData<UserDto[]>>(`user/search?keyword=${keyword}`, {
       withCredentials: true
     })
     return { data: response.data, status: response.status }

@@ -24,5 +24,25 @@ export const conversationService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+
+  async createConversation(
+    userIds: string[],
+    conversationType: string
+  ): Promise<{
+    data: BaseResponse | ResponseHasData<string>
+    status: number
+  }> {
+    const response = await apiClient.post<BaseResponse | ResponseHasData<string>>(
+      `conversation/createConversation`,
+      {
+        conversationType,
+        userIds
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

@@ -37,6 +37,7 @@ import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import ModalNewMessage from './ModalNewMessage'
 
 const Inbox: React.FC = () => {
   const navigate = useNavigate()
@@ -72,6 +73,8 @@ const Inbox: React.FC = () => {
   const pickerEmotionRef = useRef<HTMLDivElement>(null)
   const [messageReactionBar, setMessageReactionBar] = useState<string | null>(null)
   const [fullyReactionSelection, setfullyReactionSelection] = useState<string | null>(null)
+
+  const [isModalNewMessageOpen, setIsModalNewMessageOpen] = useState(false)
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -468,7 +471,11 @@ const Inbox: React.FC = () => {
     <div className='h-screen bg-[#212123] overflow-hidden'>
       <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
         <div className='w-[25%] m-[20px]'>
-          <FontAwesomeIcon className='float-right mb-2 cursor-pointer' icon={faPenToSquare} />
+          <FontAwesomeIcon
+            onClick={() => setIsModalNewMessageOpen(true)}
+            className='float-right mb-2 cursor-pointer'
+            icon={faPenToSquare}
+          />
           <ConfigProvider
             theme={{
               components: {
@@ -526,6 +533,8 @@ const Inbox: React.FC = () => {
                 ))}
           </div>
         </div>
+        {/* Tìm kiếm User để bắt đầu cuộc trò chuyện */}
+        <ModalNewMessage isModalOpen={isModalNewMessageOpen} onClose={() => setIsModalNewMessageOpen(false)} />
         <div className='w-[100%] m-[12px] flex flex-col justify-between'>
           {/* Header */}
           <div className='flex justify-between py-0 px-[16px]'>
