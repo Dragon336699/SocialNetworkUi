@@ -7,6 +7,7 @@ import ChangePasswordPopup from '../ChangePassword/ChangePassword'
 import { useState } from 'react'
 import { LoginRequest } from '@/app/types/User/Requests/loginReq'
 import { userService } from '@/app/services/user.service'
+import { useNavigate } from 'react-router-dom'
 
 const Login: React.FC = () => {
   const goolgeClientId = '45298468389-dg5oe6b4ghpfogdddidgsmq5s8g8i7b2.apps.googleusercontent.com'
@@ -17,12 +18,14 @@ const Login: React.FC = () => {
   } = useForm<LoginRequest>()
 
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
+  const navigate = useNavigate()
 
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
       const loginData = await userService.login(data)
       if (loginData.message) {
         message.success('Đăng nhập thành công!')
+        navigate('/home')
       }
     } catch (err) {
       console.error('Lỗi login:', err)
