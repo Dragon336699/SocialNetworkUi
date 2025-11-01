@@ -383,22 +383,33 @@ const Inbox: React.FC = () => {
   // Xử lý click của reaction bar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        reactionBarRef.current &&
-        !reactionBarRef.current.contains(event.target as Node) &&
-        pickerEmotionRef &&
-        !pickerEmotionRef.current?.contains(event.target as Node)
-      ) {
+      const target = event.target as Node
+      const clickedOutsideReactionBar = reactionBarRef.current && !reactionBarRef.current.contains(target)
+      const clickedOutsideEmojiPicker = pickerEmotionRef.current && !pickerEmotionRef.current.contains(target)
+
+      if (messageReactionBar && clickedOutsideReactionBar && !fullyReactionSelection) {
+        setMessageReactionBar(null)
+      }
+      if (fullyReactionSelection && clickedOutsideEmojiPicker) {
+        setfullyReactionSelection(null)
+      }
+    }
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setMessageReactionBar(null)
         setfullyReactionSelection(null)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscapeKey)
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
     }
-  }, [])
+  }, [messageReactionBar, fullyReactionSelection])
 
   // Lấy dữ liệu conversation
   useEffect(() => {
@@ -578,7 +589,10 @@ const Inbox: React.FC = () => {
               scrollableTarget='scrollableDiv'
             >
               <List
-                className='overflow-y-auto'
+                style={{
+                  overflow: 'visible',
+                  paddingTop: '550px'
+                }}
                 dataSource={messages}
                 renderItem={(item, index) => {
                   const isMe = item.sender?.id == userInfo?.id
@@ -662,12 +676,18 @@ const Inbox: React.FC = () => {
                                     title={
                                       <div className='flex gap-2'>
                                         <FontAwesomeIcon
-                                          onClick={() => setMessageReactionBar(item.id)}
+                                          onClick={() => {
+                                            setMessageReactionBar(item.id)
+                                            setfullyReactionSelection(null)
+                                          }}
                                           className='cursor-pointer'
                                           icon={faFaceSmile}
                                         />
                                         <FontAwesomeIcon
-                                          onClick={() => setRepliedMessagePreview(item)}
+                                          onClick={() => {
+                                            setRepliedMessagePreview(item)
+                                            setfullyReactionSelection(null)
+                                          }}
                                           className='cursor-pointer'
                                           icon={faReply}
                                         />
@@ -758,7 +778,10 @@ const Inbox: React.FC = () => {
                                       ))}
                                       <div className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>
                                         <FontAwesomeIcon
-                                          onClick={() => setfullyReactionSelection(item.id)}
+                                          onClick={() => {
+                                            setfullyReactionSelection(item.id)
+                                            setMessageReactionBar(null)
+                                          }}
                                           icon={faPlus}
                                         />
                                       </div>
@@ -769,7 +792,9 @@ const Inbox: React.FC = () => {
                                 {/* Emoji Picker */}
                                 {fullyReactionSelection === item.id && (
                                   <div
-                                    className={`absolute ${isMe ? '' : 'left-[20vw]'} bottom-[15vh]`}
+                                    className={`absolute z-[200] ${
+                                      isMe ? 'left-[-300px]' : 'right-[-300px]'
+                                    } top-[-437px]`}
                                     ref={pickerEmotionRef}
                                   >
                                     <Picker
