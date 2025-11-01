@@ -1,4 +1,5 @@
 import { MessageAttachment } from '../MessageAttachment/messageAttachment.dto'
+import { MessageReactionUser } from '../MessageReactionUser/messageReactionUser.dto'
 import { UserDto } from '../User/user.dto'
 
 export interface MessageDto {
@@ -11,5 +12,6 @@ export interface MessageDto {
   sender: UserDto
   repliedMessageId: string | null
   repliedMessage: MessageDto | null
+  messageReactionUsers: MessageReactionUser[]
   messageAttachments: MessageAttachment[]
 }
