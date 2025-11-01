@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react'
-import { Modal, Button, Input, Avatar, Flex, Typography, Divider } from 'antd'
+import { Modal, Button, Input, Avatar, Flex, Typography, Divider, message } from 'antd'
 import {
   BoldOutlined,
   ItalicOutlined,
@@ -17,6 +17,7 @@ import {
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
+import { postService } from '@/app/services/post.service'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -25,7 +26,9 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const textAreaRef = useRef<TextAreaRef>(null)
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
@@ -62,7 +65,6 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
       textarea.focus()
       textarea.selectionStart = textarea.selectionEnd = start + emoji.length
     })
-    setShowEmojiPicker(false)
   }
 
   useEffect(() => {
@@ -86,17 +88,50 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const handlePost = () => {
-    console.log('Text:', text)
-    console.log('Images:', images)
+  const handlePost = async () => {
+    if (!text) {
+      message.warning('Please enter content!')
+      return
+    }
+    const formData = new FormData()
+    formData.append('Content', text)
+    formData.append('PostPrivacy', privacy)
+
+    images.forEach((file) => {
+      formData.append('Images', file)
+    })
+    setLoading(true)
+    try {
+      const res = await postService.createPost(formData)
+
+      if (res?.message) {
+        message.success('Post created successfully!')
+        handleCancel()
+        resetValue()
+      } else {
+        message.error('Failed to create post, please try again!')
+      }
+    } catch (err) {
+      console.error(err)
+      message.error('An error occurred, please try again!')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetValue = () => {
     setText('')
     setImages([])
+    setPrivacy('Public')
   }
 
   return (
     <Modal
       open={isModalOpen}
-      onCancel={handleCancel}
+      onCancel={() => {
+        handleCancel()
+        resetValue()
+      }}
       footer={null}
       width={700}
       closable={false}
@@ -112,7 +147,13 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
             <Button className='flex items-center gap-1 text-s !px-2 hover:bg-neutral-200' onClick={handlePrivacyClick}>
               {getPrivacyIcon()}
             </Button>
-            <Button icon={<CloseOutlined />} onClick={handleCancel} />
+            <Button
+              icon={<CloseOutlined />}
+              onClick={() => {
+                handleCancel()
+                resetValue()
+              }}
+            />
           </Flex>
         </Flex>
       }
@@ -147,7 +188,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
         <Button icon={<OrderedListOutlined />} />
       </Flex>
 
-      <Divider />
+      <Divider className='!my-0' />
 
       <div className='grid gap-2 pb-5' style={{ gridTemplateColumns: images.length === 1 ? '1fr' : '1fr 1fr' }}>
         {images.slice(0, 4).map((file, index) => (
@@ -185,7 +226,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
           <Button icon={<PaperClipOutlined />}>Attachment</Button>
         </Flex>
 
-        <Button type='primary' icon={<PlusOutlined />} onClick={handlePost}>
+        <Button loading={loading} type='primary' icon={<PlusOutlined />} onClick={handlePost}>
           Post
         </Button>
       </Flex>
