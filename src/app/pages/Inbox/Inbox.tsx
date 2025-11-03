@@ -40,7 +40,6 @@ import Picker from '@emoji-mart/react'
 import ModalNewMessage from './ModalNewMessage'
 
 const Inbox: React.FC = () => {
-  const navigate = useNavigate()
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
   const newestMessageRef = useRef<HTMLDivElement | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
@@ -358,10 +357,13 @@ const Inbox: React.FC = () => {
 
     chatService.getUpdatedMessage((newestMessage: MessageDto) => {
       setMessages((prevMessages) =>
-        prevMessages.map((m: MessageDto) =>
-          m.id === newestMessage.id ? { ...m, ...(newestMessage as MessageDto) } : m
-        )
+        prevMessages.map((m: MessageDto) => (m.id === newestMessage.id ? newestMessage : m))
       )
+    })
+
+    // Update user khi người dùng khác thay đổi trạng thái hoạt động
+    chatService.updateUser((user: UserDto) => {
+      setReceivers((prevReceivers) => prevReceivers.map((u: UserDto) => (u.id === user.id ? user : u)))
     })
 
     const textingArea = document.getElementById('scrollableDiv')
@@ -564,7 +566,14 @@ const Inbox: React.FC = () => {
                 }
               })()}
               {conversationUsers.length !== 0 && conversation?.type === 'Personal' ? (
-                <span className='text-xs opacity-50'>{receivers.find((u) => u.id !== userInfo?.id)?.status}</span>
+                <div className='text-xs opacity-50 flex gap-1 items-center'>
+                  <span
+                    className={`select-none mb-1 cursor-default text-lg ${receivers.find((u) => u.id !== userInfo?.id)?.status === 'Online' ? 'text-green-500' : 'text-gray-400'}`}
+                  >
+                    ●
+                  </span>
+                  <p>{receivers.find((u) => u.id !== userInfo?.id)?.status}</p>
+                </div>
               ) : (
                 <Skeleton active paragraph={{ rows: 0 }} />
               )}
