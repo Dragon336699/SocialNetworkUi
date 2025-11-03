@@ -6,4 +6,5 @@ export interface ModalProps {
   subTitle?: string
   isLoading?: boolean
   title?: string
+  onCreatePost: (formData: FormData) => Promise<void>
 }
