@@ -26,6 +26,7 @@ const Navbar: React.FC = () => {
   const handleNavigate = (e: any) => {
     navigate(`/${e.key}`)
   }
+
   return (
     <ConfigProvider
       theme={{

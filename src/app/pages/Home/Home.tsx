@@ -1,120 +1,186 @@
-import React, { useState, useEffect } from 'react';
-import CreatePost from '@/components/CreatePost';
-import Post from '@/components/Post/Post';
-import { PostData } from '@/app/types/Post/Post';
-import { postService } from '@/app/services/post.service';
+import CreatePostModal from '@/app/components/modals/CreatePostModal'
+import Post from '@/app/components/Post/Post'
+import { usePosts } from '@/app/hook/usePosts'
+import { Avatar, Typography, Spin, Alert, Button, Empty } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
+import { ReloadOutlined } from '@ant-design/icons'
+
+const { Title, Text } = Typography
 
 const Home = () => {
-  const [posts, setPosts] = useState<PostData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
 
-  useEffect(() => {
-    loadPosts();
-  }, []);
+  const { posts, loading, error, hasMore, createPost, refetch, loadMore, clearError } = usePosts()
 
-  const loadPosts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await postService.getPosts();
-      setPosts(data);
-    } catch (err) {
-      setError('Không thể tải bài đăng. Vui lòng thử lại.');
-      console.error('Error loading posts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleLike = async (postId: string) => {
-    try {
-      const result = await postService.toggleLikePost(postId);
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              totalLiked: result.totalLikes,
-              isLikedByCurrentUser: result.isLiked
-            }
-          : post
-      ));
-    } catch (error) {
-      console.error('Error toggling like:', error);
-    }
-  };
-
-  const handleNewPost = (newPost: PostData) => {
-    setPosts(prev => [newPost, ...prev]);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto py-6 px-4">
-          <CreatePost />
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <span className="ml-2 text-gray-600">Đang tải...</span>
-          </div>
-        </div>
-      </div>
-    );
+  // Đóng modal tạo bài đăng
+  const handleCloseCreatePost = () => {
+    setIsOpenCreatePost(false)
   }
 
+  // Xử lý tạo bài đăng mới
+  const handleCreatePost = async (formData: FormData) => {
+    const success = await createPost(formData)
+    if (success) {
+      setIsOpenCreatePost(false)
+    }
+  }
+
+  // Cuộn vô hạn được cải thiện với giới hạn tần suất
+  const handleScroll = useCallback(() => {
+    const scrollTop = document.documentElement.scrollTop
+    const scrollHeight = document.documentElement.scrollHeight
+    const clientHeight = window.innerHeight
+
+    // Tải thêm khi người dùng cuộn đến 80% trang
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight
+
+    if (scrollPercentage > 0.8 && !loading && hasMore) {
+      loadMore()
+    }
+  }, [loading, hasMore, loadMore])
+
+  // Thêm sự kiện cuộn với giới hạn tần suất
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+
+    const throttledScroll = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(handleScroll, 100) // Giới hạn để tránh gọi quá nhiều
+    }
+
+    window.addEventListener('scroll', throttledScroll)
+    return () => {
+      window.removeEventListener('scroll', throttledScroll)
+      clearTimeout(timeoutId)
+    }
+  }, [handleScroll])
+
+  // Hiển thị cảnh báo lỗi
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto py-6 px-4">
-          <CreatePost />
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-            <div className="text-red-500 mb-4">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button 
-              onClick={loadPosts}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-            >
-              Thử lại
-            </button>
+      <div className='min-h-screen bg-gray-50 py-6'>
+        <div className='max-w-2xl mx-auto px-4'>
+          <Alert
+            message='Failed to load data'
+            description={error}
+            type='error'
+            action={
+              <Button
+                size='small'
+                danger
+                onClick={() => {
+                  clearError()
+                  refetch()
+                }}
+              >
+                <ReloadOutlined /> Try again
+              </Button>
+            }
+            closable
+            onClose={clearError}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Hiển thị trạng thái tải ban đầu
+  if (loading && posts.length === 0) {
+    return (
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+        <div className='text-center'>
+          <Spin size='large' />
+          <div className='mt-4'>
+            <Text type='secondary'>Loading posts...</Text>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto py-6 px-4">
-        <CreatePost />
-        
-        <div className="space-y-4 mt-6">
+    <div className='min-h-screen bg-gray-50 py-6'>
+      <CreatePostModal
+        isModalOpen={isOpenCreatePost}
+        handleCancel={handleCloseCreatePost}
+        onCreatePost={handleCreatePost}
+      />
+
+      <div className='max-w-2xl mx-auto px-4'>
+        {/* Create Post Section */}
+        <div className='bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-200'>
+          <div
+            onClick={() => setIsOpenCreatePost(true)}
+            className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
+          >
+            <Avatar size={48} src='https://api.dicebear.com/7.x/miniavs/svg?seed=current-user' />
+            <div className='flex-1 bg-neutral-100 rounded-full px-4 py-3 text-neutral-600 hover:bg-neutral-200 transition-colors'>
+              What's on your mind?
+            </div>
+          </div>
+        </div>
+
+        {/* Posts Section */}
+        <div>
           {posts.length > 0 ? (
-            posts.map(post => (
-              <Post 
-                key={post.id} 
-                {...post} 
-                onToggleLike={handleToggleLike}
-              />
-            ))
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-              <div className="text-gray-400 mb-4">
-                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
+            <>
+              <div className='space-y-4'>
+                {posts.map((post, index) => (
+                  <div key={`${post.id}-${index}`}>
+                    <Post {...post} />
+                  </div>
+                ))}
               </div>
-              <p className="text-gray-600">Chưa có bài đăng nào</p>
-              <p className="text-gray-500 text-sm mt-1">Hãy tạo bài đăng đầu tiên của bạn!</p>
+
+              {/* Chỉ báo tải cho cuộn vô hạn */}
+              {loading && (
+                <div className='text-center py-6'>
+                  <Spin />
+                  <div className='mt-2'>
+                    <Text type='secondary'>Loading more posts...</Text>
+                  </div>
+                </div>
+              )}
+
+              {/* Nút tải thêm */}
+              {!loading && hasMore && (
+                <div className='text-center py-6'>
+                  <Button onClick={loadMore} type='default' size='large'>
+                    Load more posts
+                  </Button>
+                </div>
+              )}
+
+              {/* Thông báo hết bài đăng */}
+              {!hasMore && posts.length > 0 && (
+                <div className='text-center py-6'>
+                  <Text type='secondary'>🎉 You’ve reached the end of all posts!</Text>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Trạng thái trống */
+            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div>
+                    <Title level={4} type='secondary' className='mb-2'>
+                      No posts yet
+                    </Title>
+                    <Text type='secondary'>Be the first to share something interesting!</Text>
+                  </div>
+                }
+              >
+                <Button type='primary' onClick={() => setIsOpenCreatePost(true)} className='mt-4'>
+                  Create the first post
+                </Button>
+              </Empty>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
-};
-
-export default Home;
+  )
+}
+export default Home
