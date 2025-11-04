@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
 import { PostData } from '@/app/types/Post/Post'
+import PostDropdownMenu from './PostDropdownMenu'
+import ImageCarousel from './ImageCarousel'
+import ImageModal from './ImageModal'
+import EditPostModal from './EditPostModal'
+import DeletePostModal from './DeletePostModal'
 
 interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
+  onPostUpdated?: (updatedPost: PostData) => void
+  onPostDeleted?: (postId: string) => void
 }
 
 const Post: React.FC<PostProps> = ({
@@ -15,13 +22,46 @@ const Post: React.FC<PostProps> = ({
   postImages,
   isLikedByCurrentUser = false,
   postPrivacy = 'Public',
-  onToggleLike
+  onToggleLike,
+  onPostUpdated,
+  onPostDeleted
 }) => {
   const [commentText, setCommentText] = useState('')
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+
+  const handleEditPost = () => {
+    setShowEditModal(true)
+    setShowDropdown(false)
+  }
+
+  const handleSavePost = (updatedPostData: any) => {
+    onPostUpdated?.(updatedPostData)
+  }
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteSuccess = () => {
+    onPostDeleted?.(id)
+    setShowDeleteModal(false)
+  }
+
+  const handleDropdownActions = {
+    onEdit: handleEditPost,
+    onTurnOffNotifications: () => {
+      console.log('Turn off notifications:', id)
+      setShowDropdown(false)
+    },
+    onDeleteClick: handleDeleteClick,
+    onDeleteSuccess: handleDeleteSuccess
+  }
 
   // Hàm tính thời gian đăng bài
   const getTimeAgo = (dateString: string) => {
@@ -101,168 +141,34 @@ const Post: React.FC<PostProps> = ({
         return null
     }
   }
-
-  // Hiển thị băng chuyền ảnh
-  const renderImages = () => {
-    if (!postImages || postImages.length === 0) return null
-
-    const imageCount = postImages.length
-
-    // CÁC HÀM ĐIỀU HƯỚNG BĂNG CHUYỀN
-    const goToPrevious = () => {
-      setCurrentImageIndex(prev => prev === 0 ? imageCount - 1 : prev - 1)
-    }
-
-    const goToNext = () => {
-      setCurrentImageIndex(prev => prev === imageCount - 1 ? 0 : prev + 1)
-    }
-
-    const goToImage = (index: number) => {
-      setCurrentImageIndex(index)
-    }
-
-    return (
-      <div className='px-4 pb-3'>
-        <div className='relative bg-gray-100 rounded-lg overflow-hidden'>
-          {/* HIỂN THỊ ẢNH CHÍNH */}
-          <div className='relative h-64 md:h-80'>
-            <img
-              src={postImages[currentImageIndex].imageUrl}
-              alt={`Post content ${currentImageIndex + 1}`}
-              className='w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity'
-              onClick={() => setSelectedImageIndex(currentImageIndex)}
-            />
-
-            {/*MŨI TÊN ĐIỀU HƯỚNG */}
-            {imageCount > 1 && (
-              <>
-                {currentImageIndex > 0 && (
-                  <button
-                    onClick={goToPrevious}
-                    className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-colors'
-                  >
-                    <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 19l-7-7 7-7' />
-                    </svg>
-                  </button>
-                )}
-
-                {currentImageIndex < imageCount - 1 && (
-                  <button
-                    onClick={goToNext}
-                    className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-colors'
-                  >
-                    <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
-                    </svg>
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* CHẤM THUMBNAIL */}
-          {imageCount > 1 && (
-            <div className='absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2'>
-              {postImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToImage(index)}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50 hover:bg-opacity-70'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    )
+  // CÁC HÀM ĐIỀU HƯỚNG BĂNG CHUYỀN
+  const goToPrevious = () => {
+    setCurrentImageIndex(prev => prev === 0 ? (postImages?.length || 1) - 1 : prev - 1)
   }
 
-  // MODAL XEM ẢNH LỚN
-  const renderImageModal = () => {
-    if (selectedImageIndex === null || !postImages) return null
-    // Xử lý sự kiện phím
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedImageIndex(null)
-      } else if (e.key === 'ArrowLeft' && selectedImageIndex > 0) {
-        setSelectedImageIndex(selectedImageIndex - 1)
-      } else if (e.key === 'ArrowRight' && selectedImageIndex < postImages.length - 1) {
-        setSelectedImageIndex(selectedImageIndex + 1)
-      }
-    }
-
-    return (
-      <div
-        className='fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50'
-        onClick={() => setSelectedImageIndex(null)}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-      >
-        <div className='relative max-w-5xl max-h-full p-4'>
-          <img
-            src={postImages[selectedImageIndex].imageUrl}
-            alt={`Post content ${selectedImageIndex + 1}`}
-            className='max-w-full max-h-full object-contain rounded-lg'
-            onClick={(e) => e.stopPropagation()}
-          />
-          {/* Nút đóng */}
-          <button
-            onClick={() => setSelectedImageIndex(null)}
-            className='absolute -top-2 -right-2 text-white bg-red-500 hover:bg-red-600 rounded-full p-2 transition-colors shadow-lg'
-          >
-            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12' />
-            </svg>
-          </button>
-
-          {/* Mũi tên điều hướng */}
-          {postImages.length > 1 && (
-            <>
-              {selectedImageIndex > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedImageIndex(selectedImageIndex - 1)
-                  }}
-                  className='absolute left-4 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-3 transition-colors shadow-lg'
-                >
-                  <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 19l-7-7 7-7' />
-                  </svg>
-                </button>
-              )}
-
-              {selectedImageIndex < postImages.length - 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedImageIndex(selectedImageIndex + 1)
-                  }}
-                  className='absolute right-4 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-3 transition-colors shadow-lg'
-                >
-                  <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
-                  </svg>
-                </button>
-              )}
-            </>
-          )}
-
-          {/* Bộ đếm ảnh */}
-          <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-70 px-4 py-2 rounded-full text-sm font-medium'>
-            {selectedImageIndex + 1} / {postImages.length}
-          </div>
-        </div>
-      </div>
-    )
+  const goToNext = () => {
+    setCurrentImageIndex(prev => prev === (postImages?.length || 1) - 1 ? 0 : prev + 1)
   }
 
+  const goToImage = (index: number) => {
+    setCurrentImageIndex(index)
+  }
+
+  // Xử lý modal
+  const handleModalPrevious = () => {
+    if (selectedImageIndex !== null && selectedImageIndex > 0) {
+      setSelectedImageIndex(selectedImageIndex - 1)
+    }
+  }
+
+  const handleModalNext = () => {
+    if (selectedImageIndex !== null && postImages && selectedImageIndex < postImages.length - 1) {
+      setSelectedImageIndex(selectedImageIndex + 1)
+    }
+  }
   return (
     <>
-      <div className='bg-white rounded-lg shadow-sm border border-gray-200 mb-4 overflow-hidden'>
+      <div className='bg-white rounded-lg shadow-sm border border-gray-200 mb-4'>
         {/* Header */}
         <div className='flex items-center justify-between p-4 pb-2'>
           <div className='flex items-center space-x-3'>
@@ -280,11 +186,22 @@ const Post: React.FC<PostProps> = ({
               </div>
             </div>
           </div>
-          <button className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100'>
-            <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
-              <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
-            </svg>
-          </button>
+          <div className='relative'>
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100'
+            >
+              <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
+                <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
+              </svg>
+            </button>
+            <PostDropdownMenu
+              isOpen={showDropdown}
+              onClose={() => setShowDropdown(false)}
+              postId={id}
+              {...handleDropdownActions}
+            />
+          </div>
         </div>
 
         {/* Content */}
@@ -293,7 +210,16 @@ const Post: React.FC<PostProps> = ({
         </div>
 
         {/* BĂNG CHUYỀN ẢNH */}
-        {renderImages()}
+        {postImages && (
+          <ImageCarousel
+            postImages={postImages}
+            currentImageIndex={currentImageIndex}
+            onImageClick={setSelectedImageIndex}
+            onPrevious={goToPrevious}
+            onNext={goToNext}
+            onGoToImage={goToImage}
+          />
+        )}
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
@@ -366,7 +292,31 @@ const Post: React.FC<PostProps> = ({
       </div>
 
       {/* Modal xem ảnh lớn */}
-      {renderImageModal()}
+      {postImages && (
+        <ImageModal
+          postImages={postImages}
+          selectedImageIndex={selectedImageIndex}
+          onClose={() => setSelectedImageIndex(null)}
+          onPrevious={handleModalPrevious}
+          onNext={handleModalNext}
+        />
+      )}
+
+      {/* EditPostModal */}
+      <EditPostModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        postId={id}
+        onSave={handleSavePost}
+      />
+
+      {/* Delete Post Modal */}
+      <DeletePostModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onDeleteSuccess={handleDeleteSuccess}
+        postId={id}
+      />
     </>
   )
 }

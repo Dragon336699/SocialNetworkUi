@@ -1,5 +1,5 @@
 import CreatePostModal from '@/app/components/modals/CreatePostModal'
-import Post from '@/app/components/Post/Post'
+import Post from '../Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { Avatar, Typography, Spin, Alert, Button, Empty } from 'antd'
 import { useState, useEffect, useCallback } from 'react'
