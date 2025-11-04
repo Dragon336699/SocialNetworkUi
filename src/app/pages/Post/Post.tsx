@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { PostData } from '@/app/types/Post/Post'
 import PostDropdownMenu from './PostDropdownMenu'
 import ImageCarousel from './ImageCarousel'
@@ -42,6 +42,7 @@ const Post: React.FC<PostProps> = ({
 
   const handleSavePost = (updatedPostData: any) => {
     onPostUpdated?.(updatedPostData)
+    setShowEditModal(false)
   }
 
   const handleDeleteClick = () => {

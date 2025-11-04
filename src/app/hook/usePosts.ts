@@ -8,10 +8,12 @@ interface UsePostsReturn {
   loading: boolean
   error: string | null
   hasMore: boolean
-  createPost: (formData: FormData) => Promise<boolean>
   loadMore: () => Promise<void>
   refetch: () => Promise<void>
   clearError: () => void
+  handlePostCreated: () => void
+  handlePostUpdated: () => void
+  handlePostDeleted: () => void
 }
 
 const POSTS_PER_PAGE = 10
@@ -77,34 +79,24 @@ export const usePosts = (): UsePostsReturn => {
     [currentSkip, loading]
   )
 
-  // Tạo bài đăng mới
-  const createPost = useCallback(
-    async (formData: FormData): Promise<boolean> => {
-      try {
-        setLoading(true)
-        setError(null)
+  // Làm mới danh sách bài đăng
+  const refetch = useCallback(async () => {
+    setCurrentSkip(0)
+    await fetchPosts(true)
+  }, [fetchPosts])
 
-        const response = await postService.createPost(formData)
+  // Các function để reload sau khi có thay đổi
+  const handlePostCreated = useCallback(async () => {
+    await refetch()
+  }, [refetch])
 
-        if (response.message) {
-          setCurrentSkip(0)
-          await fetchPosts(true)
-          message.success('Post created successfully!')
-          return true
-        } else {
-          throw new Error(response.message || 'Failed to create post')
-        }
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'Failed to create post'
-        setError(errorMessage)
-        message.error(errorMessage)
-        return false
-      } finally {
-        setLoading(false)
-      }
-    },
-    [fetchPosts]
-  )
+  const handlePostUpdated = useCallback(async () => {
+    await refetch()
+  }, [refetch])
+
+  const handlePostDeleted = useCallback(async () => {
+    await refetch()
+  }, [refetch])
 
   // Tải thêm bài đăng
   const loadMore = useCallback(async () => {
@@ -112,12 +104,6 @@ export const usePosts = (): UsePostsReturn => {
       await fetchPosts(false)
     }
   }, [fetchPosts, loading, hasMore])
-
-  // Làm mới danh sách bài đăng
-  const refetch = useCallback(async () => {
-    setCurrentSkip(0)
-    await fetchPosts(true)
-  }, [fetchPosts])
 
   // Xóa thông báo lỗi
   const clearError = useCallback(() => {
@@ -134,9 +120,11 @@ export const usePosts = (): UsePostsReturn => {
     loading,
     error,
     hasMore,
-    createPost,
     loadMore,
     refetch,
-    clearError
+    clearError,
+    handlePostCreated,
+    handlePostUpdated,
+    handlePostDeleted
   }
 }

@@ -1,4 +1,4 @@
-import CreatePostModal from '@/app/components/modals/CreatePostModal'
+import CreatePostModal from '@/app/common/modals/CreatePostModal'
 import Post from '../Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { Avatar, Typography, Spin, Alert, Button, Empty } from 'antd'
@@ -10,7 +10,18 @@ const { Title, Text } = Typography
 const Home = () => {
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
 
-  const { posts, loading, error, hasMore, createPost, refetch, loadMore, clearError } = usePosts()
+  const {
+    posts,
+    loading,
+    error,
+    hasMore,
+    refetch,
+    loadMore,
+    clearError,
+    handlePostCreated,
+    handlePostUpdated,
+    handlePostDeleted
+  } = usePosts()
 
   // Đóng modal tạo bài đăng
   const handleCloseCreatePost = () => {
@@ -18,11 +29,9 @@ const Home = () => {
   }
 
   // Xử lý tạo bài đăng mới
-  const handleCreatePost = async (formData: FormData) => {
-    const success = await createPost(formData)
-    if (success) {
-      setIsOpenCreatePost(false)
-    }
+  const handleCreatePostSuccess = async () => {
+    setIsOpenCreatePost(false)
+    handlePostCreated()
   }
 
   // Cuộn vô hạn được cải thiện với giới hạn tần suất
@@ -103,7 +112,7 @@ const Home = () => {
       <CreatePostModal
         isModalOpen={isOpenCreatePost}
         handleCancel={handleCloseCreatePost}
-        onCreatePost={handleCreatePost}
+        onCreatePostSuccess={handleCreatePostSuccess}
       />
 
       <div className='max-w-2xl mx-auto px-4'>
@@ -127,7 +136,7 @@ const Home = () => {
               <div className='space-y-4'>
                 {posts.map((post, index) => (
                   <div key={`${post.id}-${index}`}>
-                    <Post {...post} />
+                    <Post {...post} onPostUpdated={handlePostUpdated} onPostDeleted={handlePostDeleted} />
                   </div>
                 ))}
               </div>

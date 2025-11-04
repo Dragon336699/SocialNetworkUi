@@ -295,14 +295,12 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
             <Button icon={<OrderedListOutlined />} />
           </Flex>
 
-          <Divider className='!my-0' />
+          <Divider className='!my-0 pb-5' />
 
           {/* Hiển thị images */}
           {allImages.length > 0 && (
             <>
-              {/* Header với nút xóa tất cả ảnh */}
-              <Flex justify='space-between' align='center' style={{ marginBottom: '8px' }}>
-                <Text type='secondary'>{allImages.length} image(s)</Text>
+              <Flex justify='flex-end' align='center' style={{ marginBottom: '8px' }}>
                 <Button size='small' type='text' danger icon={<DeleteOutlined />} onClick={removeAllImages}>
                   Remove all images
                 </Button>

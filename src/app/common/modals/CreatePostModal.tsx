@@ -14,7 +14,9 @@ import {
   UsergroupAddOutlined,
   LockOutlined
 } from '@ant-design/icons'
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
+// import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
@@ -22,7 +24,7 @@ import { postService } from '@/app/services/post.service'
 const { TextArea } = Input
 const { Text } = Typography
 
-const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
+const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: ModalProps) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -51,8 +53,8 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
     else setPrivacy('Public')
   }
 
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    const emoji = emojiData.emoji
+  const handleEmojiSelect = (emojiData: any) => {
+    const emoji = emojiData.native
     const textarea = textAreaRef.current?.resizableTextArea?.textArea
     if (!textarea) return
 
@@ -107,6 +109,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
       if (res?.message) {
         message.success('Post created successfully!')
         handleCancel()
+        onCreatePostSuccess?.()
         resetValue()
       } else {
         message.error('Failed to create post, please try again!')
@@ -173,12 +176,15 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
         <div ref={emojiWrapperRef} className='relative inline-block'>
           <Button icon={<SmileOutlined />} onClick={() => setShowEmojiPicker((prev) => !prev)} />
           {showEmojiPicker && (
-            <div className='absolute top-full left-0 z-20 w-[300px] max-h-[350px] overflow-y-auto overflow-x-hidden shadow-md bg-white'>
-              <EmojiPicker
-                onEmojiClick={handleEmojiClick}
-                previewConfig={{ showPreview: false }}
-                width={300}
-                height={350}
+            <div className='absolute top-full left-0 z-20 overflow-y-auto overflow-x-hidden shadow-md bg-white'>
+              <Picker
+                data={data}
+                onEmojiSelect={handleEmojiSelect}
+                previewPosition='none'
+                theme='light'
+                navPosition='top'
+                perLine={8}
+                emojiSize={22}
               />
             </div>
           )}

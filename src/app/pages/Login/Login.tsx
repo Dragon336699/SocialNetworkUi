@@ -37,6 +37,7 @@ const Login: React.FC = () => {
       const gooleLoginData = await userService.googleLogin({ googleToken: credentialResponse.credential ?? '' })
       if (gooleLoginData.message) {
         message.success('Đăng nhập thành công!')
+        window.location.href = '/home'
       }
     } catch (err) {
       console.error('Lỗi login:', err)

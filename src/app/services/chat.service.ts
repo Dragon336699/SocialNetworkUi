@@ -4,6 +4,7 @@ import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 import { SendMessageResponse } from '../types/Message/Responses/messageResponses'
 import { MessageDto } from '../types/Message/messge.dto'
 import { UpdateStatusMessageRequest } from '../types/Message/Requests/updateStatusMessageReq'
+import { UserDto } from '../types/User/user.dto'
 let connection: HubConnection | null = null
 
 export const chatService = {
@@ -72,5 +73,13 @@ export const chatService = {
       return
     }
     connection.on('UpdatedMessage', callback)
+  },
+
+  updateUser(callback: (user: UserDto) => void) {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection.on('UpdateUser', callback)
   }
 }
