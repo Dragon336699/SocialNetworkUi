@@ -1,4 +1,4 @@
-import CreatePostModal from '@/app/components/modals/CreatePostModal'
+import CreatePostModal from '@/app/common/modals/CreatePostModal'
 import Post from '@/app/components/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { Avatar, Typography, Spin, Alert, Button, Empty } from 'antd'
