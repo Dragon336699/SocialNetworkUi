@@ -175,7 +175,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
         <div ref={emojiWrapperRef} className='relative inline-block'>
           <Button icon={<SmileOutlined />} onClick={() => setShowEmojiPicker((prev) => !prev)} />
           {showEmojiPicker && (
-            <div className='absolute top-full left-0 z-20 overflow-y-auto overflow-x-hidden shadow-md bg-white'>
+            <div className='absolute top-full left-0 z-20 h-[400px] overflow-hidden shadow-md bg-white'>
               <Picker
                 data={data}
                 onEmojiSelect={handleEmojiSelect}
