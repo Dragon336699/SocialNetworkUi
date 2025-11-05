@@ -1,6 +1,6 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
-import { GetAllPostsResponse, GetPostByIdResponse, UpdatePostResponse, DeletePostResponse } from '../types/Post/Post'
+import { GetAllPostsResponse, GetPostByIdResponse, UpdatePostResponse, DeletePostResponse, PostReactionResponse } from '../types/Post/Post'
 
 export const postService = {
   async createPost(formData: FormData): Promise<BaseResponse> {
@@ -36,6 +36,16 @@ export const postService = {
 
   async deletePost(postId: string): Promise<DeletePostResponse> {
     const { data } = await apiClient.delete<DeletePostResponse>(`post/${postId}`, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async reactionPost(postId: string, reaction: string): Promise<PostReactionResponse> {
+    const { data } = await apiClient.post<PostReactionResponse>('post/reaction', {
+      postId,
+      reaction
+    }, {
       withCredentials: true
     })
     return data

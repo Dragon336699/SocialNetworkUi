@@ -74,7 +74,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
         </button>
 
         {/* Tắt thông báo */}
-        <button
+        {/* <button
           onClick={() => {
             onTurnOffNotifications?.()
             onClose()
@@ -93,7 +93,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
           </span>
         </button>
 
-        <hr className='my-2' />
+        <hr className='my-2' /> */}
 
         {/* Xóa bài viết */}
         <button

@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { PostData } from '@/app/types/Post/Post'
+import { PostData, PostReactionDto } from '@/app/types/Post/Post'
 import PostDropdownMenu from './PostDropdownMenu'
 import ImageCarousel from './ImageCarousel'
 import ImageModal from './ImageModal'
 import EditPostModal from './EditPostModal'
 import DeletePostModal from './DeletePostModal'
+import PostReaction from './PostReaction'
+import { message } from 'antd'
+import { postService } from '@/app/services/post.service'
 
 interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
   onPostDeleted?: (postId: string) => void
+  currentUserId?: string
 }
 
 const Post: React.FC<PostProps> = ({
@@ -20,11 +24,11 @@ const Post: React.FC<PostProps> = ({
   createdAt,
   user,
   postImages,
-  isLikedByCurrentUser = false,
   postPrivacy = 'Public',
-  onToggleLike,
+  postReactionUsers,
   onPostUpdated,
-  onPostDeleted
+  onPostDeleted,
+  currentUserId = ''
 }) => {
   const [commentText, setCommentText] = useState('')
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
@@ -32,8 +36,75 @@ const Post: React.FC<PostProps> = ({
   const [showDropdown, setShowDropdown] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [reactions, setReactions] = useState<PostReactionDto[]>(postReactionUsers)
+  const [localTotalLiked, setLocalTotalLiked] = useState(totalLiked)
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+
+  // Đồng bộ reactions và totalLiked từ props khi chúng thay đổi
+  useEffect(() => {
+    setReactions(postReactionUsers)
+    setLocalTotalLiked(totalLiked)
+  }, [postReactionUsers, totalLiked])
+
+  // Xử lý gửi reaction cho bài viết
+  const handleSendReaction = async (postId: string, reaction: string) => {
+    try {
+      const response = await postService.reactionPost(postId, reaction)
+      if (response.message && response.message.includes('successfull')) {
+        const currentUserReaction = reactions.find(r => r.userId === currentUserId)
+        let newReactions: PostReactionDto[] = []
+        let newTotalLiked = localTotalLiked
+
+        if (currentUserReaction) {
+          if (currentUserReaction.reaction === reaction) {
+            newReactions = reactions.filter(r => r.userId !== currentUserId)
+            newTotalLiked = Math.max(0, localTotalLiked - 1)
+            setReactions(newReactions)
+            setLocalTotalLiked(newTotalLiked)
+          } else {
+            newReactions = reactions.map(r => r.userId === currentUserId ? { ...r, reaction: reaction }: r)
+            newTotalLiked = localTotalLiked
+            setReactions(newReactions)
+          }
+        } else {
+          const newReaction: PostReactionDto = {
+            id: Date.now().toString(),
+            userId: currentUserId,
+            reaction: reaction,
+            user: {
+              id: currentUserId,
+              firstName: user.firstName || '',
+              lastName: user.lastName || '',
+              avatarUrl: user.avatarUrl || ''
+            }
+          }
+          newReactions = [...reactions, newReaction]
+          newTotalLiked = localTotalLiked + 1
+          setReactions(newReactions)
+          setLocalTotalLiked(newTotalLiked)
+        }
+
+        if (onPostUpdated) {
+          onPostUpdated({
+            id,
+            content,
+            totalLiked: newTotalLiked,
+            totalComment,
+            createdAt,
+            user,
+            postImages,
+            postPrivacy,
+            postReactionUsers: newReactions
+          } as PostData)
+        }
+      } else {
+        message.error(response.message || 'Reaction failed')
+      }
+    } catch (error) {
+      message.error('An error occurred while reacting')
+    }
+  }
 
   const handleEditPost = () => {
     setShowEditModal(true)
@@ -56,18 +127,12 @@ const Post: React.FC<PostProps> = ({
 
   const handleDropdownActions = {
     onEdit: handleEditPost,
-    onTurnOffNotifications: () => {
-      console.log('Turn off notifications:', id)
-      setShowDropdown(false)
-    },
     onDeleteClick: handleDeleteClick,
     onDeleteSuccess: handleDeleteSuccess
   }
 
-  // Hàm tính thời gian đăng bài
   const getTimeAgo = (dateString: string) => {
     let normalizedDateString = dateString
-    // Kiểm tra nếu không có timezone info thì thêm 'Z' (UTC)
     if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
       normalizedDateString = dateString + 'Z'
     }
@@ -79,7 +144,6 @@ const Post: React.FC<PostProps> = ({
       return 'Invalid time'
     }
 
-    // Tính chênh lệch thời gian bằng mili giây
     const diffInMs = now.getTime() - postTime.getTime()
 
     const diffInSeconds = Math.floor(diffInMs / 1000)
@@ -107,7 +171,6 @@ const Post: React.FC<PostProps> = ({
     }
   }
 
-  // Hiển thị biểu tượng quyền riêng tư
   const renderPrivacyIcon = () => {
     const iconClass = 'w-3.5 h-3.5 text-gray-500'
 
@@ -142,7 +205,7 @@ const Post: React.FC<PostProps> = ({
         return null
     }
   }
-  // CÁC HÀM ĐIỀU HƯỚNG BĂNG CHUYỀN
+
   const goToPrevious = () => {
     setCurrentImageIndex(prev => prev === 0 ? (postImages?.length || 1) - 1 : prev - 1)
   }
@@ -155,7 +218,6 @@ const Post: React.FC<PostProps> = ({
     setCurrentImageIndex(index)
   }
 
-  // Xử lý modal
   const handleModalPrevious = () => {
     if (selectedImageIndex !== null && selectedImageIndex > 0) {
       setSelectedImageIndex(selectedImageIndex - 1)
@@ -167,6 +229,7 @@ const Post: React.FC<PostProps> = ({
       setSelectedImageIndex(selectedImageIndex + 1)
     }
   }
+
   return (
     <>
       <div className='bg-white rounded-lg shadow-sm border border-gray-200 mb-4'>
@@ -174,7 +237,7 @@ const Post: React.FC<PostProps> = ({
         <div className='flex items-center justify-between p-4 pb-2'>
           <div className='flex items-center space-x-3'>
             <img
-              src={user.avatar || '/default-avatar.png'}
+              src={user.avatarUrl || '/default-avatar.png'}
               alt={fullName}
               className='w-10 h-10 rounded-full object-cover'
             />
@@ -210,7 +273,7 @@ const Post: React.FC<PostProps> = ({
           <p className='text-gray-800 text-sm leading-relaxed'>{content}</p>
         </div>
 
-        {/* BĂNG CHUYỀN ẢNH */}
+        {/* Image Carousel */}
         {postImages && (
           <ImageCarousel
             postImages={postImages}
@@ -224,30 +287,35 @@ const Post: React.FC<PostProps> = ({
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
-          <div className='flex items-center space-x-6 mb-3'>
-            <button
-              onClick={() => onToggleLike?.(id)}
-              className={`flex items-center space-x-2 text-sm transition-colors ${
-                isLikedByCurrentUser ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-              }`}
-            >
-              <svg
-                className='w-5 h-5'
-                fill={isLikedByCurrentUser ? 'currentColor' : 'none'}
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
-                />
-              </svg>
-              <span className='font-medium'>{totalLiked}</span>
-            </button>
+          {reactions.length > 0 && (
+            <div className='flex items-center gap-2 mb-3 text-sm text-gray-600'>
+              {/* Top reactions icons */}
+              <div className='flex items-center -space-x-1'>
+                {reactions.slice(0, 3).map((reaction, index) => (
+                  <div
+                    key={index}
+                    className='w-5 h-5 bg-white rounded-full border border-gray-200 flex items-center justify-center text-xs shadow-sm'
+                    style={{ zIndex: 3 - index }}
+                  >
+                    {reaction.reaction}
+                  </div>
+                ))}
+              </div>
 
-            <button className='flex items-center space-x-2 text-sm text-gray-500 hover:text-blue-500 transition-colors'>
+              {/* Names and count */}
+              <span className='text-sm cursor-pointer'>{reactions.length}</span>
+            </div>
+          )}
+
+          <div className='flex items-center justify-between space-x-6 mb-3'>
+            <PostReaction
+              postId={id}
+              reactions={reactions}
+              onSendReaction={handleSendReaction}
+              currentUserId={currentUserId}
+              totalLiked={localTotalLiked}
+            />
+            <button className='flex items-center space-x-2 px-2 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors'>
               <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
                   strokeLinecap='round'
@@ -256,10 +324,10 @@ const Post: React.FC<PostProps> = ({
                   d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
                 />
               </svg>
-              <span className='font-medium'>{totalComment}</span>
+              <span className='font-medium'>Comment</span>
             </button>
 
-            <button className='flex items-center space-x-2 text-sm text-gray-500 hover:text-green-500 transition-colors'>
+            <button className='flex items-center space-x-2 px-2 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors'>
               <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
                   strokeLinecap='round'
@@ -272,10 +340,10 @@ const Post: React.FC<PostProps> = ({
             </button>
           </div>
 
-          {/* Ô nhập bình luận */}
-          <div className='flex items-center space-x-2'>
+          {/* Comment input */}
+          {/* <div className='flex items-center space-x-2'>
             <img
-              src={user.avatar || '/default-avatar.png'}
+              src={user.avatarUrl || '/default-avatar.png'}
               alt='Your avatar'
               className='w-8 h-8 rounded-full object-cover'
             />
@@ -288,11 +356,11 @@ const Post: React.FC<PostProps> = ({
                 className='flex-1 bg-transparent text-sm outline-none placeholder-gray-500'
               />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
-      {/* Modal xem ảnh lớn */}
+      {/* Image Modal */}
       {postImages && (
         <ImageModal
           postImages={postImages}
@@ -303,7 +371,7 @@ const Post: React.FC<PostProps> = ({
         />
       )}
 
-      {/* EditPostModal */}
+      {/* Edit Post Modal */}
       <EditPostModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}

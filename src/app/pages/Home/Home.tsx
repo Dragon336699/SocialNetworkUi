@@ -1,14 +1,36 @@
 import CreatePostModal from '@/app/common/modals/CreatePostModal'
 import Post from '../Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
-import { Avatar, Typography, Spin, Alert, Button, Empty } from 'antd'
+import { Avatar, Typography, Spin, Alert, Button, Empty, message } from 'antd'
 import { useState, useEffect, useCallback } from 'react'
 import { ReloadOutlined } from '@ant-design/icons'
+import { userService } from '@/app/services/user.service'
+import { UserDto } from '@/app/types/User/user.dto'
 
 const { Title, Text } = Typography
 
 const Home = () => {
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
+
+  const [currentUserId, setCurrentUserId] = useState<string>('')
+
+  // Lấy user info khi component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await userService.getUserInfoByToken()
+        if (response.status === 200 && response.data) {
+          if ('id' in response.data) {
+            const userData = response.data as UserDto
+            setCurrentUserId(userData.id)
+          }
+        }
+      } catch (error) {
+        message.error('Error fetching current user')
+      }
+    }
+    fetchCurrentUser()
+  }, [])
 
   const {
     posts,
@@ -136,7 +158,12 @@ const Home = () => {
               <div className='space-y-4'>
                 {posts.map((post, index) => (
                   <div key={`${post.id}-${index}`}>
-                    <Post {...post} onPostUpdated={handlePostUpdated} onPostDeleted={handlePostDeleted} />
+                    <Post
+                      {...post}
+                      currentUserId={currentUserId || ''}
+                      onPostUpdated={handlePostUpdated}
+                      onPostDeleted={handlePostDeleted}
+                    />
                   </div>
                 ))}
               </div>

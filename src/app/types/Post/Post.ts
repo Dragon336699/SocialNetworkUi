@@ -1,8 +1,10 @@
+import { BaseResponse } from '../Base/Responses/baseResponse'
+
 export interface User {
   id: string
   firstName?: string
   lastName?: string
-  avatar?: string
+  avatarUrl?: string
 }
 
 export interface PostImage {
@@ -22,7 +24,7 @@ export interface PostData {
   postPrivacy: 'Public' | 'Friends' | 'Private'
   user: User
   postImages?: PostImage[]
-  isLikedByCurrentUser?: boolean
+  postReactionUsers: PostReactionDto[]
 }
 
 export interface GetAllPostsResponse {
@@ -43,4 +45,20 @@ export interface UpdatePostResponse {
 
 export interface DeletePostResponse {
   message: string
+}
+
+export interface PostReactionDto {
+  id: string
+  userId: string
+  reaction: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string
+  }
+}
+
+export interface PostReactionResponse extends BaseResponse {
+  data: PostReactionDto
 }
