@@ -1,5 +1,5 @@
-import { chatService } from '@/app/services/chat.service'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, message, Skeleton, Tooltip, Image } from 'antd'
 import { PhoneOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -20,26 +20,31 @@ import {
   faReply,
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
-import { userService } from '@/app/services/user.service'
-import { useNavigate, useParams } from 'react-router-dom'
-import { messageService } from '@/app/services/message.service'
-import { MessageDto } from '@/app/types/Message/messge.dto'
-import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
-import { UserDto } from '@/app/types/User/user.dto'
-import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
-import InfiniteScroll from 'react-infinite-scroll-component'
-import { conversationService } from '@/app/services/conversation.service'
-import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
-import { conversationUserService } from '@/app/services/conversation.user.service'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
-import WaveSurfer from 'wavesurfer.js'
-import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
-import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import WaveSurfer from 'wavesurfer.js'
+import InfiniteScroll from 'react-infinite-scroll-component'
+
+import { UserDto } from '@/app/types/User/user.dto'
+import { MessageDto } from '@/app/types/Message/messge.dto'
+import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
+import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
+
+import { userService } from '@/app/services/user.service'
+import { chatService } from '@/app/services/chat.service'
+import { messageService } from '@/app/services/message.service'
+import { conversationService } from '@/app/services/conversation.service'
+import { conversationUserService } from '@/app/services/conversation.user.service'
+
+import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+
+import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import ModalNewMessage from './ModalNewMessage'
 
 const Inbox: React.FC = () => {
+  const navigate = useNavigate()
   const firstMessageRef = useRef<HTMLDivElement | null>(null)
   const newestMessageRef = useRef<HTMLDivElement | null>(null)
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
@@ -74,6 +79,8 @@ const Inbox: React.FC = () => {
   const [fullyReactionSelection, setfullyReactionSelection] = useState<string | null>(null)
 
   const [isModalNewMessageOpen, setIsModalNewMessageOpen] = useState(false)
+
+  const [messageUnseen, setMessageUnseen] = useState(0)
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -164,6 +171,7 @@ const Inbox: React.FC = () => {
       } else if (sendMessageReponse.status === 200) {
         const res = sendMessageReponse.data as ResponseHasData<MessageDto>
         setMessages([...messages, res.data as MessageDto])
+        updateItemInConversations(conversationId || '')
         setTimeout(() => {
           newestMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
         }, 100)
@@ -232,7 +240,7 @@ const Inbox: React.FC = () => {
         setConversationUsers(conversationUsersRes.data as ConversationUserDto[])
       }
     } catch (err) {
-      message.error('Error while getting conversation user infomation!')
+      return
     }
   }
 
@@ -276,7 +284,33 @@ const Inbox: React.FC = () => {
   }
 
   const navigateToInbox = (conversationId: string) => {
-    window.location.href = `/Inbox/${conversationId}`
+    setMessages([])
+    setSkipMessages(0)
+    setTimeout(() => {
+      navigate(`/Inbox/${conversationId}`)
+    }, 1000)
+  }
+
+  // Cập nhật item trong list conversation khi nhận được tin nhắn mới
+  const updateItemInConversations = async (convId: string) => {
+    try {
+      const response = await conversationService.getConversationForList(convId)
+      if (response.status === 400) message.error('Update list conversation fail!')
+      else if (response.status === 200) {
+        const resData = response.data as ResponseHasData<ConversationDto>
+        const newConversation = resData.data as ConversationDto
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => c.id === newConversation.id)
+          if (idx === -1) return prev
+
+          const newList = [...prev]
+          newList[idx] = newConversation
+          return newList
+        })
+      }
+    } catch (err) {
+      return
+    }
   }
 
   // Handle seen
@@ -298,6 +332,8 @@ const Inbox: React.FC = () => {
             status: 'Seen'
           })
           if (!updateMessageStatus) return
+          setMessageUnseen(messageUnseen - 1)
+          updateItemInConversations(conversationId || '')
         }
       },
       {
@@ -335,7 +371,10 @@ const Inbox: React.FC = () => {
   useEffect(() => {
     chatService.start().then(() => {
       chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
-        setMessages([...messages, newReceivedMessage])
+        if (conversationId !== undefined) {
+          setMessages([...messages, newReceivedMessage])
+          updateItemInConversations(newReceivedMessage.conversationId)
+        }
         const updateMessageStatus = await chatService.updateMessageStatus({
           messageId: newReceivedMessage.id,
           status: 'Delivered'
@@ -480,6 +519,21 @@ const Inbox: React.FC = () => {
       wavesurferRef.current?.destroy()
     }
   }, [audioUrl])
+
+  useEffect(() => {
+    let count = 0
+    conversations.map((conversation) => {
+      if (conversation.newestMessage?.senderId !== userInfo?.id && conversation.newestMessage?.status !== 'Seen')
+        count++
+    })
+    setMessageUnseen(count)
+  }, [conversations])
+
+  useEffect(() => {
+    const baseTitle = 'FriCon'
+    if (messageUnseen > 0) document.title = `(${messageUnseen}) ${baseTitle}`
+    else document.title = baseTitle
+  }, [messageUnseen])
   return (
     <div className='h-screen bg-[#212123] overflow-hidden'>
       <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
@@ -515,35 +569,45 @@ const Inbox: React.FC = () => {
               ? Array.from({ length: 10 }).map((_, i) => (
                   <Skeleton className='mb-3' key={i} active avatar paragraph={{ rows: 1 }} />
                 ))
-              : conversations.map((conversation) => (
-                  <div
-                    onClick={() => navigateToInbox(conversation.id)}
-                    className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
-                  >
-                    <Avatar
-                      draggable='false'
-                      className='select-none'
-                      size={48}
-                      src={conversation.conversationUsers[0].user.avatarUrl}
-                    ></Avatar>
-                    <div className='flex flex-col justify-around overflow-hidden'>
-                      <p className='text-lg font-medium select-none truncate'>
-                        {conversation.type === 'Personal'
-                          ? conversation.conversationUsers[0].nickName
-                          : conversation.conversationName}
-                      </p>
-                      <span className='text-xs opacity-50 truncate select-none'>
-                        {conversation.newestMessage?.senderId === userInfo?.id &&
-                        conversation.newestMessage?.messageAttachments.length === 0
-                          ? 'You: '
-                          : ''}
-                        {conversation.newestMessage?.content === ''
-                          ? conversation.newestMessage.sender.firstName + ' sent attachments'
-                          : conversation.newestMessage?.content}
-                      </span>
+              : conversations.map((conversation) => {
+                  const seenByMe =
+                    conversation.newestMessage?.senderId !== userInfo?.id &&
+                    conversation.newestMessage?.status !== 'Seen'
+                      ? false
+                      : true
+                  return (
+                    <div
+                      onClick={() => navigateToInbox(conversation.id)}
+                      className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
+                    >
+                      <Avatar
+                        draggable='false'
+                        className='select-none'
+                        size={48}
+                        src={conversation.conversationUsers[0].user.avatarUrl}
+                      ></Avatar>
+                      <div className='flex flex-col justify-around overflow-hidden'>
+                        <p className={`text-lg font-medium select-none truncate ${seenByMe ? '' : 'font-bold'}`}>
+                          {conversation.type === 'Personal'
+                            ? conversation.conversationUsers[0].nickName
+                            : conversation.conversationName}
+                        </p>
+                        <span
+                          className={`text-xs truncate select-none ${seenByMe ? 'opacity-50' : 'font-bold text-black'}`}
+                        >
+                          {conversation.newestMessage?.senderId === userInfo?.id &&
+                          conversation.newestMessage?.messageAttachments.length === 0
+                            ? 'You: '
+                            : ''}
+                          {conversation.newestMessage?.content === ''
+                            ? conversation.newestMessage.sender.firstName + ' sent attachments'
+                            : conversation.newestMessage?.content}
+                        </span>
+                      </div>
+                      {!seenByMe && <div className='text-blue-500 flex-1 text-right text-lg'>●</div>}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
           </div>
         </div>
         {/* Tìm kiếm User để bắt đầu cuộc trò chuyện */}
@@ -578,288 +642,292 @@ const Inbox: React.FC = () => {
                 <Skeleton active paragraph={{ rows: 0 }} />
               )}
             </div>
-            <div className='flex gap-[16px] items-center'>
-              <SearchOutlined className='text-lg cursor-pointer' />
-              <PhoneOutlined className='text-lg cursor-pointer' />
-              <FontAwesomeIcon icon={faEllipsisVertical} className='text-lg cursor-pointer' />
-            </div>
+            {conversationId && (
+              <div className='flex gap-[16px] items-center'>
+                <SearchOutlined className='text-lg cursor-pointer' />
+                <PhoneOutlined className='text-lg cursor-pointer' />
+                <FontAwesomeIcon icon={faEllipsisVertical} className='text-lg cursor-pointer' />
+              </div>
+            )}
           </div>
           {/* Body */}
 
-          <div id='scrollableDiv' className='h-[100%] overflow-y-auto flex flex-col-reverse'>
-            <InfiniteScroll
-              dataLength={messages.length}
-              next={loadMoreMessage}
-              hasMore={true}
-              style={{ display: 'flex', flexDirection: 'column-reverse' }}
-              inverse={true}
-              loader={<div></div>}
-              endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
-              scrollableTarget='scrollableDiv'
-            >
-              <List
-                style={{
-                  overflow: 'visible',
-                  paddingTop: '550px'
-                }}
-                dataSource={messages}
-                renderItem={(item, index) => {
-                  const isMe = item.sender?.id == userInfo?.id
-                  const isFirst = index === 18
-                  return (
-                    <div
-                      id={`msg-${item.id}`}
-                      ref={isFirst ? firstMessageRef : null}
-                      className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
-                      key={item.id}
-                    >
-                      {!isMe && (
-                        <a href='#' className='mr-2'>
-                          <Avatar src={item.sender?.avatarUrl}></Avatar>
-                        </a>
-                      )}
+          {conversationId && (
+            <div id='scrollableDiv' className='h-[100%] overflow-y-auto flex flex-col-reverse'>
+              <InfiniteScroll
+                dataLength={messages.length}
+                next={loadMoreMessage}
+                hasMore={true}
+                style={{ display: 'flex', flexDirection: 'column-reverse' }}
+                inverse={true}
+                loader={<div></div>}
+                endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
+                scrollableTarget='scrollableDiv'
+              >
+                <List
+                  style={{
+                    overflow: 'visible',
+                    paddingTop: '550px'
+                  }}
+                  dataSource={messages}
+                  renderItem={(item, index) => {
+                    const isMe = item.sender?.id == userInfo?.id
+                    const isFirst = index === 18
+                    return (
+                      <div
+                        id={`msg-${item.id}`}
+                        ref={isFirst ? firstMessageRef : null}
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
+                        key={item.id}
+                      >
+                        {!isMe && (
+                          <a href='#' className='mr-2'>
+                            <Avatar src={item.sender?.avatarUrl}></Avatar>
+                          </a>
+                        )}
 
-                      <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
-                        <div
-                          className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
-                        >
-                          <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
-                            {(() => {
-                              if (item.repliedMessage !== null && item.repliedMessage.content !== '') {
-                                return (
-                                  <p
-                                    className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
-                                  >
-                                    {item.repliedMessage.content}
-                                  </p>
-                                )
-                              } else if (
-                                item.repliedMessage !== null &&
-                                item.repliedMessage.content === '' &&
-                                item.repliedMessage.messageAttachments.length > 0 &&
-                                item.repliedMessage.messageAttachments[0].fileType === 'Image'
-                              ) {
-                                return item.repliedMessage.messageAttachments.map((img, index) => (
-                                  <Image
-                                    className='rounded-[28px]'
-                                    key={index}
-                                    width={150}
-                                    height={150}
-                                    src={img.fileUrl}
-                                    alt={`attachment-${index}`}
-                                  />
-                                ))
-                              } else if (
-                                item.repliedMessage !== null &&
-                                item.repliedMessage.content === '' &&
-                                item.repliedMessage.messageAttachments.length > 0 &&
-                                item.repliedMessage.messageAttachments[0].fileType !== 'Image'
-                              ) {
-                                return (
-                                  <p
-                                    className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
-                                  >
-                                    Attachment
-                                  </p>
-                                )
-                              }
-                            })()}
-                            {(item.content !== '' || item.messageAttachments.length !== 0) && (
-                              <div
-                                className='flex flex-col items-end gap-2 relative'
-                                ref={index === messages.length - 1 ? newestMessageRef : null}
-                              >
-                                <ConfigProvider
-                                  theme={{
-                                    components: {
-                                      Tooltip: {
-                                        colorBgSpotlight: 'transparent',
-                                        colorTextLightSolid: '#8f8f8fff',
-                                        boxShadowSecondary: 'none'
-                                      }
-                                    }
-                                  }}
-                                >
-                                  <Tooltip
-                                    placement={isMe ? 'left' : 'right'}
-                                    title={
-                                      <div className='flex gap-2'>
-                                        <FontAwesomeIcon
-                                          onClick={() => {
-                                            setMessageReactionBar(item.id)
-                                            setfullyReactionSelection(null)
-                                          }}
-                                          className='cursor-pointer'
-                                          icon={faFaceSmile}
-                                        />
-                                        <FontAwesomeIcon
-                                          onClick={() => {
-                                            setRepliedMessagePreview(item)
-                                            setfullyReactionSelection(null)
-                                          }}
-                                          className='cursor-pointer'
-                                          icon={faReply}
-                                        />
-                                      </div>
-                                    }
-                                  >
-                                    <div
-                                      className={`${item.messageAttachments.length !== 0 && item.content != '' ? 'flex flex-col-reverse gap-2' : ''} relative inline-block rounded-[20px] break-all cursor-default self-end float-left'
-                                      }`}
+                        <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
+                          <div
+                            className={`${item.messageAttachments.length === 0 ? 'flex items-center' : 'flex items-center'}`}
+                          >
+                            <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
+                              {(() => {
+                                if (item.repliedMessage !== null && item.repliedMessage.content !== '') {
+                                  return (
+                                    <p
+                                      className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
                                     >
-                                      {/* Hiện content nếu có */}
-                                      {item.content !== '' && (
-                                        <p
-                                          className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300'} p-[12px] rounded-[20px]`}
-                                        >
-                                          {item.content}
-                                        </p>
-                                      )}
-
-                                      {/* Hiện attachment nếu có */}
-                                      {item.messageAttachments.length !== 0 && (
-                                        <div className='flex gap-2 flex-wrap mt-2'>
-                                          {item.messageAttachments.map((att, index) => {
-                                            switch (att.fileType) {
-                                              case 'Image':
-                                                return (
-                                                  <Image
-                                                    key={index}
-                                                    className='rounded-[28px]'
-                                                    width={150}
-                                                    height={150}
-                                                    src={att.fileUrl}
-                                                    alt={`attachment-${index}`}
-                                                  />
-                                                )
-                                              case 'Voice':
-                                                return (
-                                                  <div
-                                                    key={index}
-                                                    className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}
-                                                  >
-                                                    <VoiceWave url={att.fileUrl} />
-                                                  </div>
-                                                )
-                                              default:
-                                                return <p key={index}>Error</p>
-                                            }
-                                          })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </Tooltip>
-
-                                  {/* Hiện reaction summary */}
-                                  {item.messageReactionUsers.length !== 0 && (
-                                    <div
-                                      className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${
-                                        index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'
-                                      } flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
-                                    >
-                                      {[...new Set(item.messageReactionUsers.map((u) => u.reaction))]
-                                        .slice(0, 4)
-                                        .map((emoji) => (
-                                          <div key={emoji}>{emoji}</div>
-                                        ))}
-                                      {item.messageReactionUsers.length > 1 && (
-                                        <p className='text-white'>{item.messageReactionUsers.length}</p>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {/* Hiện list Reaction */}
-                                  {messageReactionBar === item.id && (
-                                    <div
-                                      ref={reactionBarRef}
-                                      className={`z-[100] flex gap-2 bg-black text-white rounded-[20px] py-[10px] px-[16px] absolute ${
-                                        isMe ? 'left-[-160px]' : 'right-[-160px]'
-                                      } top-[-50px]`}
-                                    >
-                                      {reactions.map((reaction) => (
-                                        <div
-                                          key={reaction}
-                                          onClick={() => handleSendReaction(item.id, reaction)}
-                                          className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'
-                                        >
-                                          {reaction}
-                                        </div>
-                                      ))}
-                                      <div className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>
-                                        <FontAwesomeIcon
-                                          onClick={() => {
-                                            setfullyReactionSelection(item.id)
-                                            setMessageReactionBar(null)
-                                          }}
-                                          icon={faPlus}
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                </ConfigProvider>
-
-                                {/* Emoji Picker */}
-                                {fullyReactionSelection === item.id && (
-                                  <div
-                                    className={`absolute z-[200] ${
-                                      isMe ? 'left-[-300px]' : 'right-[-300px]'
-                                    } top-[-437px]`}
-                                    ref={pickerEmotionRef}
-                                  >
-                                    <Picker
-                                      previewPosition='none'
-                                      data={data}
-                                      onEmojiSelect={(emoji: any) => handleSendReaction(item.id, emoji.native)}
+                                      {item.repliedMessage.content}
+                                    </p>
+                                  )
+                                } else if (
+                                  item.repliedMessage !== null &&
+                                  item.repliedMessage.content === '' &&
+                                  item.repliedMessage.messageAttachments.length > 0 &&
+                                  item.repliedMessage.messageAttachments[0].fileType === 'Image'
+                                ) {
+                                  return item.repliedMessage.messageAttachments.map((img, index) => (
+                                    <Image
+                                      className='rounded-[28px]'
+                                      key={index}
+                                      width={150}
+                                      height={150}
+                                      src={img.fileUrl}
+                                      alt={`attachment-${index}`}
                                     />
-                                  </div>
-                                )}
-
-                                {/* Trạng thái gửi tin nhắn */}
-                                {isMe && index === messages.length - 1 && (
+                                  ))
+                                } else if (
+                                  item.repliedMessage !== null &&
+                                  item.repliedMessage.content === '' &&
+                                  item.repliedMessage.messageAttachments.length > 0 &&
+                                  item.repliedMessage.messageAttachments[0].fileType !== 'Image'
+                                ) {
+                                  return (
+                                    <p
+                                      className={`${isMe ? 'bg-gray-500 bg-opacity-20 float-right' : 'bg-gray-300 bg-opacity-60 float-left'} inline-block  p-[12px] rounded-[20px] break-all cursor-default self-end text-[#0000007a]`}
+                                    >
+                                      Attachment
+                                    </p>
+                                  )
+                                }
+                              })()}
+                              {(item.content !== '' || item.messageAttachments.length !== 0) && (
+                                <div
+                                  className='flex flex-col items-end gap-2 relative'
+                                  ref={index === messages.length - 1 ? newestMessageRef : null}
+                                >
                                   <ConfigProvider
                                     theme={{
-                                      token: {
-                                        colorBgSpotlight: 'transparent',
-                                        colorTextLightSolid: '#8f8f8fff',
-                                        boxShadowSecondary: 'none'
+                                      components: {
+                                        Tooltip: {
+                                          colorBgSpotlight: 'transparent',
+                                          colorTextLightSolid: '#8f8f8fff',
+                                          boxShadowSecondary: 'none'
+                                        }
                                       }
                                     }}
                                   >
-                                    {item.status === 'Sent' && (
-                                      <Tooltip placement='left' title={item.status}>
-                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
-                                      </Tooltip>
+                                    <Tooltip
+                                      placement={isMe ? 'left' : 'right'}
+                                      title={
+                                        <div className='flex gap-2'>
+                                          <FontAwesomeIcon
+                                            onClick={() => {
+                                              setMessageReactionBar(item.id)
+                                              setfullyReactionSelection(null)
+                                            }}
+                                            className='cursor-pointer'
+                                            icon={faFaceSmile}
+                                          />
+                                          <FontAwesomeIcon
+                                            onClick={() => {
+                                              setRepliedMessagePreview(item)
+                                              setfullyReactionSelection(null)
+                                            }}
+                                            className='cursor-pointer'
+                                            icon={faReply}
+                                          />
+                                        </div>
+                                      }
+                                    >
+                                      <div
+                                        className={`${item.messageAttachments.length !== 0 && item.content != '' ? 'flex flex-col-reverse gap-2' : ''} relative inline-block rounded-[20px] break-all cursor-default self-end float-left'
+                                      }`}
+                                      >
+                                        {/* Hiện content nếu có */}
+                                        {item.content !== '' && (
+                                          <p
+                                            className={`${isMe ? 'bg-sky-400 float-right' : 'bg-gray-300'} p-[12px] rounded-[20px]`}
+                                          >
+                                            {item.content}
+                                          </p>
+                                        )}
+
+                                        {/* Hiện attachment nếu có */}
+                                        {item.messageAttachments.length !== 0 && (
+                                          <div className='flex gap-2 flex-wrap mt-2'>
+                                            {item.messageAttachments.map((att, index) => {
+                                              switch (att.fileType) {
+                                                case 'Image':
+                                                  return (
+                                                    <Image
+                                                      key={index}
+                                                      className='rounded-[28px]'
+                                                      width={150}
+                                                      height={150}
+                                                      src={att.fileUrl}
+                                                      alt={`attachment-${index}`}
+                                                    />
+                                                  )
+                                                case 'Voice':
+                                                  return (
+                                                    <div
+                                                      key={index}
+                                                      className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}
+                                                    >
+                                                      <VoiceWave url={att.fileUrl} />
+                                                    </div>
+                                                  )
+                                                default:
+                                                  return <p key={index}>Error</p>
+                                              }
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </Tooltip>
+
+                                    {/* Hiện reaction summary */}
+                                    {item.messageReactionUsers.length !== 0 && (
+                                      <div
+                                        className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${
+                                          index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'
+                                        } flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
+                                      >
+                                        {[...new Set(item.messageReactionUsers.map((u) => u.reaction))]
+                                          .slice(0, 4)
+                                          .map((emoji) => (
+                                            <div key={emoji}>{emoji}</div>
+                                          ))}
+                                        {item.messageReactionUsers.length > 1 && (
+                                          <p className='text-white'>{item.messageReactionUsers.length}</p>
+                                        )}
+                                      </div>
                                     )}
-                                    {item.status === 'Delivered' && (
-                                      <Tooltip placement='left' title={item.status}>
-                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
-                                      </Tooltip>
-                                    )}
-                                    {item.status === 'Seen' && (
-                                      <Tooltip placement='left' title={item.status}>
-                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
-                                      </Tooltip>
+
+                                    {/* Hiện list Reaction */}
+                                    {messageReactionBar === item.id && (
+                                      <div
+                                        ref={reactionBarRef}
+                                        className={`z-[100] flex gap-2 bg-black text-white rounded-[20px] py-[10px] px-[16px] absolute ${
+                                          isMe ? 'left-[-160px]' : 'right-[-160px]'
+                                        } top-[-50px]`}
+                                      >
+                                        {reactions.map((reaction) => (
+                                          <div
+                                            key={reaction}
+                                            onClick={() => handleSendReaction(item.id, reaction)}
+                                            className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'
+                                          >
+                                            {reaction}
+                                          </div>
+                                        ))}
+                                        <div className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>
+                                          <FontAwesomeIcon
+                                            onClick={() => {
+                                              setfullyReactionSelection(item.id)
+                                              setMessageReactionBar(null)
+                                            }}
+                                            icon={faPlus}
+                                          />
+                                        </div>
+                                      </div>
                                     )}
                                   </ConfigProvider>
-                                )}
-                              </div>
-                            )}
+
+                                  {/* Emoji Picker */}
+                                  {fullyReactionSelection === item.id && (
+                                    <div
+                                      className={`absolute z-[200] ${
+                                        isMe ? 'left-[-300px]' : 'right-[-300px]'
+                                      } top-[-437px]`}
+                                      ref={pickerEmotionRef}
+                                    >
+                                      <Picker
+                                        previewPosition='none'
+                                        data={data}
+                                        onEmojiSelect={(emoji: any) => handleSendReaction(item.id, emoji.native)}
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Trạng thái gửi tin nhắn */}
+                                  {isMe && index === messages.length - 1 && (
+                                    <ConfigProvider
+                                      theme={{
+                                        token: {
+                                          colorBgSpotlight: 'transparent',
+                                          colorTextLightSolid: '#8f8f8fff',
+                                          boxShadowSecondary: 'none'
+                                        }
+                                      }}
+                                    >
+                                      {item.status === 'Sent' && (
+                                        <Tooltip placement='left' title={item.status}>
+                                          <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
+                                        </Tooltip>
+                                      )}
+                                      {item.status === 'Delivered' && (
+                                        <Tooltip placement='left' title={item.status}>
+                                          <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
+                                        </Tooltip>
+                                      )}
+                                      {item.status === 'Seen' && (
+                                        <Tooltip placement='left' title={item.status}>
+                                          <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
+                                        </Tooltip>
+                                      )}
+                                    </ConfigProvider>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {isMe && (
-                        <a href='#' className='ml-2'>
-                          <Avatar className='select-none' src={userInfo.avatarUrl}></Avatar>
-                        </a>
-                      )}
-                      <div ref={messageEndRef}></div>
-                    </div>
-                  )
-                }}
-              />
-            </InfiniteScroll>
-          </div>
+                        {isMe && (
+                          <a href='#' className='ml-2'>
+                            <Avatar className='select-none' src={userInfo.avatarUrl}></Avatar>
+                          </a>
+                        )}
+                        <div ref={messageEndRef}></div>
+                      </div>
+                    )
+                  }}
+                />
+              </InfiniteScroll>
+            </div>
+          )}
           <div>
             <div className='flex flex-wrap gap-2 mb-[8px]'>
               {imagesPreview.map((image, index) => (

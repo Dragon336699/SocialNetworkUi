@@ -3,9 +3,9 @@ import Login from './app/pages/Login/Login'
 import Register from './app/pages/Register/Register'
 import EmailConfirm from './app/pages/EmailConfirm/EmailConfirm'
 import ForgotPassword from './app/pages/ForgotPassword/ForgotPassword'
-import Chat from './app/pages/Inbox/Inbox'
 import Layout from './app/common/Layout/Layout'
 import Home from './app/pages/Home/Home'
+import Inbox from './app/pages/Inbox/Inbox'
 
 function App() {
   return (
@@ -18,8 +18,8 @@ function App() {
         <Route element={<Layout />}>
           <Route path='/' element={<Navigate to='/home' replace />}></Route>
           <Route path='/home' element={<Home />}></Route>
-          <Route path='inbox' element={<Chat />}></Route>
-          <Route path='inbox/:conversationId?' element={<Chat />}></Route>
+          <Route path='inbox' element={<Inbox />}></Route>
+          <Route path='inbox/:conversationId?' element={<Inbox />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>

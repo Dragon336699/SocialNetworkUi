@@ -44,5 +44,19 @@ export const conversationService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+
+  async getConversationForList(conversationId: string): Promise<{
+    data: BaseResponse | ResponseHasData<ConversationDto>
+    status: number
+  }> {
+    const response = await apiClient.post<BaseResponse | ResponseHasData<ConversationDto>>(
+      `conversation/getConversationForList`,
+      `"${conversationId}"`,
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

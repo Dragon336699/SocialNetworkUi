@@ -1,9 +1,9 @@
 import { userService } from '@/app/services/user.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Avatar, ConfigProvider, Menu, MenuProps, message } from 'antd'
+import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -23,17 +23,29 @@ const Navbar: React.FC = () => {
   const [items, setItems] = useState<MenuItem[]>([
     getItem(
       <div className='flex items-center gap-3'>
-        <FontAwesomeIcon className='text-lg' icon={faHouse} />
+        <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
         <span>Home</span>
       </div>,
       'Home'
     ),
     getItem(
       <div className='flex items-center gap-3'>
-        <FontAwesomeIcon className='text-lg' icon={faComment} />
+        <Badge size='small'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faComment} />
+        </Badge>
         <span>Inbox</span>
       </div>,
       'Inbox'
+    ),
+    getItem(
+      <div className='flex items-center gap-3'>
+        <Badge size='small'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faBell} />
+        </Badge>
+
+        <span>Notification</span>
+      </div>,
+      'Notification'
     )
   ])
   const [collapsed, setCollapsed] = useState(false)
@@ -41,7 +53,8 @@ const Navbar: React.FC = () => {
   const path = location.pathname.split('/')[1] || 'Home'
 
   const handleNavigate = (e: any) => {
-    navigate(`/${e.key}`)
+    if (e.key === 'Inbox') window.location.href = '/Inbox'
+    else navigate(`/${e.key}`)
   }
 
   const fetchUserInfo = async () => {
