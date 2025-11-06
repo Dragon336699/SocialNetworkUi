@@ -22,6 +22,7 @@ function App() {
           <Route path='inbox' element={<Chat />}></Route>
           <Route path='inbox/:conversationId?' element={<Chat />}></Route>
           <Route path='/profile' element={<ProfileUser />}></Route>
+          <Route path='/profile/:userId' element={<ProfileUser />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>

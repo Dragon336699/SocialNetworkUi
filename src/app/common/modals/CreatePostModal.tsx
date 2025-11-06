@@ -9,10 +9,7 @@ import {
   PaperClipOutlined,
   PlusOutlined,
   CloseOutlined,
-  SmileOutlined,
-  GlobalOutlined,
-  UsergroupAddOutlined,
-  LockOutlined
+  SmileOutlined
 } from '@ant-design/icons'
 // import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 import data from '@emoji-mart/data'
@@ -36,14 +33,38 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const getPrivacyIcon = () => {
+  const renderPrivacyIcon = () => {
+    const iconClass = 'w-4 h-4 text-gray-500'
+
     switch (privacy) {
       case 'Public':
-        return <GlobalOutlined className='text-blue-500' />
+        return (
+          <svg className={iconClass} fill='currentColor' viewBox='0 0 20 20'>
+            <path
+              fillRule='evenodd'
+              d='M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0710 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z'
+              clipRule='evenodd'
+            />
+          </svg>
+        )
       case 'Friends':
-        return <UsergroupAddOutlined className='text-green-500' />
+        return (
+          <svg className={iconClass} fill='currentColor' viewBox='0 0 20 20'>
+            <path d='M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z' />
+          </svg>
+        )
       case 'Private':
-        return <LockOutlined className='text-red-500' />
+        return (
+          <svg className={iconClass} fill='currentColor' viewBox='0 0 20 20'>
+            <path
+              fillRule='evenodd'
+              d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+              clipRule='evenodd'
+            />
+          </svg>
+        )
+      default:
+        return null
     }
   }
 
@@ -147,7 +168,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
           </Flex>
           <Flex gap='small' align='flex-start'>
             <Button className='flex items-center gap-1 text-s !px-2 hover:bg-neutral-200' onClick={handlePrivacyClick}>
-              {getPrivacyIcon()}
+              {renderPrivacyIcon()}
             </Button>
             <Button
               icon={<CloseOutlined />}
