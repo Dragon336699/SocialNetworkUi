@@ -1,6 +1,6 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
-import { GetAllPostsResponse } from '../types/Post/Post'
+import { GetAllPostsResponse, GetPostByIdResponse, UpdatePostResponse, DeletePostResponse, PostReactionResponse } from '../types/Post/Post'
 
 export const postService = {
   async createPost(formData: FormData): Promise<BaseResponse> {
@@ -14,6 +14,38 @@ export const postService = {
   async getAllPosts(skip: number = 0, take: number = 10): Promise<GetAllPostsResponse> {
     const { data } = await apiClient.get('post/all', {
       params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async getPostById(postId: string): Promise<GetPostByIdResponse> {
+    const { data } = await apiClient.get<GetPostByIdResponse>(`post/${postId}`, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async updatePost(postId: string, formData: FormData): Promise<UpdatePostResponse> {
+    const { data } = await apiClient.put<UpdatePostResponse>(`post/${postId}`, formData, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return data
+  },
+
+  async deletePost(postId: string): Promise<DeletePostResponse> {
+    const { data } = await apiClient.delete<DeletePostResponse>(`post/${postId}`, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async reactionPost(postId: string, reaction: string): Promise<PostReactionResponse> {
+    const { data } = await apiClient.post<PostReactionResponse>('post/reaction', {
+      postId,
+      reaction
+    }, {
       withCredentials: true
     })
     return data

@@ -24,7 +24,7 @@ import { postService } from '@/app/services/post.service'
 const { TextArea } = Input
 const { Text } = Typography
 
-const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
+const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: ModalProps) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -109,6 +109,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel }: ModalProps) => {
       if (res?.message) {
         message.success('Post created successfully!')
         handleCancel()
+        onCreatePostSuccess?.()
         resetValue()
       } else {
         message.error('Failed to create post, please try again!')
