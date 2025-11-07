@@ -1,4 +1,4 @@
-import { ConfigProvider, Input, message } from 'antd'
+import { ConfigProvider, Input, message, Spin } from 'antd'
 import styles from './Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
@@ -18,16 +18,20 @@ const Login: React.FC = () => {
   } = useForm<LoginRequest>()
 
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const navigate = useNavigate()
 
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
+      setIsLoading(true)
       const loginData = await userService.login(data)
       if (loginData.message) {
+        setIsLoading(false)
         message.success('Đăng nhập thành công!')
         navigate('/home')
       }
     } catch (err) {
+      setIsLoading(false)
       console.error('Lỗi login:', err)
       message.error('Đăng nhập thất bại!')
     }
@@ -126,12 +130,14 @@ const Login: React.FC = () => {
           </div>
         </div>
         <div className={styles.inputBox}>
-          <input
+          <button
             form='loginForm'
             type='submit'
-            className={`${styles.inputSubmit} w-full cursor-pointer font-medium`}
-            value='Login'
-          />
+            className={`${styles.inputSubmit} w-full cursor-pointer font-medium flex justify-center items-center gap-2`}
+            disabled={isLoading}
+          >
+            {isLoading ? <Spin size='small' className={styles.spinner} /> : 'Login'}
+          </button>
         </div>
         <GoogleOAuthProvider clientId={goolgeClientId}>
           <GoogleLogin onSuccess={onGooleLoginSuccess} />
