@@ -8,6 +8,7 @@ import DeletePostModal from './DeletePostModal'
 import PostReaction from './PostReaction'
 import { message } from 'antd'
 import { postService } from '@/app/services/post.service'
+import { Avatar } from 'antd'
 
 interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
@@ -236,11 +237,14 @@ const Post: React.FC<PostProps> = ({
         {/* Header */}
         <div className='flex items-center justify-between p-4 pb-2'>
           <div className='flex items-center space-x-3'>
-            <img
-              src={user.avatarUrl || '/default-avatar.png'}
-              alt={fullName}
+            <Avatar
+              src={user.avatarUrl}
+              size={40}
               className='w-10 h-10 rounded-full object-cover'
-            />
+              style={{ minWidth: 40, minHeight: 40 }}
+            >
+              {user.firstName?.[0] || user.lastName?.[0] || ''}
+            </Avatar>
             <div>
               <h4 className='font-semibold text-black-600 text-sm hover:underline cursor-pointer'>{fullName}</h4>
               <div className='flex items-center space-x-1'>
