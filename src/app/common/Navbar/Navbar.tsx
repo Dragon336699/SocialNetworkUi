@@ -5,8 +5,9 @@ import { faBell, faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useUnread } from '../Contexts/UnreadContext'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -20,36 +21,42 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
 }
 const Navbar: React.FC = () => {
   const navigate = useNavigate()
-  const [items, setItems] = useState<MenuItem[]>([
-    getItem(
-      <div className='flex items-center gap-3'>
-        <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
-        <span>Home</span>
-      </div>,
-      'Home'
-    ),
-    getItem(
-      <div className='flex items-center gap-3'>
-        <Badge size='small'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faComment} />
-        </Badge>
-        <span>Inbox</span>
-      </div>,
-      'Inbox'
-    ),
-    getItem(
-      <div className='flex items-center gap-3'>
-        <Badge size='small'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faBell} />
-        </Badge>
+  const { unreadMessages } = useUnread()
 
-        <span>Notification</span>
-      </div>,
-      'Notification'
-    )
-  ])
+  const [items, setItems] = useState<MenuItem[]>([])
+  const baseItems = useMemo<MenuItem[]>(
+    () => [
+      getItem(
+        'Home',
+        'Home',
+        <div className='flex items-center gap-6'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
+        </div>
+      ),
+      getItem(
+        'Inbox',
+        'Inbox',
+        <div className='flex items-center gap-6'>
+          <Badge count={unreadMessages} size='small'>
+            <FontAwesomeIcon className='text-lg text-white' icon={faComment} />
+          </Badge>
+        </div>
+      ),
+      getItem(
+        'Notification',
+        'Notification',
+        <div className='flex items-center gap-6'>
+          <Badge size='small'>
+            <FontAwesomeIcon className='text-lg text-white' icon={faBell} />
+          </Badge>
+        </div>
+      )
+    ],
+    [unreadMessages]
+  )
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
+
   const path = location.pathname.split('/')[1] || 'Home'
 
   const handleNavigate = (e: any) => {
@@ -76,8 +83,12 @@ const Navbar: React.FC = () => {
   }
 
   useEffect(() => {
+    setItems((prev) => {
+      const profileItem = prev.find((i) => i?.key === 'Profile')
+      return profileItem ? [...baseItems, profileItem] : baseItems
+    })
     fetchUserInfo()
-  }, [])
+  }, [baseItems])
   return (
     <ConfigProvider
       theme={{

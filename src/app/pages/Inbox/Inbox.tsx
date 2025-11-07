@@ -42,6 +42,7 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import ModalNewMessage from './ModalNewMessage'
+import { useUnread } from '@/app/common/Contexts/UnreadContext'
 
 const Inbox: React.FC = () => {
   const navigate = useNavigate()
@@ -81,6 +82,7 @@ const Inbox: React.FC = () => {
   const [isModalNewMessageOpen, setIsModalNewMessageOpen] = useState(false)
 
   const [messageUnseen, setMessageUnseen] = useState(0)
+  const { setUnreadMessages } = useUnread()
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -171,7 +173,7 @@ const Inbox: React.FC = () => {
       } else if (sendMessageReponse.status === 200) {
         const res = sendMessageReponse.data as ResponseHasData<MessageDto>
         setMessages([...messages, res.data as MessageDto])
-        updateItemInConversations(conversationId || '')
+        updateItemInConversations(conversationId || '', res.data as MessageDto, null)
         setTimeout(() => {
           newestMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
         }, 100)
@@ -292,22 +294,12 @@ const Inbox: React.FC = () => {
   }
 
   // Cập nhật item trong list conversation khi nhận được tin nhắn mới
-  const updateItemInConversations = async (convId: string) => {
+  const updateItemInConversations = async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
     try {
-      const response = await conversationService.getConversationForList(convId)
-      if (response.status === 400) message.error('Update list conversation fail!')
-      else if (response.status === 200) {
-        const resData = response.data as ResponseHasData<ConversationDto>
-        const newConversation = resData.data as ConversationDto
-        setConversations((prev) => {
-          const idx = prev.findIndex((c) => c.id === newConversation.id)
-          if (idx === -1) return prev
-
-          const newList = [...prev]
-          newList[idx] = newConversation
-          return newList
-        })
-      }
+      conversations.forEach((conv) => {
+        if (conv.id === convId && conv.newestMessage && newestMessage !== null) conv.newestMessage = newestMessage
+        else if (conv.id === convId && conv.newestMessage && status !== null) conv.newestMessage.status = status
+      })
     } catch (err) {
       return
     }
@@ -333,7 +325,7 @@ const Inbox: React.FC = () => {
           })
           if (!updateMessageStatus) return
           setMessageUnseen(messageUnseen - 1)
-          updateItemInConversations(conversationId || '')
+          updateItemInConversations(conversationId || '', null, 'Seen')
         }
       },
       {
@@ -373,7 +365,7 @@ const Inbox: React.FC = () => {
       chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
         if (conversationId !== undefined) {
           setMessages([...messages, newReceivedMessage])
-          updateItemInConversations(newReceivedMessage.conversationId)
+          updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
         }
         const updateMessageStatus = await chatService.updateMessageStatus({
           messageId: newReceivedMessage.id,
@@ -383,7 +375,9 @@ const Inbox: React.FC = () => {
       })
     })
 
-    chatService.offReceivePrivateMessage()
+    return () => {
+      chatService.offReceivePrivateMessage()
+    }
   })
 
   // Lấy dữ liệu user, conversation và cho thẻ chat được focus
@@ -527,6 +521,7 @@ const Inbox: React.FC = () => {
         count++
     })
     setMessageUnseen(count)
+    setUnreadMessages(count)
   }, [conversations])
 
   useEffect(() => {

@@ -1,14 +1,17 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '../Navbar/Navbar'
+import { UnreadProvider } from '../Contexts/UnreadContext'
 
 const Layout: React.FC = () => {
   return (
-    <div className='flex h-screen'>
-      <Navbar />
-      <div className='flex-1 h-screen'>
-        <Outlet />
+    <UnreadProvider>
+      <div className='flex h-screen'>
+        <Navbar />
+        <div className='flex-1 h-screen'>
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </UnreadProvider>
   )
 }
 
