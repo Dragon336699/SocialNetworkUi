@@ -3,12 +3,17 @@ import Login from './app/pages/Login/Login'
 import Register from './app/pages/Register/Register'
 import EmailConfirm from './app/pages/EmailConfirm/EmailConfirm'
 import ForgotPassword from './app/pages/ForgotPassword/ForgotPassword'
-import Chat from './app/pages/Inbox/Inbox'
 import Layout from './app/common/Layout/Layout'
 import Home from './app/pages/Home/Home'
 import ProfileUser from './app/pages/Profile/ProfileUser'
+import Inbox from './app/pages/Inbox/Inbox'
+import { useEffect } from 'react'
+import { chatService } from './app/services/chat.service'
 
 function App() {
+  useEffect(() => {
+    chatService.start()
+  }, [])
   return (
     <BrowserRouter>
       <Routes>
@@ -19,10 +24,10 @@ function App() {
         <Route element={<Layout />}>
           <Route path='/' element={<Navigate to='/home' replace />}></Route>
           <Route path='/home' element={<Home />}></Route>
-          <Route path='inbox' element={<Chat />}></Route>
-          <Route path='inbox/:conversationId?' element={<Chat />}></Route>
           <Route path='/profile' element={<ProfileUser />}></Route>
           <Route path='/profile/:userId' element={<ProfileUser />}></Route>
+          <Route path='inbox' element={<Inbox />}></Route>
+          <Route path='inbox/:conversationId?' element={<Inbox />}></Route>
         </Route>
       </Routes>
     </BrowserRouter>

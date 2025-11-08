@@ -10,6 +10,7 @@ export interface MessageDto {
   updatedAt: Date
   senderId: string
   sender: UserDto
+  conversationId: string
   repliedMessageId: string | null
   repliedMessage: MessageDto | null
   messageReactionUsers: MessageReactionUser[]

@@ -11,7 +11,6 @@ import {
   UserOutlined,
   CameraOutlined
 } from '@ant-design/icons'
-import Post from '../Post/Post'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -19,9 +18,10 @@ import { UploadChangeParam } from 'antd/es/upload'
 import ImageCropModal from '@/app/common/Modals/ImageCropModal'
 import { UserDto } from '@/app/types/User/user.dto'
 import { userService } from '@/app/services/user.service'
-import { base64ToFile } from '@/app/helpers'
+import { base64ToFile } from '@/app/helper'
 import { PostData } from '@/app/types/Post/Post'
-import { postService } from '@/app/services/post.service'
+import Post from '@/app/pages/Post/Post'
+import { usePosts } from '@/app/hook/usePosts'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -40,6 +40,7 @@ const profile = {
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
 const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo: UserDto; onEdit: () => void }) => {
   const { userId } = useParams()
+  const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<TabType>('posts')
 
@@ -49,11 +50,9 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
   const [loading, setLoading] = useState<boolean>(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
-  const handleCreatePost = async (formData: FormData) => {
-    const success = await postService.createPost(formData)
-    if (success) {
-      setIsOpenCreatePost(false)
-    }
+  const handleCreatePostSuccess = async () => {
+    setIsOpenCreatePost(false)
+    handlePostCreated()
   }
 
   const getTabButtonClass = (tabName: TabType) => {
@@ -85,7 +84,12 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
               <div className='space-y-4'>
                 {posts.map((post, index) => (
                   <div key={`${post.id}-${index}`}>
-                    <Post {...post} />
+                    <Post
+                      {...post}
+                      currentUserId={userInfo.id || ''}
+                      onPostUpdated={handlePostUpdated}
+                      onPostDeleted={handlePostDeleted}
+                    />
                   </div>
                 ))}
               </div>
@@ -241,7 +245,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       <CreatePostModal
         isModalOpen={isOpenCreatePost}
         handleCancel={() => setIsOpenCreatePost(false)}
-        onCreatePost={handleCreatePost}
+        onCreatePostSuccess={handleCreatePostSuccess}
       />
       <ImageCropModal
         open={cropModalOpen}
