@@ -1,4 +1,4 @@
-import { Avatar, Button, Col, Row, Upload, Image } from 'antd'
+import { Avatar, Button, Col, Row, Upload, Image, message } from 'antd'
 import {
   HeartOutlined,
   EnvironmentOutlined,
@@ -9,7 +9,6 @@ import {
   WomanOutlined,
   FileTextOutlined,
   UserOutlined,
-  StarOutlined,
   CameraOutlined
 } from '@ant-design/icons'
 import { usePosts } from '@/app/hook/usePosts'
@@ -19,35 +18,35 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { UploadChangeParam } from 'antd/es/upload'
 import ImageCropModal from '@/app/common/Modals/ImageCropModal'
+import { UserDto } from '@/app/types/User/user.dto'
+import { userService } from '@/app/services/user.service'
+import { base64ToFile } from '@/app/helpers'
 
-interface ProfileViewProps {
-  profile: {
-    name: string
-    bio: string
-    gender: string
-    avatar: string
-    followers: number
-    following: number
-    posts: number
-    location: string
-    website: string
-    friends: number
-    flowers?: number
-  }
-  onEdit: () => void
+const profile = {
+  name: 'Nguyễn Văn A',
+  bio: '???',
+  avatar: '/diverse-user-avatars.png',
+  gender: 'Male',
+  followers: 1250,
+  following: 342,
+  posts: 89,
+  location: 'Ho Chi Minh City, Vietnam',
+  website: 'https://github.com',
+  friends: 19,
+  email: 'user@example.com'
 }
 
-type TabType = 'posts' | 'followers' | 'following' | 'friends' | 'flowers'
-
-const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
+type TabType = 'posts' | 'followers' | 'following' | 'friends'
+const ProfileView = ({ userInfo, onEdit }: { userInfo: UserDto; onEdit: () => void }) => {
   const { userId } = useParams()
   const { posts, createPost } = usePosts()
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<TabType>('posts')
 
   // const [form] = Form.useForm()
-  const [previewImage, setPreviewImage] = useState(profile.avatar)
+  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || '')
   const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
   const handleCreatePost = async (formData: FormData) => {
@@ -189,45 +188,16 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
           </div>
         )
 
-      case 'flowers':
-        return (
-          <div className='space-y-3'>
-            {(profile.flowers || 0) > 0 ? (
-              [...Array(Math.min(profile.flowers || 0, 6))].map((_, i) => (
-                <div
-                  key={i}
-                  className='p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200 hover:shadow-md transition-shadow'
-                >
-                  <div className='flex items-center gap-3'>
-                    <StarOutlined className='text-2xl text-pink-500' />
-                    <div>
-                      <p className='font-semibold text-gray-900'>Flower {i + 1}</p>
-                      <p className='text-sm text-gray-500'>
-                        Received on {new Date(Date.now() - i * 86400000).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className='text-center py-12'>
-                <StarOutlined className='text-4xl text-gray-300 mb-3' />
-                <p className='text-gray-500'>No flowers yet</p>
-              </div>
-            )}
-          </div>
-        )
-
       default:
         return null
     }
   }
 
   const stats = [
-    { label: 'Posts', value: profile.posts },
-    { label: 'Followers', value: profile.followers },
-    { label: 'Following', value: profile.following },
-    { label: 'Friends', value: profile.friends }
+    { label: 'Posts', value: profile.posts, active: 'posts' },
+    { label: 'Followers', value: profile.followers, active: 'followers' },
+    { label: 'Following', value: profile.following, active: 'following' },
+    { label: 'Friends', value: profile.friends, active: 'friends' }
   ]
 
   const handleAvatarChange = (info: UploadChangeParam) => {
@@ -245,6 +215,27 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
     reader.readAsDataURL(file)
   }
 
+  const changeAvatar = async (croppedImg: string) => {
+    try {
+      setLoading(true)
+      const newAvatar = base64ToFile(croppedImg, 'avatar.png')
+      const formData = new FormData()
+      formData.append('Avatar', newAvatar)
+
+      const res = await userService.changeAvatar(formData)
+
+      if (res.status === 200) {
+        setLoading(false)
+        message.success('Avatar changed successfully!')
+        setPreviewImage(croppedImg)
+        setCropModalOpen(false)
+      }
+    } catch (err) {
+      setLoading(false)
+      console.log('Failed to change avatar: ', err)
+    }
+  }
+
   return (
     <>
       <CreatePostModal
@@ -255,10 +246,10 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
       <ImageCropModal
         open={cropModalOpen}
         image={imageToCrop}
+        loading={loading}
         onClose={() => setCropModalOpen(false)}
         onCropDone={(croppedImg) => {
-          setPreviewImage(croppedImg)
-          // form.setFieldsValue({ avatar: croppedImg })
+          changeAvatar(croppedImg)
         }}
       />
 
@@ -278,7 +269,18 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
                 }}
               />
               {/* <Avatar size={140} src={previewImage} className='border-4 border-white shadow-lg' /> */}
-              <Upload showUploadList={false} onChange={handleAvatarChange} accept='image/*'>
+              <Upload
+                showUploadList={false}
+                onChange={handleAvatarChange}
+                customRequest={({ onSuccess }) => {
+                  setTimeout(() => {
+                    if (onSuccess) {
+                      onSuccess('ok')
+                    }
+                  }, 0)
+                }}
+                accept='image/*'
+              >
                 <div
                   className='absolute bottom-[2px] right-[37px] rounded-full cursor-pointer shadow-md transition
              flex items-center justify-center'
@@ -297,7 +299,7 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
             <Col flex='auto'>
               <Row justify='space-between' align='middle' className='mb-4'>
                 <Col>
-                  <h1 className='text-xl md:text-xl font-bold text-gray-900'>{profile.name}</h1>
+                  <h1 className='text-xl md:text-xl font-bold text-gray-900'>{`${userInfo.lastName} ${userInfo.firstName}`}</h1>
                 </Col>
                 {!userId && (
                   <Col>
@@ -308,24 +310,30 @@ const ProfileView = ({ profile, onEdit }: ProfileViewProps) => {
                 )}
               </Row>
 
-              <p className='text-lg text-gray-700 mb-6'>{profile.bio}</p>
+              <p className='text-lg text-gray-700 mb-6'>{userInfo.description}</p>
 
               <div className='flex flex-wrap items-center gap-20 text-gray-800 text-base'>
                 {stats.map((item) => (
                   <span key={item.label}>
-                    <span className='font-bold'>{item.value}</span> {item.label}
+                    <span
+                      className='font-bold hover:underline cursor-pointer'
+                      onClick={() => setActiveTab(item.active as TabType)}
+                    >
+                      {item.value}
+                    </span>{' '}
+                    {item.label}
                   </span>
                 ))}
               </div>
 
               <div className='gap-6 mt-6 text-sm text-gray-600 flex flex-wrap'>
                 <div className='flex items-center gap-2'>
-                  {profile.gender === 'Male' ? (
+                  {userInfo.gender === 'Male' ? (
                     <ManOutlined className='text-lg text-blue-500' />
                   ) : (
                     <WomanOutlined className='text-lg text-pink-500' />
                   )}
-                  <span>{profile.gender}</span>
+                  <span>{userInfo.gender}</span>
                 </div>
                 <div className='flex items-center gap-2'>
                   <EnvironmentOutlined className='text-lg text-amber-500' />

@@ -85,5 +85,13 @@ export const userService = {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
+  },
+
+  async changeAvatar(formData: FormData): Promise<any> {
+    const response = await apiClient.put<any>('user/changeAvatar', formData, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return { data: response.data, status: response.status }
   }
 }

@@ -4,12 +4,13 @@ import { Modal, Slider, Button } from 'antd'
 
 interface ImageCropModalProps {
   open: boolean
+  loading: boolean
   image: string | null
   onClose: () => void
   onCropDone: (croppedImage: string) => void
 }
 
-const ImageCropModal = ({ open, image, onClose, onCropDone }: ImageCropModalProps) => {
+const ImageCropModal = ({ open, loading, image, onClose, onCropDone }: ImageCropModalProps) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedPixels, setCroppedPixels] = useState<Area | null>(null)
@@ -43,7 +44,6 @@ const ImageCropModal = ({ open, image, onClose, onCropDone }: ImageCropModalProp
     if (croppedImg) {
       onCropDone(croppedImg)
     }
-    onClose()
   }
 
   return (
@@ -72,7 +72,7 @@ const ImageCropModal = ({ open, image, onClose, onCropDone }: ImageCropModalProp
 
       <Slider min={1} max={3} step={0.1} className='mt-4' value={zoom} onChange={setZoom} />
 
-      <Button type='primary' block size='large' className='mt-4' onClick={handleSave}>
+      <Button type='primary' block size='large' className='mt-4' onClick={handleSave} loading={loading}>
         Save
       </Button>
     </Modal>

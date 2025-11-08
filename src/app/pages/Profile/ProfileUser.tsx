@@ -1,22 +1,45 @@
 import ProfileEdit from '@/app/components/Profile/ProfileEdit'
 import ProfileView from '@/app/components/Profile/ProfileView'
-import { useState } from 'react'
+import { userService } from '@/app/services/user.service'
+import { UserDto } from '@/app/types/User/user.dto'
+import { message, Spin } from 'antd'
+import { useEffect, useState } from 'react'
+
+const initialUserInfo = {
+  id: '',
+  status: '',
+  email: '',
+  userName: '',
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  gender: '',
+  phoneNumer: '',
+  description: ''
+}
 
 const ProfileUser = () => {
+  const [userInfo, setUserInfo] = useState<UserDto>(initialUserInfo)
+
   const [isEditing, setIsEditing] = useState(false)
-  const [profile] = useState({
-    name: 'Nguyễn Văn A',
-    bio: '???',
-    avatar: '/diverse-user-avatars.png',
-    gender: 'Male',
-    followers: 1250,
-    following: 342,
-    posts: 89,
-    location: 'Ho Chi Minh City, Vietnam',
-    website: 'https://github.com',
-    friends: 19,
-    email: 'user@example.com'
-  })
+  const [countLoading, setCountLoading] = useState<number>(0)
+
+  const getUserInfo = async () => {
+    try {
+      setCountLoading((pre) => pre + 1)
+      const res = await userService.getUserInfoByToken()
+      if (res.status === 200) {
+        setUserInfo(res.data as UserDto)
+        setCountLoading((pre) => pre - 1)
+      }
+    } catch {
+      message.error('Error while getting user infomation!')
+    }
+  }
+
+  useEffect(() => {
+    getUserInfo()
+  }, [])
 
   // const handleSave = (updatedProfile: typeof profile) => {
   //   setProfile(updatedProfile)
@@ -24,9 +47,12 @@ const ProfileUser = () => {
   // }
 
   return (
-    <main className='min-h-screen bg-background'>
-      {isEditing ? <ProfileEdit /> : <ProfileView profile={profile} onEdit={() => setIsEditing(true)} />}
-    </main>
+    <Spin spinning={countLoading !== 0}>
+      <main className='min-h-screen bg-background'>
+        {countLoading === 0 &&
+          (isEditing ? <ProfileEdit /> : <ProfileView userInfo={userInfo} onEdit={() => setIsEditing(true)} />)}
+      </main>
+    </Spin>
   )
 }
 
