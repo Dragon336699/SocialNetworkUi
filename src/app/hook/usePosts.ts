@@ -33,8 +33,8 @@ export const usePosts = (): UsePostsReturn => {
       user: {
         id: post.userId || post.user?.id || '',
         firstName: post.user?.firstName || 'Unknown',
-        lastName: post.user?.lastName || 'User',
-        avatar: post.user?.avatarUrl || `https://api.dicebear.com/7.x/miniavs/svg?seed=${post.userId}`
+        lastName: post.user?.lastName,
+        avatarUrl: post.user?.avatarUrl || `https://api.dicebear.com/7.x/miniavs/svg?seed=${post.userId}`
       },
       postImages: post.postImages || []
     }
