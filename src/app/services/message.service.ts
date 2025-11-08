@@ -48,5 +48,11 @@ export const messageService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+  async getUnreadMessagesNumber(): Promise<{ data: ResponseHasData<number>; status: number }> {
+    const response = await apiClient.get<ResponseHasData<number>>('message/getUnreadMessages', {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
   }
 }

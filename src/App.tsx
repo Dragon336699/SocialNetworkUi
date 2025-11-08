@@ -6,8 +6,13 @@ import ForgotPassword from './app/pages/ForgotPassword/ForgotPassword'
 import Layout from './app/common/Layout/Layout'
 import Home from './app/pages/Home/Home'
 import Inbox from './app/pages/Inbox/Inbox'
+import { useEffect } from 'react'
+import { chatService } from './app/services/chat.service'
 
 function App() {
+  useEffect(() => {
+    chatService.start()
+  }, [])
   return (
     <BrowserRouter>
       <Routes>

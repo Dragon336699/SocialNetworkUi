@@ -296,10 +296,21 @@ const Inbox: React.FC = () => {
   // Cập nhật item trong list conversation khi nhận được tin nhắn mới
   const updateItemInConversations = async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
     try {
-      conversations.forEach((conv) => {
-        if (conv.id === convId && conv.newestMessage && newestMessage !== null) conv.newestMessage = newestMessage
-        else if (conv.id === convId && conv.newestMessage && status !== null) conv.newestMessage.status = status
-      })
+      setConversations((prev) =>
+        prev.map((conv) => {
+          if (conv.id !== convId) return conv
+          const updatedConv = { ...conv }
+          if (newestMessage) {
+            updatedConv.newestMessage = newestMessage
+          } else if (status && updatedConv.newestMessage) {
+            updatedConv.newestMessage = {
+              ...updatedConv.newestMessage,
+              status
+            }
+          }
+          return updatedConv
+        })
+      )
     } catch (err) {
       return
     }
@@ -455,7 +466,7 @@ const Inbox: React.FC = () => {
 
   // Lấy thông tin user trong conversation
   useEffect(() => {
-    if (conversation) {
+    if (conversation && userInfo) {
       fetchConversationUsers()
     }
   }, [conversation])
