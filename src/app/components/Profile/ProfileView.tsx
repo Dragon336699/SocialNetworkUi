@@ -11,7 +11,6 @@ import {
   UserOutlined,
   CameraOutlined
 } from '@ant-design/icons'
-import { usePosts } from '@/app/hook/usePosts'
 import Post from '../Post/Post'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useState } from 'react'
@@ -21,6 +20,8 @@ import ImageCropModal from '@/app/common/Modals/ImageCropModal'
 import { UserDto } from '@/app/types/User/user.dto'
 import { userService } from '@/app/services/user.service'
 import { base64ToFile } from '@/app/helpers'
+import { PostData } from '@/app/types/Post/Post'
+import { postService } from '@/app/services/post.service'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -37,9 +38,8 @@ const profile = {
 }
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
-const ProfileView = ({ userInfo, onEdit }: { userInfo: UserDto; onEdit: () => void }) => {
+const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo: UserDto; onEdit: () => void }) => {
   const { userId } = useParams()
-  const { posts, createPost } = usePosts()
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<TabType>('posts')
 
@@ -50,7 +50,7 @@ const ProfileView = ({ userInfo, onEdit }: { userInfo: UserDto; onEdit: () => vo
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
   const handleCreatePost = async (formData: FormData) => {
-    const success = await createPost(formData)
+    const success = await postService.createPost(formData)
     if (success) {
       setIsOpenCreatePost(false)
     }
@@ -194,7 +194,7 @@ const ProfileView = ({ userInfo, onEdit }: { userInfo: UserDto; onEdit: () => vo
   }
 
   const stats = [
-    { label: 'Posts', value: profile.posts, active: 'posts' },
+    { label: 'Posts', value: posts.length, active: 'posts' },
     { label: 'Followers', value: profile.followers, active: 'followers' },
     { label: 'Following', value: profile.following, active: 'following' },
     { label: 'Friends', value: profile.friends, active: 'friends' }
@@ -269,32 +269,34 @@ const ProfileView = ({ userInfo, onEdit }: { userInfo: UserDto; onEdit: () => vo
                 }}
               />
               {/* <Avatar size={140} src={previewImage} className='border-4 border-white shadow-lg' /> */}
-              <Upload
-                showUploadList={false}
-                onChange={handleAvatarChange}
-                customRequest={({ onSuccess }) => {
-                  setTimeout(() => {
-                    if (onSuccess) {
-                      onSuccess('ok')
-                    }
-                  }, 0)
-                }}
-                accept='image/*'
-              >
-                <div
-                  className='absolute bottom-[2px] right-[37px] rounded-full cursor-pointer shadow-md transition
-             flex items-center justify-center'
-                  style={{
-                    width: 35,
-                    height: 35,
-                    transform: 'translate(25%, 25%)',
-                    backgroundColor: '#f8aeae',
-                    color: 'white'
+              {!userId && (
+                <Upload
+                  showUploadList={false}
+                  onChange={handleAvatarChange}
+                  customRequest={({ onSuccess }) => {
+                    setTimeout(() => {
+                      if (onSuccess) {
+                        onSuccess('ok')
+                      }
+                    }, 0)
                   }}
+                  accept='image/*'
                 >
-                  <CameraOutlined className='text-lg text-pink-500' />
-                </div>
-              </Upload>
+                  <div
+                    className='absolute bottom-[2px] right-[37px] rounded-full cursor-pointer shadow-md transition
+             flex items-center justify-center'
+                    style={{
+                      width: 35,
+                      height: 35,
+                      transform: 'translate(25%, 25%)',
+                      backgroundColor: '#f8aeae',
+                      color: 'white'
+                    }}
+                  >
+                    <CameraOutlined className='text-lg text-pink-500' />
+                  </div>
+                </Upload>
+              )}
             </Col>
             <Col flex='auto'>
               <Row justify='space-between' align='middle' className='mb-4'>
