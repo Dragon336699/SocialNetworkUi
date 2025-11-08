@@ -7,6 +7,7 @@ import { LoginRequest } from '../types/User/Requests/loginReq'
 import { RequestOTPRequest, VerifyOTPRequest } from '../types/User/Requests/otpReq'
 import { ChangePasswordRequest, ResetPasswordRequest } from '../types/User/Requests/passwordReq'
 import { RegisterRequest } from '../types/User/Requests/registerReq'
+import { UpdateProfileRequest } from '../types/User/Requests/updateProfileReq'
 import { UserDto } from '../types/User/user.dto'
 
 export const userService = {
@@ -82,6 +83,21 @@ export const userService = {
 
   async searchUsers(keyword: string): Promise<{ data: BaseResponse | ResponseHasData<UserDto[]>; status: number }> {
     const response = await apiClient.get<BaseResponse | ResponseHasData<UserDto[]>>(`user/search?keyword=${keyword}`, {
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
+  },
+
+  async changeAvatar(formData: FormData): Promise<any> {
+    const response = await apiClient.put<any>('user/changeAvatar', formData, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return { data: response.data, status: response.status }
+  },
+
+  async updateInfo(body: UpdateProfileRequest): Promise<{ data: any; status: number }> {
+    const response = await apiClient.put<any>('user/updateInfo', body, {
       withCredentials: true
     })
     return { data: response.data, status: response.status }

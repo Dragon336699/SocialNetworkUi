@@ -6,4 +6,7 @@ export interface UserDto {
   firstName: string
   lastName: string | null
   avatarUrl: string | null
+  gender?: string
+  phoneNumer?: string
+  description?: string
 }

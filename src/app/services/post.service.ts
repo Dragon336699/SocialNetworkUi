@@ -1,6 +1,12 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
-import { GetAllPostsResponse, GetPostByIdResponse, UpdatePostResponse, DeletePostResponse, PostReactionResponse } from '../types/Post/Post'
+import {
+  GetAllPostsResponse,
+  GetPostByIdResponse,
+  UpdatePostResponse,
+  DeletePostResponse,
+  PostReactionResponse
+} from '../types/Post/Post'
 
 export const postService = {
   async createPost(formData: FormData): Promise<BaseResponse> {
@@ -19,6 +25,20 @@ export const postService = {
     return data
   },
 
+  async getPostsByUser(
+    userId: string,
+    skip: number = 0,
+    take: number = 10
+  ): Promise<{ data: GetAllPostsResponse; status: number }> {
+    const res = await apiClient.get(`post/user/${userId}`, {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return {
+      data: res.data,
+      status: res.status
+    }
+  },
   async getPostById(postId: string): Promise<GetPostByIdResponse> {
     const { data } = await apiClient.get<GetPostByIdResponse>(`post/${postId}`, {
       withCredentials: true
@@ -42,12 +62,16 @@ export const postService = {
   },
 
   async reactionPost(postId: string, reaction: string): Promise<PostReactionResponse> {
-    const { data } = await apiClient.post<PostReactionResponse>('post/reaction', {
-      postId,
-      reaction
-    }, {
-      withCredentials: true
-    })
+    const { data } = await apiClient.post<PostReactionResponse>(
+      'post/reaction',
+      {
+        postId,
+        reaction
+      },
+      {
+        withCredentials: true
+      }
+    )
     return data
   }
 }

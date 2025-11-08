@@ -73,3 +73,7 @@
 .inputSubmit:hover {
   background-color: var(--login-input-submit-hover-color);
 }
+
+.spinner :global(.ant-spin-dot-item) {
+  background-color: var(--login-box-color) !important;
+}

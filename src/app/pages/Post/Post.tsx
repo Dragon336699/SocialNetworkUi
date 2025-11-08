@@ -291,7 +291,7 @@ const Post: React.FC<PostProps> = ({
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
-          {reactions.length > 0 && (
+          {reactions?.length > 0 && (
             <div className='flex items-center gap-2 mb-3 text-sm text-gray-600'>
               {/* Top reactions icons */}
               <div className='flex items-center -space-x-1'>

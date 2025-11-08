@@ -73,8 +73,8 @@ const Navbar: React.FC = () => {
       } else if (response.status === 200) {
         const resData = response.data as UserDto
         setItems((prev) => {
-          if (prev.some((i) => i?.key === 'Profile')) return prev
-          return [...prev, getItem('Profile', 'Profile', <Avatar src={resData.avatarUrl} size='small' />)]
+          if (prev.some((i) => i?.key === 'profile')) return prev
+          return [...prev, getItem('Profile', 'profile', <Avatar src={resData.avatarUrl} size='small' />)]
         })
       }
     } catch (err) {

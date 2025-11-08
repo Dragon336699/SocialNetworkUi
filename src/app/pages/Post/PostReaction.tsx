@@ -87,7 +87,7 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
 
   // Xử lý khi người dùng click vào nút Like
   const handleLikeClick = () => {
-    const currentUserReaction = reactions.find(r => r.userId === currentUserId)
+    const currentUserReaction = reactions?.find(r => r.userId === currentUserId)
     if (currentUserReaction) {
       handleReaction(currentUserReaction.reaction)
     } else {
@@ -95,7 +95,7 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
     }
   }
 
-  const userReaction = reactions.find(r => r.userId === currentUserId)
+  const userReaction = reactions?.find(r => r.userId === currentUserId)
 
   return (
     <div className='relative'>

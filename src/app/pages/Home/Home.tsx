@@ -1,4 +1,4 @@
-import CreatePostModal from '@/app/common/modals/CreatePostModal'
+import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import Post from '../Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { Avatar, Typography, Spin, Alert, Button, Empty, message } from 'antd'
@@ -139,7 +139,7 @@ const Home = () => {
 
       <div className='max-w-2xl mx-auto px-4'>
         {/* Create Post Section */}
-        <div className='bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-200'>
+        <div className='bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-200'>
           <div
             onClick={() => setIsOpenCreatePost(true)}
             className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'

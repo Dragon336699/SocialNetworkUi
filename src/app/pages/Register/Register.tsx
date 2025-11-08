@@ -260,7 +260,7 @@ const Register: React.FC = () => {
                 className={`${styles.inputSubmit} w-full cursor-pointer font-medium flex justify-center items-center gap-2`}
                 disabled={loading}
               >
-                {loading ? <Spin size='small' /> : 'Register'}
+                {loading ? <Spin size='small' className={styles.spinner}/> : 'Register'}
               </button>
             </div>
           )}
