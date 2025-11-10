@@ -181,7 +181,7 @@ const Post: React.FC<PostProps> = ({
           <svg className={iconClass} fill='currentColor' viewBox='0 0 20 20'>
             <path
               fillRule='evenodd'
-              d='M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0710 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z'
+              d='M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z'
               clipRule='evenodd'
             />
           </svg>
@@ -205,6 +205,75 @@ const Post: React.FC<PostProps> = ({
       default:
         return null
     }
+  }
+
+  const renderReactionsInfo = () => {
+    if (!reactions || reactions.length === 0) {
+      return null
+    }
+
+    // Lấy các reactions unique để hiển thị icon
+    const uniqueReactions = Array.from(new Set(reactions.map((r) => r.reaction)))
+
+    const currentUserReaction = reactions.find(r => r.userId === currentUserId)
+
+    const getFullName = (user: any) => {
+      if (!user) return 'Người dùng'
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Người dùng'
+    }
+
+    // Lấy tên người react để hiển thị
+    const getReactionText = () => {
+      if (reactions.length === 1) {
+        const reactionUser = reactions[0]?.user
+        return getFullName(reactionUser)
+      } else if (reactions.length === 2) {
+        if (currentUserReaction) {
+          const otherUser = reactions.find(r => r.userId !== currentUserId)?.user
+          if (otherUser) {
+            return `Bạn và ${getFullName(otherUser)}`
+          }
+          return 'Bạn và 1 người khác'
+        }
+        const user1 = reactions[0]?.user
+        const user2 = reactions[1]?.user
+        return `${getFullName(user1)} và ${getFullName(user2)}`
+      } else {
+        if (currentUserReaction) {
+          const othersCount = reactions.length - 1
+          return `Bạn và ${othersCount} người khác`
+        }
+        const firstUser = reactions[0]?.user
+        const othersCount = reactions.length - 1
+        return `${getFullName(firstUser)} và ${othersCount} người khác`
+      }
+    }
+
+    return (
+      <div className='flex items-center justify-between text-sm text-gray-600 mb-3'>
+        <div className='flex items-center gap-2'>
+          <div className='flex items-center -space-x-1'>
+            {uniqueReactions.slice(0, 3).map((reactionEmoji, index) => (
+              <div
+                key={index}
+                className='w-5 h-5 bg-white rounded-full border border-white flex items-center justify-center text-xs shadow-sm'
+                style={{ zIndex: 3 - index }}
+              >
+                {reactionEmoji}
+              </div>
+            ))}
+          </div>
+
+          {/* Reaction text */}
+          <span className='hover:underline cursor-pointer text-gray-600'>{getReactionText()}</span>
+        </div>
+
+        {/* Right side: Comments count (nếu có) */}
+        {/* {totalComment > 0 && (
+          <span className='hover:underline cursor-pointer text-gray-600'>{totalComment} bình luận</span>
+        )} */}
+      </div>
+    )
   }
 
   const goToPrevious = () => {
@@ -291,27 +360,10 @@ const Post: React.FC<PostProps> = ({
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
-          {reactions?.length > 0 && (
-            <div className='flex items-center gap-2 mb-3 text-sm text-gray-600'>
-              {/* Top reactions icons */}
-              <div className='flex items-center -space-x-1'>
-                {reactions.slice(0, 3).map((reaction, index) => (
-                  <div
-                    key={index}
-                    className='w-5 h-5 bg-white rounded-full border border-gray-200 flex items-center justify-center text-xs shadow-sm'
-                    style={{ zIndex: 3 - index }}
-                  >
-                    {reaction.reaction}
-                  </div>
-                ))}
-              </div>
+          {/* Reactions info - Facebook style */}
+          {renderReactionsInfo()}
 
-              {/* Names and count */}
-              <span className='text-sm cursor-pointer'>{reactions.length}</span>
-            </div>
-          )}
-
-          <div className='flex items-center justify-between space-x-6 mb-3'>
+          <div className='flex items-center justify-between space-x-6 mb-3 pt-2 border-t border-gray-100'>
             <PostReaction
               postId={id}
               reactions={reactions}
