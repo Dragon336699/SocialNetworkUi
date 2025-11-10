@@ -336,8 +336,10 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                 <div className='flex items-center gap-2'>
                   {userInfo.gender === 'Male' ? (
                     <ManOutlined className='text-lg text-blue-500' />
-                  ) : (
+                  ) : userInfo.gender === 'Female' ? (
                     <WomanOutlined className='text-lg text-pink-500' />
+                  ) : (
+                    <UserOutlined className='text-md text-purple-500' />
                   )}
                   <span>{userInfo.gender}</span>
                 </div>

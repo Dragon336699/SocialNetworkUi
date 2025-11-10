@@ -86,7 +86,17 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack
             </Form.Item>
           </div>
 
-          <Form.Item label='Email' required>
+          <Form.Item
+            label='Email'
+            required
+            name='email'
+            rules={[
+              {
+                type: 'email',
+                message: 'Invalid email format!'
+              }
+            ]}
+          >
             <Input
               name='email'
               type='email'
