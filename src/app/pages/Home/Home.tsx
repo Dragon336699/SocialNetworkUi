@@ -12,7 +12,6 @@ const { Title, Text } = Typography
 const Home = () => {
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
 
-  const [currentUserId, setCurrentUserId] = useState<string>('')
   const [userInfo, setUserInfo] = useState<UserDto | null>(null)
 
   // Lấy user info khi component mount
@@ -23,7 +22,6 @@ const Home = () => {
         if (response.status === 200 && response.data) {
           if ('id' in response.data) {
             const userData = response.data as UserDto
-            setCurrentUserId(userData.id)
             setUserInfo(userData)
           }
         }
@@ -162,7 +160,7 @@ const Home = () => {
                   <div key={`${post.id}-${index}`}>
                     <Post
                       {...post}
-                      currentUserId={currentUserId || ''}
+                      currentUserId={userInfo?.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
                     />
