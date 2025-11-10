@@ -13,6 +13,7 @@ const Home = () => {
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
 
   const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [userInfo, setUserInfo] = useState<UserDto | null>(null)
 
   // Lấy user info khi component mount
   useEffect(() => {
@@ -23,6 +24,7 @@ const Home = () => {
           if ('id' in response.data) {
             const userData = response.data as UserDto
             setCurrentUserId(userData.id)
+            setUserInfo(userData)
           }
         }
       } catch (error) {
@@ -144,7 +146,7 @@ const Home = () => {
             onClick={() => setIsOpenCreatePost(true)}
             className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
           >
-            <Avatar size={48} src='https://api.dicebear.com/7.x/miniavs/svg?seed=current-user' />
+            <Avatar size={48} src={userInfo?.avatarUrl} />
             <div className='flex-1 bg-neutral-100 rounded-full px-4 py-3 text-neutral-600 hover:bg-neutral-200 transition-colors'>
               What's on your mind?
             </div>
