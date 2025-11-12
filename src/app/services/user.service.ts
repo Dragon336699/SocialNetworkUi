@@ -60,8 +60,8 @@ export const userService = {
     return data
   },
 
-  async getUserInfoByToken(): Promise<{ data: BaseResponse | UserDto; status: number }> {
-    const response = await apiClient.get<BaseResponse | UserDto>('user/getUserInfo', {
+  async getUserInfoByToken(): Promise<{ data: UserDto; status: number }> {
+    const response = await apiClient.get<UserDto>('user/getUserInfo', {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
