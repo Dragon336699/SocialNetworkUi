@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { LoginRequest } from '@/app/types/User/Requests/loginReq'
 import { userService } from '@/app/services/user.service'
 import { useNavigate } from 'react-router-dom'
+import { useUserStore } from '@/app/stores/auth'
 
 const Login: React.FC = () => {
   const goolgeClientId = '45298468389-dg5oe6b4ghpfogdddidgsmq5s8g8i7b2.apps.googleusercontent.com'
@@ -20,6 +21,7 @@ const Login: React.FC = () => {
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const navigate = useNavigate()
+  const { setIsLoggedIn, fetchUser } = useUserStore()
 
   const onLoginSubmit = async (data: LoginRequest) => {
     try {
@@ -28,6 +30,8 @@ const Login: React.FC = () => {
       if (loginData.message) {
         setIsLoading(false)
         message.success('Đăng nhập thành công!')
+        setIsLoggedIn(true)
+        await fetchUser()
         navigate('/home')
       }
     } catch (err) {
