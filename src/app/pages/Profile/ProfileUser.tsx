@@ -6,6 +6,7 @@ import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
 import { message, Spin } from 'antd'
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 const initialUserInfo = {
   id: '',
@@ -21,6 +22,8 @@ const initialUserInfo = {
 }
 
 const ProfileUser = () => {
+  const { userId } = useParams()
+  console.log('🚀 ~ ProfileUser ~ userId:', userId)
   const [userInfo, setUserInfo] = useState<UserDto>(initialUserInfo)
   const [posts, setPosts] = useState<PostData[]>([])
 
@@ -30,7 +33,9 @@ const ProfileUser = () => {
   const getUserInfo = async () => {
     try {
       setCountLoading((pre) => pre + 1)
-      const res = await userService.getUserInfoByToken()
+      let res
+      if (userId) res = await userService.getUserInfoById(userId)
+      else res = await userService.getUserInfoByToken()
       if (res.status === 200) {
         setUserInfo(res.data as UserDto)
         setCountLoading((pre) => pre - 1)
@@ -42,9 +47,9 @@ const ProfileUser = () => {
 
   const getPost = async () => {
     try {
-      if (!userInfo.id) return
+      if (!userInfo.id && userId) return
       setCountLoading((pre) => pre + 1)
-      const res = await postService.getPostsByUser(userInfo.id)
+      const res = await postService.getPostsByUser(userId || userInfo.id)
       if (res.status === 200) {
         setPosts(res.data.posts)
         setCountLoading((pre) => pre - 1)
@@ -56,7 +61,8 @@ const ProfileUser = () => {
 
   useEffect(() => {
     getUserInfo()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   useEffect(() => {
     if (userInfo.id) {
