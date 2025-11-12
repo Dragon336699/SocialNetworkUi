@@ -10,9 +10,18 @@ import { UserDto } from '@/app/types/User/user.dto'
 const { Title, Text } = Typography
 
 const Home = () => {
+  const defaultUser: UserDto = {
+    id: '',
+    avatarUrl: '',
+    firstName: 'Guest',
+    lastName: '',
+    email: '',
+    userName: '',
+    status: ''
+  }
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
 
-  const [userInfo, setUserInfo] = useState<UserDto | null>(null)
+  const [userInfo, setUserInfo] = useState<UserDto>(defaultUser)
 
   // Lấy user info khi component mount
   useEffect(() => {
@@ -163,6 +172,7 @@ const Home = () => {
                       currentUserId={userInfo?.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
+                      currentUser={userInfo}
                     />
                   </div>
                 ))}

@@ -26,7 +26,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const imageCount = postImages.length
 
   return (
-    <div className='px-4 pb-3'>
+    <div>
       <div className='relative bg-gray-100 rounded-lg overflow-hidden'>
         {/* HIỂN THỊ ẢNH CHÍNH */}
         <div className='relative h-64 md:h-80'>

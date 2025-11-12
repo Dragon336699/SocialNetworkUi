@@ -9,12 +9,15 @@ import PostReaction from './PostReaction'
 import { message } from 'antd'
 import { postService } from '@/app/services/post.service'
 import { Avatar } from 'antd'
+import PostCommentModal from '../Comment/PostCommentModal'
+import { UserDto } from '@/app/types/User/user.dto'
 
 interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
   onPostDeleted?: (postId: string) => void
   currentUserId?: string
+  currentUser: UserDto
 }
 
 const Post: React.FC<PostProps> = ({
@@ -29,9 +32,9 @@ const Post: React.FC<PostProps> = ({
   postReactionUsers,
   onPostUpdated,
   onPostDeleted,
-  currentUserId = ''
+  currentUserId = '',
+  currentUser
 }) => {
-  const [commentText, setCommentText] = useState('')
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -40,13 +43,37 @@ const Post: React.FC<PostProps> = ({
   const [reactions, setReactions] = useState<PostReactionDto[]>(postReactionUsers)
   const [localTotalLiked, setLocalTotalLiked] = useState(totalLiked)
 
+  const [showComments, setShowComments] = useState(false)
+  const [localTotalComment, setLocalTotalComment] = useState(totalComment)
+
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
-  // Đồng bộ reactions và totalLiked từ props khi chúng thay đổi
   useEffect(() => {
     setReactions(postReactionUsers)
     setLocalTotalLiked(totalLiked)
   }, [postReactionUsers, totalLiked])
+
+  useEffect(() => {
+    setLocalTotalComment(totalComment)
+  }, [totalComment])
+
+  const handleCommentCountChange = (newCount: number) => {
+    setLocalTotalComment(newCount)
+
+    if (onPostUpdated) {
+      onPostUpdated({
+        id,
+        content,
+        totalLiked,
+        totalComment: newCount,
+        createdAt,
+        user,
+        postImages,
+        postPrivacy,
+        postReactionUsers
+      } as PostData)
+    }
+  }
 
   // Xử lý gửi reaction cho bài viết
   const handleSendReaction = async (postId: string, reaction: string) => {
@@ -208,44 +235,38 @@ const Post: React.FC<PostProps> = ({
   }
 
   const renderReactionsInfo = () => {
-    if (!reactions || reactions.length === 0) {
+    const hasReactions = postReactionUsers && postReactionUsers.length > 0
+    const hasComments = totalComment > 0
+
+    if (!hasReactions && !hasComments) {
       return null
     }
 
-    // Lấy các reactions unique để hiển thị icon
-    const uniqueReactions = Array.from(new Set(reactions.map((r) => r.reaction)))
+    const uniqueReactions = hasReactions ? Array.from(new Set(postReactionUsers.map((r) => r.reaction))) : []
 
-    const currentUserReaction = reactions.find(r => r.userId === currentUserId)
+    const currentUserReaction = hasReactions ? postReactionUsers.find((r) => r.userId === currentUserId) : null
 
     const getFullName = (user: any) => {
       if (!user) return 'Người dùng'
       return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Người dùng'
     }
 
-    // Lấy tên người react để hiển thị
     const getReactionText = () => {
-      if (reactions.length === 1) {
-        const reactionUser = reactions[0]?.user
-        return getFullName(reactionUser)
-      } else if (reactions.length === 2) {
+      if (!hasReactions) return ''
+
+      if (postReactionUsers.length === 1) {
+        return getFullName(postReactionUsers[0]?.user)
+      } else if (postReactionUsers.length === 2) {
         if (currentUserReaction) {
-          const otherUser = reactions.find(r => r.userId !== currentUserId)?.user
-          if (otherUser) {
-            return `Bạn và ${getFullName(otherUser)}`
-          }
-          return 'Bạn và 1 người khác'
+          const otherUser = postReactionUsers.find((r) => r.userId !== currentUserId)?.user
+          return otherUser ? `Bạn và ${getFullName(otherUser)}` : 'Bạn và 1 người khác'
         }
-        const user1 = reactions[0]?.user
-        const user2 = reactions[1]?.user
-        return `${getFullName(user1)} và ${getFullName(user2)}`
+        return `${getFullName(postReactionUsers[0]?.user)} và ${getFullName(postReactionUsers[1]?.user)}`
       } else {
         if (currentUserReaction) {
-          const othersCount = reactions.length - 1
-          return `Bạn và ${othersCount} người khác`
+          return `Bạn và ${postReactionUsers.length - 1} người khác`
         }
-        const firstUser = reactions[0]?.user
-        const othersCount = reactions.length - 1
-        return `${getFullName(firstUser)} và ${othersCount} người khác`
+        return `${getFullName(postReactionUsers[0]?.user)} và ${postReactionUsers.length - 1} người khác`
       }
     }
 
@@ -268,10 +289,11 @@ const Post: React.FC<PostProps> = ({
           <span className='hover:underline cursor-pointer text-gray-600'>{getReactionText()}</span>
         </div>
 
-        {/* Right side: Comments count (nếu có) */}
-        {/* {totalComment > 0 && (
-          <span className='hover:underline cursor-pointer text-gray-600'>{totalComment} bình luận</span>
-        )} */}
+        {localTotalComment > 0 && (
+          <button onClick={() => setShowComments(true)} className=' flex hover:underline cursor-pointer text-gray-600'>
+            {localTotalComment} Comment
+          </button>
+        )}
       </div>
     )
   }
@@ -362,7 +384,6 @@ const Post: React.FC<PostProps> = ({
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
-          {/* Reactions info - Facebook style */}
           {renderReactionsInfo()}
 
           <div className='flex items-center justify-between space-x-6 mb-3 pt-2 border-t border-gray-100'>
@@ -373,7 +394,10 @@ const Post: React.FC<PostProps> = ({
               currentUserId={currentUserId}
               totalLiked={localTotalLiked}
             />
-            <button className='flex items-center space-x-2 px-2 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors'>
+            <button
+              onClick={() => setShowComments(true)}
+              className='flex items-center space-x-2 px-2 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors'
+            >
               <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
                   strokeLinecap='round'
@@ -444,6 +468,29 @@ const Post: React.FC<PostProps> = ({
         onDeleteSuccess={handleDeleteSuccess}
         postId={id}
       />
+
+      {/* PostCommentModal */}
+      {showComments && (
+        <PostCommentModal
+          isOpen={showComments}
+          onClose={() => setShowComments(false)}
+          postId={id}
+          currentUserId={currentUserId}
+          currentUser={currentUser}
+          postContent={content}
+          postUser={user}
+          postImages={postImages}
+          postCreatedAt={createdAt}
+          postPrivacy={postPrivacy}
+          totalLiked={localTotalLiked}
+          totalComment={localTotalComment}
+          postReactionUsers={reactions}
+          onCommentCountChange={handleCommentCountChange}
+          onPostReaction={handleSendReaction}
+          onPostUpdated={onPostUpdated}
+          onPostDeleted={onPostDeleted}
+        />
+      )}
     </>
   )
 }
