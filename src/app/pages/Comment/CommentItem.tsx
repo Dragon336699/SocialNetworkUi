@@ -54,27 +54,34 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
   const [isHovering, setIsHovering] = useState(false)
 
+  const [localReactions, setLocalReactions] = useState(comment.commentReactionUsers || [])
+
   const CHARACTER_LIMIT = 300
-  
   const menuRef = useRef<HTMLDivElement>(null)
   const reactionBarRef = useRef<HTMLDivElement>(null)
 
   const fullName = `${comment.user?.firstName || ''} ${comment.user?.lastName || ''}`.trim()
   const isOwner = comment.userId === currentUserId
-  const userReaction = comment.commentReactionUsers?.find((r) => r.userId === currentUserId)
-  const reactionCount = comment.commentReactionUsers?.length || 0
+
+  const userReaction = localReactions?.find((r) => r.userId === currentUserId)
+  const reactionCount = localReactions?.length || 0
 
   const isLongContent = comment.content.length > CHARACTER_LIMIT
   const displayContent = showFullContent || !isLongContent ? comment.content : comment.content.substring(0, CHARACTER_LIMIT) + '...'
 
+  // Cập nhật localReactions khi comment prop thay đổi
+  useEffect(() => {
+    setLocalReactions(comment.commentReactionUsers || [])
+  }, [comment.commentReactionUsers])
+
   // Hàm tính thống kê reaction
   const getReactionStats = () => {
-    if (!comment.commentReactionUsers || comment.commentReactionUsers.length === 0) {
+    if (!localReactions || localReactions.length === 0) {
       return { uniqueReactions: [], total: 0 }
     }
 
     const reactionCounts: { [key: string]: number } = {}
-    comment.commentReactionUsers.forEach(r => {
+    localReactions.forEach(r => {
       reactionCounts[r.reaction] = (reactionCounts[r.reaction] || 0) + 1
     })
 
@@ -84,7 +91,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
     return {
       uniqueReactions: sortedReactions.slice(0, 3),
-      total: comment.commentReactionUsers.length
+      total: localReactions.length
     }
   }
 
@@ -160,14 +167,41 @@ const CommentItem: React.FC<CommentItemProps> = ({
   // Hàm xử lý reaction cho bình luận
   const handleReaction = async (reaction: string) => {
     try {
+      const currentUserReaction = localReactions.find(r => r.userId === currentUserId)
+      let newReactions = [...localReactions]
+
+      if (currentUserReaction) {
+        if (currentUserReaction.reaction === reaction) {
+          // Xóa reaction
+          newReactions = localReactions.filter(r => r.userId !== currentUserId)
+        } else {
+          // Thay đổi reaction
+          newReactions = localReactions.map(r => r.userId === currentUserId ? { ...r, reaction: reaction } : r)
+        }
+      } else {
+        const newReaction = {
+          id: Date.now().toString(),
+          userId: currentUserId,
+          reaction: reaction,
+          user: comment.user
+        }
+        newReactions = [...localReactions, newReaction]
+      }
+      setLocalReactions(newReactions)
+
       const response = await commentService.reactionComment({
         commentId: comment.id,
         reaction
       })
-      if (response.message?.includes('success')) {
-        loadComments()
+
+      // Nếu API thất bại, revert lại
+      if (!response.message?.includes('success')) {
+        setLocalReactions(localReactions)
+        message.error('Failed to perform reaction')
       }
     } catch (error) {
+      // Revert nếu có lỗi
+      setLocalReactions(localReactions)
       message.error('Failed to perform reaction')
     }
     setShowReactionPicker(false)
