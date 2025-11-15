@@ -183,19 +183,19 @@ const Post: React.FC<PostProps> = ({
     const diffInYears = Math.floor(diffInDays / 365)
 
     if (diffInSeconds < 60) {
-      return 'Vừa xong'
+      return 'Just now'
     } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} phút trước`
+      return `${diffInMinutes} minutes ago`
     } else if (diffInHours < 24) {
-      return `${diffInHours} giờ trước`
+      return `${diffInHours} hours ago`
     } else if (diffInDays < 7) {
-      return `${diffInDays} ngày trước`
+      return `${diffInDays} days ago`
     } else if (diffInWeeks < 4) {
-      return `${diffInWeeks} tuần trước`
+      return `${diffInWeeks} weeks ago`
     } else if (diffInMonths < 12) {
-      return `${diffInMonths} tháng trước`
+      return `${diffInMonths} months ago`
     } else {
-      return `${diffInYears} năm trước`
+      return `${diffInYears} years ago`
     }
   }
 
@@ -247,8 +247,8 @@ const Post: React.FC<PostProps> = ({
     const currentUserReaction = hasReactions ? postReactionUsers.find((r) => r.userId === currentUserId) : null
 
     const getFullName = (user: any) => {
-      if (!user) return 'Người dùng'
-      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Người dùng'
+      if (!user) return 'User'
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     }
 
     const getReactionText = () => {
@@ -259,14 +259,14 @@ const Post: React.FC<PostProps> = ({
       } else if (postReactionUsers.length === 2) {
         if (currentUserReaction) {
           const otherUser = postReactionUsers.find((r) => r.userId !== currentUserId)?.user
-          return otherUser ? `Bạn và ${getFullName(otherUser)}` : 'Bạn và 1 người khác'
+          return otherUser ? `You and ${getFullName(otherUser)}` : 'You and 1 other person'
         }
-        return `${getFullName(postReactionUsers[0]?.user)} và ${getFullName(postReactionUsers[1]?.user)}`
+        return `${getFullName(postReactionUsers[0]?.user)} and ${getFullName(postReactionUsers[1]?.user)}`
       } else {
         if (currentUserReaction) {
-          return `Bạn và ${postReactionUsers.length - 1} người khác`
+          return `You and ${postReactionUsers.length - 1} others`
         }
-        return `${getFullName(postReactionUsers[0]?.user)} và ${postReactionUsers.length - 1} người khác`
+        return `${getFullName(postReactionUsers[0]?.user)} and ${postReactionUsers.length - 1} others`
       }
     }
 

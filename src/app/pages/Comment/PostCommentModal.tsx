@@ -401,19 +401,25 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     const diffInMs = now.getTime() - postTime.getTime()
     const diffInMinutes = Math.floor(diffInMs / 60000)
 
-    if (diffInMinutes < 1) return 'Vừa xong'
-    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
+
     const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `${diffInHours} giờ trước`
+    if (diffInHours < 24) return `${diffInHours} hours ago`
+
     const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 7) return `${diffInDays} ngày trước`
+    if (diffInDays < 7) return `${diffInDays} days ago`
+
     const diffInWeeks = Math.floor(diffInDays / 7)
-    if (diffInWeeks < 4) return `${diffInWeeks} tuần trước`
+    if (diffInWeeks < 4) return `${diffInWeeks} weeks ago`
+
     const diffInMonths = Math.floor(diffInDays / 30)
-    if (diffInMonths < 12) return `${diffInMonths} tháng trước`
+    if (diffInMonths < 12) return `${diffInMonths} months ago`
+
     const diffInYears = Math.floor(diffInDays / 365)
-    return `${diffInYears} năm trước`
+    return `${diffInYears} years ago`
   }
+
   // Hàm hiển thị biểu tượng quyền riêng tư
   const renderPrivacyIcon = () => {
     const iconClass = 'w-3 h-3 text-gray-500'
@@ -462,8 +468,8 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     const currentUserReaction = hasReactions ? postReactionUsers.find((r) => r.userId === currentUserId) : null
     // Hàm lấy tên đầy đủ của người dùng
     const getFullName = (user: any) => {
-      if (!user) return 'Người dùng'
-      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Người dùng'
+      if (!user) return 'User'
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     }
     // Hàm tạo văn bản hiển thị cho reaction
     const getReactionText = () => {
@@ -474,14 +480,14 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
       } else if (postReactionUsers.length === 2) {
         if (currentUserReaction) {
           const otherUser = postReactionUsers.find((r) => r.userId !== currentUserId)?.user
-          return otherUser ? `Bạn và ${getFullName(otherUser)}` : 'Bạn và 1 người khác'
+          return otherUser ? `You and ${getFullName(otherUser)}` : 'You and 1 other person'
         }
-        return `${getFullName(postReactionUsers[0]?.user)} và ${getFullName(postReactionUsers[1]?.user)}`
+        return `${getFullName(postReactionUsers[0]?.user)} and ${getFullName(postReactionUsers[1]?.user)}`
       } else {
         if (currentUserReaction) {
-          return `Bạn và ${postReactionUsers.length - 1} người khác`
+          return `You and ${postReactionUsers.length - 1} others`
         }
-        return `${getFullName(postReactionUsers[0]?.user)} và ${postReactionUsers.length - 1} người khác`
+        return `${getFullName(postReactionUsers[0]?.user)} and ${postReactionUsers.length - 1} others`
       }
     }
 

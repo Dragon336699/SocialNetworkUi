@@ -143,18 +143,18 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   // Hàm tính thời gian đã trôi qua kể từ khi bình luận
   const getTimeAgo = (dateString?: string) => {
-    if (!dateString) return 'Vừa xong'
+    if (!dateString) return 'Just now'
     const date = new Date(dateString)
     const now = new Date()
     const diffInMs = now.getTime() - date.getTime()
     const diffInMinutes = Math.floor(diffInMs / 60000)
 
-    if (diffInMinutes < 1) return 'Vừa xong'
-    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
     const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `${diffInHours} giờ trước`
+    if (diffInHours < 24) return `${diffInHours} hours ago`
     const diffInDays = Math.floor(diffInHours / 24)
-    return `${diffInDays} ngày trước`
+    return `${diffInDays} days ago`
   }
 
   // Hàm xử lý reaction cho bình luận
