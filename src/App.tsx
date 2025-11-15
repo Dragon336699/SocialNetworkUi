@@ -9,7 +9,7 @@ import ProfileUser from './app/pages/Profile/ProfileUser'
 import Inbox from './app/pages/Inbox/Inbox'
 import { useEffect } from 'react'
 import { chatService } from './app/services/chat.service'
-
+import PostDetail from './app/pages/Post/PostDetail'
 function App() {
   useEffect(() => {
     chatService.start()
@@ -21,6 +21,7 @@ function App() {
         <Route path='/login' element={<Login />}></Route>
         <Route path='/emailConfirm/:status' element={<EmailConfirm />}></Route>
         <Route path='/register' element={<Register />}></Route>
+        <Route path='/post/:postId' element={<PostDetail />}></Route>
         <Route element={<Layout />}>
           <Route path='/' element={<Navigate to='/home' replace />}></Route>
           <Route path='/home' element={<Home />}></Route>

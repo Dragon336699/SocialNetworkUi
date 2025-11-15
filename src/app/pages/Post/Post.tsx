@@ -354,14 +354,13 @@ const Post: React.FC<PostProps> = ({
                 <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
               </svg>
             </button>
-            {currentUserId == user.id && (
-              <PostDropdownMenu
-                isOpen={showDropdown}
-                onClose={() => setShowDropdown(false)}
-                postId={id}
-                {...handleDropdownActions}
-              />
-            )}
+            <PostDropdownMenu
+              isOpen={showDropdown}
+              onClose={() => setShowDropdown(false)}
+              postId={id}
+              isOwner={currentUserId === user.id}
+              {...handleDropdownActions}
+            />
           </div>
         </div>
 

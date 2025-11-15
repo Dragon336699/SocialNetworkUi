@@ -561,15 +561,15 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                   >
                     <MoreOutlined style={{ fontSize: '20px' }} />
                   </button>
-                  {isCurrentUserPost && (
-                    <PostDropdownMenu
-                      isOpen={showDropdown}
-                      onClose={() => setShowDropdown(false)}
-                      postId={postId}
-                      onEdit={handleEditPost}
-                      onDeleteClick={handleDeleteClick}
-                    />
-                  )}
+
+                  <PostDropdownMenu
+                    isOpen={showDropdown}
+                    isOwner={isCurrentUserPost}
+                    onClose={() => setShowDropdown(false)}
+                    postId={postId}
+                    onEdit={handleEditPost}
+                    onDeleteClick={handleDeleteClick}
+                  />
                 </div>
               </div>
             </div>
