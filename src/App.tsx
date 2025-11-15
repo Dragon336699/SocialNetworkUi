@@ -22,7 +22,7 @@ const PublicRoute = () => {
 }
 
 function App() {
-  const { isLoggedIn, fetchUser } = useUserStore()
+  const { isLoggedIn, fetchUser, user } = useUserStore()
 
   useEffect(() => {
     fetchUser()
@@ -47,8 +47,8 @@ function App() {
           <Route element={<Layout />}>
             <Route path='/' element={<Navigate to='/home' replace />} />
             <Route path='/home' element={<Home />} />
-            <Route path='/profile' element={<ProfileUser />} />
-            <Route path='/profile/:userId' element={<ProfileUser />} />
+            <Route path='/profile' element={<Navigate to={`/profile/${user?.userName}`} replace />} />
+            <Route path='/profile/:userName' element={<ProfileUser />} />
             <Route path='/inbox' element={<Inbox />} />
             <Route path='/inbox/:conversationId?' element={<Inbox />} />
           </Route>

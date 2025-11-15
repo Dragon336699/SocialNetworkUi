@@ -61,6 +61,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack
             firstName: userInfo.firstName,
             lastName: userInfo.lastName,
             email: userInfo.email,
+            userName: userInfo.userName,
             gender: userInfo.gender,
             description: userInfo.description
           }}
@@ -100,16 +101,27 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack
               }
             ]}
           >
-            <Input type='email' placeholder='Enter your email address' />
+            <Input type='email' disabled placeholder='Enter your email address' />
           </Form.Item>
 
-          <Form.Item label='Gender' name='gender'>
-            <Select placeholder='Select your gender' allowClear>
-              <Option value='male'>Male</Option>
-              <Option value='female'>Female</Option>
-              <Option value='other'>Other</Option>
-            </Select>
-          </Form.Item>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <Form.Item
+              label='User Name'
+              required
+              name='userName'
+              rules={[{ required: true, message: 'Please input your user name!' }]}
+            >
+              <Input placeholder='Enter your user name' />
+            </Form.Item>
+
+            <Form.Item label='Gender' name='gender'>
+              <Select placeholder='Select your gender' allowClear>
+                <Option value='male'>Male</Option>
+                <Option value='female'>Female</Option>
+                <Option value='other'>Other</Option>
+              </Select>
+            </Form.Item>
+          </div>
 
           <Form.Item label='Bio' name='description'>
             <TextArea placeholder='Tell us about yourself' rows={5} />

@@ -22,8 +22,7 @@ const initialUserInfo = {
 }
 
 const ProfileUser = () => {
-  const { userId } = useParams()
-  console.log('🚀 ~ ProfileUser ~ userId:', userId)
+  const { userName } = useParams()
   const [userInfo, setUserInfo] = useState<UserDto>(initialUserInfo)
   const [posts, setPosts] = useState<PostData[]>([])
 
@@ -34,7 +33,7 @@ const ProfileUser = () => {
     try {
       setCountLoading((pre) => pre + 1)
       let res
-      if (userId) res = await userService.getUserInfoById(userId)
+      if (userName) res = await userService.getUserInfoByUserName(userName)
       else res = await userService.getUserInfoByToken()
       if (res.status === 200) {
         setUserInfo(res.data as UserDto)
@@ -47,9 +46,9 @@ const ProfileUser = () => {
 
   const getPost = async () => {
     try {
-      if (!userInfo.id && userId) return
+      if (!userInfo.id && userName) return
       setCountLoading((pre) => pre + 1)
-      const res = await postService.getPostsByUser(userId || userInfo.id)
+      const res = await postService.getPostsByUser(userInfo.id)
       if (res.status === 200) {
         setPosts(res.data.posts)
         setCountLoading((pre) => pre - 1)
@@ -62,7 +61,7 @@ const ProfileUser = () => {
   useEffect(() => {
     getUserInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId])
+  }, [userName])
 
   useEffect(() => {
     if (userInfo.id) {

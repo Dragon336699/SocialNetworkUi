@@ -22,6 +22,7 @@ import { base64ToFile } from '@/app/helper'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '@/app/pages/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
+import { useUserStore } from '@/app/stores/auth'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -39,7 +40,8 @@ const profile = {
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
 const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo: UserDto; onEdit: () => void }) => {
-  const { userId } = useParams()
+  const { user } = useUserStore()
+  const { userName } = useParams()
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<TabType>('posts')
@@ -49,6 +51,8 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+
+  const isMe = user?.userName === userName
 
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
@@ -67,7 +71,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       case 'posts':
         return (
           <div className='space-y-4'>
-            {!userId && (
+            {isMe && (
               <div className='bg-white rounded-lg p-4 shadow-sm border border-gray-200'>
                 <div
                   onClick={() => setIsOpenCreatePost(true)}
@@ -273,7 +277,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                 }}
               />
               {/* <Avatar size={140} src={previewImage} className='border-4 border-white shadow-lg' /> */}
-              {!userId && (
+              {isMe && (
                 <Upload
                   showUploadList={false}
                   onChange={handleAvatarChange}
@@ -307,7 +311,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                 <Col>
                   <h1 className='text-xl md:text-xl font-bold text-gray-900'>{`${userInfo.lastName} ${userInfo.firstName}`}</h1>
                 </Col>
-                {!userId && (
+                {isMe && (
                   <Col>
                     <Button onClick={onEdit} type='primary' size='large' className='px-6 font-medium'>
                       Edit Profile
@@ -362,7 +366,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
             </Col>
           </Row>
 
-          {userId && (
+          {userName && (
             <div className='mt-6 pt-6 border-t border-blue-200'>
               <Row gutter={[12, 12]}>
                 {[
