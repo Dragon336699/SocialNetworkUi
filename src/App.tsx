@@ -21,6 +21,7 @@ const PublicRoute = () => {
   return !isLoggedIn ? <Outlet /> : <Navigate to='/home' replace />
 }
 
+import PostDetail from './app/pages/Post/PostDetail'
 function App() {
   const { isLoggedIn, fetchUser, user } = useUserStore()
 

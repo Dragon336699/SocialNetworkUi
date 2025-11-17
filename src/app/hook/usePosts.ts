@@ -12,8 +12,8 @@ interface UsePostsReturn {
   refetch: () => Promise<void>
   clearError: () => void
   handlePostCreated: () => void
-  handlePostUpdated: () => void
-  handlePostDeleted: () => void
+  handlePostUpdated: (updatedPost: PostData) => void
+  handlePostDeleted: (postId: string) => void
 }
 
 const POSTS_PER_PAGE = 10
@@ -90,13 +90,21 @@ export const usePosts = (): UsePostsReturn => {
     await refetch()
   }, [refetch])
 
-  const handlePostUpdated = useCallback(async () => {
-    await refetch()
-  }, [refetch])
+  const handlePostUpdated = useCallback((updatedPost: PostData) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === updatedPost.id 
+          ? { ...post, ...updatedPost }
+          : post
+      )
+    )
+  }, [])
 
-  const handlePostDeleted = useCallback(async () => {
-    await refetch()
-  }, [refetch])
+  const handlePostDeleted = useCallback((postId: string) => {
+    setPosts(prevPosts => 
+      prevPosts.filter(post => post.id !== postId)
+    )
+  }, [])
 
   // Tải thêm bài đăng
   const loadMore = useCallback(async () => {
