@@ -8,6 +8,7 @@ import Sider from 'antd/es/layout/Sider'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
+import { NavbarProps } from '../Interfaces/NavbarProps'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -19,9 +20,9 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
     label
   } as MenuItem
 }
-const Navbar: React.FC = () => {
+const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
   const navigate = useNavigate()
-  const { unreadMessages } = useUnread()
+  const { unreadMessages, unreadNotis } = useUnread()
 
   const [items, setItems] = useState<MenuItem[]>([])
   const baseItems = useMemo<MenuItem[]>(
@@ -46,13 +47,13 @@ const Navbar: React.FC = () => {
         'Notification',
         'Notification',
         <div className='flex items-center gap-6'>
-          <Badge size='small'>
+          <Badge count={unreadNotis} size='small'>
             <FontAwesomeIcon className='text-lg text-white' icon={faBell} />
           </Badge>
         </div>
       )
     ],
-    [unreadMessages]
+    [unreadMessages, unreadNotis]
   )
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
@@ -61,7 +62,10 @@ const Navbar: React.FC = () => {
 
   const handleNavigate = (e: any) => {
     if (e.key === 'Inbox') window.location.href = '/Inbox'
-    else navigate(`/${e.key}`)
+    else if (e.key === 'Notification') {
+      setShowNoti((prev) => !prev)
+      setCollapsed(!collapsed)
+    } else navigate(`/${e.key}`)
   }
 
   const fetchUserInfo = async () => {

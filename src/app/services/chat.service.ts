@@ -5,6 +5,7 @@ import { SendMessageResponse } from '../types/Message/Responses/messageResponses
 import { MessageDto } from '../types/Message/messge.dto'
 import { UpdateStatusMessageRequest } from '../types/Message/Requests/updateStatusMessageReq'
 import { UserDto } from '../types/User/user.dto'
+import { NotificationDto } from '../types/Notification/notification.dto'
 let connection: HubConnection | null = null
 
 export const chatService = {
@@ -81,5 +82,13 @@ export const chatService = {
       return
     }
     connection.on('UpdateUser', callback)
+  },
+
+  updateNotification(callback: (noti: NotificationDto) => void) {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection.on('SendPrivateNoti', callback)
   }
 }

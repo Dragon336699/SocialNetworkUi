@@ -2,7 +2,6 @@ import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import { MessageDto } from '../types/Message/messge.dto'
-import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 
 export const messageService = {
   async getMessages(

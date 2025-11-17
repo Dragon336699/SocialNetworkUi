@@ -601,8 +601,9 @@ const Inbox: React.FC = () => {
                         <span
                           className={`text-xs truncate select-none ${seenByMe ? 'opacity-50' : 'font-bold text-black'}`}
                         >
-                          {conversation.newestMessage?.senderId === userInfo?.id &&
-                          conversation.newestMessage?.messageAttachments.length === 0
+                          {conversation.newestMessage?.senderId.toLowerCase() === userInfo?.id.toLowerCase() &&
+                          (!conversation.newestMessage?.messageAttachments ||
+                            conversation.newestMessage.messageAttachments.length === 0)
                             ? 'You: '
                             : ''}
                           {conversation.newestMessage?.content === ''
