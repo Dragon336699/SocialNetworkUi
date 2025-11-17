@@ -46,7 +46,8 @@ export const useUserStore = create<UserState>()(
         try {
           const res = await userService.getUserInfoByToken()
           if (res.status === 200 && res.data) {
-            set({ user: res.data, isLoggedIn: true })
+            const resData = res.data as UserDto
+            set({ user: resData, isLoggedIn: true })
           } else {
             set({ user: null, isLoggedIn: false })
           }
