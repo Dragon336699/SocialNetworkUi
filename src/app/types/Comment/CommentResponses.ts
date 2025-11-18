@@ -20,8 +20,8 @@ export interface CommentDto {
   postId: string
   userId: string
   repliedCommentId?: string
-  createdAt?: string
-  updatedAt?: string
+  createdAt: string
+  updatedAt: string
   user?: UserDto
   commentImages?: CommentImageDto[]
   replies?: CommentDto[]

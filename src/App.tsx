@@ -52,6 +52,7 @@ function App() {
             <Route path='/profile/:userName' element={<ProfileUser />} />
             <Route path='/inbox' element={<Inbox />} />
             <Route path='/inbox/:conversationId?' element={<Inbox />} />
+            <Route path='/post/:postId' element={<PostDetail />} />
           </Route>
         </Route>
 
