@@ -19,7 +19,7 @@ const PostDetail: React.FC = () => {
     const fetchData = async () => {
       if (!postId) {
         message.error('Post ID not found')
-        navigate('/')
+        navigate(-1)
         return
       }
 
@@ -37,12 +37,12 @@ const PostDetail: React.FC = () => {
           setPost(postResponse.post)
         } else {
           message.error('Post not found')
-          navigate('/')
+          navigate(-1)
         }
       } catch (error) {
         console.error('Error fetching post:', error)
         message.error('Failed to load post')
-        navigate('/')
+        navigate(-1)
       } finally {
         setLoading(false)
       }
@@ -52,7 +52,7 @@ const PostDetail: React.FC = () => {
   }, [postId, navigate])
 
   const handleClose = () => {
-    navigate('/')
+    navigate(-1)
   }
 
   const handleCommentCountChange = (newCount: number) => {
@@ -80,7 +80,7 @@ const PostDetail: React.FC = () => {
 
   const handlePostDeleted = () => {
     message.success('Post deleted successfully')
-    navigate('/')
+    navigate(-1)
   }
 
   if (loading) {

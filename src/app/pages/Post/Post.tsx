@@ -79,7 +79,7 @@ const Post: React.FC<PostProps> = ({
   const handleSendReaction = async (postId: string, reaction: string) => {
     try {
       const response = await postService.reactionPost(postId, reaction)
-      if (response.message && response.message.includes('successfull')) {
+      if (response.message && response.message.includes('successfully')) {
         const currentUserReaction = reactions.find(r => r.userId === currentUserId)
         let newReactions: PostReactionDto[] = []
         let newTotalLiked = localTotalLiked
@@ -102,9 +102,9 @@ const Post: React.FC<PostProps> = ({
             reaction: reaction,
             user: {
               id: currentUserId,
-              firstName: user.firstName || '',
-              lastName: user.lastName || '',
-              avatarUrl: user.avatarUrl || ''
+              firstName: currentUser.firstName || '',
+              lastName: currentUser.lastName || '',
+              avatarUrl: currentUser.avatarUrl || ''
             }
           }
           newReactions = [...reactions, newReaction]
