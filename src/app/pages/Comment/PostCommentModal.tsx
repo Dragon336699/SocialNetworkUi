@@ -248,7 +248,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
         const response = await commentService.updateComment(editingComment.id, formData)
 
         if (response.message?.includes('success')) {
-          message.success('Comment updated successfully')
           loadComments()
           resetForm()
         } else {
@@ -267,7 +266,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
         const response = await commentService.createComment(formData)
 
         if (response.message?.includes('success')) {
-          message.success('Comment added successfully')
           loadComments()
           resetForm()
 
