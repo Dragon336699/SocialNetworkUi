@@ -1,0 +1,111 @@
+import { apiClient } from '../environments/axiosClient'
+import {
+  DeleteGroupResponse,
+  GetAllGroupsResponse,
+  GetGroupByIdResponse,
+  JoinGroupResponse,
+  LeaveGroupResponse,
+  UpdateGroupResponse,
+  CreateGroupResponse
+} from '../types/Group/GroupResponse'
+import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
+
+export const groupService = {
+  async createGroup(request: CreateGroupRequest): Promise<CreateGroupResponse> {
+    const formData = new FormData()
+    formData.append('Name', request.name)
+    formData.append('Description', request.description)
+    formData.append('IsPublic', String(request.isPublic))
+
+    if (request.image) {
+      formData.append('Image', request.image)
+    }
+
+    const { data } = await apiClient.post<CreateGroupResponse>('group/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async getAllGroups(skip: number = 0, take: number = 10): Promise<GetAllGroupsResponse> {
+    const { data } = await apiClient.get<GetAllGroupsResponse>('group/all', {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async getGroupById(groupId: string): Promise<GetGroupByIdResponse> {
+    const { data } = await apiClient.get<GetGroupByIdResponse>(`group/${groupId}`, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async updateGroup(groupId: string, request: UpdateGroupRequest): Promise<UpdateGroupResponse> {
+    const formData = new FormData()
+    if (request.name) {
+      formData.append('Name', request.name)
+    }
+    if (request.description) {
+      formData.append('Description', request.description)
+    }
+    if (request.isPublic !== undefined) {
+      formData.append('IsPublic', String(request.isPublic))
+    }
+    if (request.newImage) {
+      formData.append('NewImage', request.newImage)
+    }
+    if (request.removeImage !== undefined) {
+      formData.append('RemoveImage', String(request.removeImage))
+    }
+
+    const { data } = await apiClient.put<UpdateGroupResponse>(`group/${groupId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async deleteGroup(groupId: string): Promise<DeleteGroupResponse> {
+    const { data } = await apiClient.delete<DeleteGroupResponse>(`group/${groupId}`, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async joinGroup(groupId: string): Promise<JoinGroupResponse> {
+    const { data } = await apiClient.post<JoinGroupResponse>(
+      `group/${groupId}/join`,
+      {},
+      {
+        withCredentials: true
+      }
+    )
+    return data
+  },
+
+  async leaveGroup(groupId: string): Promise<LeaveGroupResponse> {
+    const { data } = await apiClient.post<LeaveGroupResponse>(
+      `group/${groupId}/leave`,
+      {},
+      {
+        withCredentials: true
+      }
+    )
+    return data
+  },
+
+  async getMyGroups(skip: number = 0, take: number = 10): Promise<GetAllGroupsResponse> {
+    const { data } = await apiClient.get<GetAllGroupsResponse>('group/my-groups', {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  }
+}

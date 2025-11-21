@@ -10,7 +10,11 @@ import ProfileUser from './app/pages/Profile/ProfileUser'
 import Inbox from './app/pages/Inbox/Inbox'
 import { chatService } from './app/services/chat.service'
 import { useUserStore } from './app/stores/auth'
-
+import Groups from './app/pages/Group/Groups'
+import GroupsFeed from './app/pages/Group/GroupsFeed'
+import GroupsDiscover from './app/pages/Group/GroupsDiscover'
+import MyGroupsPage from './app/pages/Group/MyGroupsPage'
+import GroupDetail from './app/pages/Group/GroupDetail'
 const PrivateRoute = () => {
   const { isLoggedIn } = useUserStore()
   return isLoggedIn ? <Outlet /> : <Navigate to='/login' replace />
@@ -52,7 +56,17 @@ function App() {
             <Route path='/profile/:userName' element={<ProfileUser />} />
             <Route path='/inbox' element={<Inbox />} />
             <Route path='/inbox/:conversationId?' element={<Inbox />} />
+
             <Route path='/post/:postId' element={<PostDetail />} />
+
+            <Route path='/groups' element={<Groups />}>
+              <Route index element={<GroupsFeed />} />
+              <Route path='discover' element={<GroupsDiscover />} />
+              <Route path='my-groups' element={<MyGroupsPage />} />
+            </Route>
+            <Route path='/group/:groupId' element={<Groups />}>
+              <Route index element={<GroupDetail />} />
+            </Route>
           </Route>
         </Route>
 

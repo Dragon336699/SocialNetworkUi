@@ -1,7 +1,7 @@
 import { userService } from '@/app/services/user.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { faBell, faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faComment, faHouse, faUsers } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
@@ -32,6 +32,13 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         'Home',
         <div className='flex items-center gap-6'>
           <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
+        </div>
+      ),
+      getItem(
+        'Groups',
+        'Groups',
+        <div className='flex items-center gap-6'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faUsers} />
         </div>
       ),
       getItem(

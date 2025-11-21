@@ -7,4 +7,5 @@ export interface ModalProps {
   isLoading?: boolean
   title?: string
   onCreatePostSuccess?: () => void
+  groupId?: string
 }
