@@ -1,5 +1,12 @@
 import { PostData } from '../Post/Post'
 import { UserDto } from '../User/user.dto'
+
+export enum GroupRole {
+  User = 'User',
+  Administrator = 'Administrator',
+  SuperAdministrator = 'SuperAdministrator'
+}
+
 export interface GroupDto {
   id: string
   name: string

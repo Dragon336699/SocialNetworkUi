@@ -11,15 +11,17 @@ import {
   MoreOutlined,
   EditOutlined,
   DeleteOutlined,
-  CrownOutlined
+  CrownOutlined,
+  StarOutlined,
+  TeamOutlined
 } from '@ant-design/icons'
 import { groupService } from '@/app/services/group.service'
-import { postService } from '@/app/services/post.service'
 import { GroupDto } from '@/app/types/Group/group.dto'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '../Post/Post'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
-import EditGroupModal from '../../common/Modals/Group/EditGroupModal'
+import EditGroupModal from '@/app/common/Modals/Group/EditGroupModal'
+import ManageMembersModal from '@/app/common/Modals/Group/ManageMembersModal'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
 
@@ -42,15 +44,16 @@ const GroupDetail = () => {
   const [group, setGroup] = useState<GroupDto | null>(null)
   const [posts, setPosts] = useState<PostData[]>([])
   const [loading, setLoading] = useState(true)
-  const [postsLoading, setPostsLoading] = useState(false)
   const [isJoined, setIsJoined] = useState(false)
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const [isEditGroupOpen, setIsEditGroupOpen] = useState(false)
+  const [isManageMembersOpen, setIsManageMembersOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserDto>(defaultUser)
 
-  // Kiểm tra xem người dùng hiện tại có phải là admin không - sử dụng groupUsers từ response
-  const isAdmin =
-    group?.groupUsers?.some( gu => gu.userId === currentUser?.id && gu.roleName === 'Administrator') ?? false
+  // Kiểm tra role của người dùng hiện tại
+  const currentUserRole = group?.groupUsers?.find(gu => gu.userId === currentUser?.id)?.roleName || ''
+  const isSuperAdmin = currentUserRole === 'SuperAdministrator'
+  const isAdmin = currentUserRole === 'Administrator' || isSuperAdmin
 
   // Lấy thông tin người dùng hiện tại
   useEffect(() => {
@@ -68,7 +71,6 @@ const GroupDetail = () => {
   }, [])
 
   // Lấy chi tiết nhóm
-  // Fetch group details
   useEffect(() => {
     const fetchGroupDetail = async () => {
       if (!groupId) return
@@ -79,12 +81,9 @@ const GroupDetail = () => {
 
         if (response.group) {
           setGroup(response.group)
-
-          // Check if user is joined using groupUsers from response
           const isUserJoined = response.group.groupUsers?.some(gu => gu.userId === currentUser.id) ?? false
           setIsJoined(isUserJoined)
 
-          // Set posts directly from group response
           if (response.group.posts) {
             setPosts(response.group.posts as unknown as PostData[])
           }
@@ -103,21 +102,31 @@ const GroupDetail = () => {
     }
   }, [groupId, navigate, currentUser.id])
 
+  // Refresh group data
+  const refreshGroupData = async () => {
+    if (!groupId) return
+    try {
+      const response = await groupService.getGroupById(groupId)
+      if (response.group) {
+        setGroup(response.group)
+        if (response.group.posts) {
+          setPosts(response.group.posts as unknown as PostData[])
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing group data:', error)
+    }
+  }
+
   // Xử lý tham gia nhóm
-  // Handle joining group
   const handleJoinGroup = async () => {
     if (!groupId) return
 
     try {
       await groupService.joinGroup(groupId)
       message.success('Successfully joined the group!')
-      
-      // Refresh group data to get updated groupUsers
-      const response = await groupService.getGroupById(groupId)
-      if (response.group) {
-        setGroup(response.group)
-        setIsJoined(true)
-      }
+      await refreshGroupData()
+      setIsJoined(true)
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to join group'
       message.error(errorMessage)
@@ -125,7 +134,6 @@ const GroupDetail = () => {
   }
 
   // Xử lý rời khỏi nhóm
-  // Handle leaving group
   const handleLeaveGroup = async () => {
     if (!groupId) return
 
@@ -150,7 +158,6 @@ const GroupDetail = () => {
   }
 
   // Xử lý xóa nhóm
-  // Handle deleting group
   const handleDeleteGroup = async () => {
     if (!groupId) return
 
@@ -173,29 +180,22 @@ const GroupDetail = () => {
     })
   }
 
-  // Xử lý khi tạo bài viết thành công
-  // Handle successful post creation
   const handlePostCreated = async () => {
     setIsCreatePostOpen(false)
-    if (groupId) {
-      // Refresh group data to get updated posts
-      const response = await groupService.getGroupById(groupId)
-      if (response.group?.posts) {
-        setPosts(response.group.posts as unknown as PostData[])
-      }
-    }
+    await refreshGroupData()
   }
 
-  // Xử lý khi chỉnh sửa nhóm thành công
-  // Handle successful group edit
   const handleEditGroupSuccess = (updatedGroup: GroupDto) => {
     setGroup(updatedGroup)
     setIsEditGroupOpen(false)
     message.success('Group has been updated!')
   }
 
-  // Menu cho người dùng đã tham gia (không phải admin)
-  // Menu items for joined users (non-admin)
+  const handleMembersUpdated = async () => {
+    await refreshGroupData()
+  }
+
+  // Menu cho người dùng đã tham gia (User và Admin có thể leave)
   const joinedMenuItems: MenuProps['items'] = [
     {
       key: 'leave',
@@ -206,23 +206,63 @@ const GroupDetail = () => {
     }
   ]
 
-  // Menu cho admin
-  // Menu items for admin
+  // Menu cho admin (Admin và SuperAdmin)
   const adminMenuItems: MenuProps['items'] = [
+    {
+      key: 'manage',
+      label: 'Manage Members',
+      icon: <TeamOutlined />,
+      onClick: () => setIsManageMembersOpen(true)
+    },
     {
       key: 'edit',
       label: 'Edit Group',
       icon: <EditOutlined />,
       onClick: () => setIsEditGroupOpen(true)
     },
-    {
-      key: 'delete',
-      label: 'Delete Group',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: handleDeleteGroup
-    }
+
+    ...(isSuperAdmin
+      ? []
+      : [
+          {
+            key: 'leave',
+            label: 'Leave Group',
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: handleLeaveGroup
+          }
+        ]),
+    ...(isSuperAdmin
+      ? [
+          {
+            key: 'delete',
+            label: 'Delete Group',
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: handleDeleteGroup
+          }
+        ]
+      : [])
   ]
+
+  // Render role tag
+  const renderRoleTag = (roleName: string) => {
+    if (roleName === 'SuperAdministrator') {
+      return (
+        <Tag color='gold' icon={<StarOutlined />}>
+          Owner
+        </Tag>
+      )
+    }
+    if (roleName === 'Administrator') {
+      return (
+        <Tag color='blue' icon={<CrownOutlined />}>
+          Admin
+        </Tag>
+      )
+    }
+    return null
+  }
 
   if (loading) {
     return (
@@ -246,17 +286,25 @@ const GroupDetail = () => {
       />
 
       {group && (
-        <EditGroupModal
-          isModalOpen={isEditGroupOpen}
-          handleCancel={() => setIsEditGroupOpen(false)}
-          onEditGroupSuccess={handleEditGroupSuccess}
-          group={group}
-        />
+        <>
+          <EditGroupModal
+            isModalOpen={isEditGroupOpen}
+            handleCancel={() => setIsEditGroupOpen(false)}
+            onEditGroupSuccess={handleEditGroupSuccess}
+            group={group}
+          />
+          <ManageMembersModal
+            isModalOpen={isManageMembersOpen}
+            handleCancel={() => setIsManageMembersOpen(false)}
+            group={group}
+            currentUserId={currentUser.id}
+            onMembersUpdated={handleMembersUpdated}
+          />
+        </>
       )}
 
       {/* Group Header with Image */}
       <Card className='mb-6 overflow-hidden'>
-        {/* Cover Image */}
         <div className='relative -mt-6 -mx-6 mb-4'>
           {group.imageUrl && (
             <div className='w-full h-64 overflow-hidden'>
@@ -294,12 +342,10 @@ const GroupDetail = () => {
               ) : (
                 <>
                   {isAdmin ? (
-                    // Admin: Show only Edit/Delete menu, no "Joined" button
-                    <Dropdown menu={{ items: adminMenuItems }} trigger={['click']}>
+                    <Dropdown menu={{ items: adminMenuItems }} trigger={['click']} placement='bottomRight'>
                       <Button icon={<MoreOutlined />} />
                     </Dropdown>
                   ) : (
-                    // Regular member: Show only "Joined" with leave menu
                     <Dropdown menu={{ items: joinedMenuItems }} trigger={['click']}>
                       <Button icon={<CheckOutlined />}>Joined</Button>
                     </Dropdown>
@@ -330,7 +376,6 @@ const GroupDetail = () => {
       {isJoined ? (
         <Tabs defaultActiveKey='posts' size='large'>
           <TabPane tab='Discussion' key='posts'>
-            {/* Create Post */}
             <div className='bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-200'>
               <div
                 onClick={() => setIsCreatePostOpen(true)}
@@ -343,12 +388,7 @@ const GroupDetail = () => {
               </div>
             </div>
 
-            {/* Posts */}
-            {postsLoading ? (
-              <div className='text-center py-12'>
-                <Spin size='large' />
-              </div>
-            ) : posts.length > 0 ? (
+            {posts.length > 0 ? (
               <div className='space-y-4'>
                 {posts.map((post) => (
                   <Post
@@ -372,7 +412,7 @@ const GroupDetail = () => {
 
           <TabPane tab='Members' key='members'>
             <Card>
-              <Title level={4} className='mb-4'>
+              <Title level={4} className='mb-0'>
                 Members ({group.groupUsers?.length || 0})
               </Title>
               <List
@@ -392,11 +432,7 @@ const GroupDetail = () => {
                               ? `${member.user.firstName || ''} ${member.user.lastName || ''}`.trim() || 'Unknown User'
                               : 'Unknown User'}
                           </span>
-                          {member.roleName === 'Administrator' && (
-                            <Tag color='gold' icon={<CrownOutlined />}>
-                              Admin
-                            </Tag>
-                          )}
+                          {renderRoleTag(member.roleName)}
                         </Space>
                       }
                       description={

@@ -11,3 +11,10 @@ export interface UpdateGroupRequest {
   newImage?: File
   removeImage?: boolean
 }
+export interface PromoteToAdminRequest {
+  targetUserId: string
+}
+
+export interface DemoteAdminRequest {
+  targetUserId: string
+}

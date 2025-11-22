@@ -1,4 +1,4 @@
-import { GroupDto } from './group.dto'
+import { GroupDto, GroupUserDto } from './group.dto'
 
 export interface CreateGroupResponse {
   groupId?: string
@@ -31,4 +31,18 @@ export interface JoinGroupResponse {
 
 export interface LeaveGroupResponse {
   message: string
+}
+export interface PromoteToAdminResponse {
+  message: string
+  groupUser?: GroupUserDto
+}
+
+export interface DemoteAdminResponse {
+  message: string
+  groupUser?: GroupUserDto
+}
+
+export interface KickMemberResponse {
+  message: string
+  success: boolean
 }

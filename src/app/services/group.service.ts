@@ -6,7 +6,10 @@ import {
   JoinGroupResponse,
   LeaveGroupResponse,
   UpdateGroupResponse,
-  CreateGroupResponse
+  CreateGroupResponse,
+  PromoteToAdminResponse,
+  DemoteAdminResponse,
+  KickMemberResponse
 } from '../types/Group/GroupResponse'
 import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
 
@@ -106,6 +109,33 @@ export const groupService = {
       params: { skip, take },
       withCredentials: true
     })
+    return data
+  },
+
+  async promoteToAdmin(groupId: string, targetUserId: string): Promise<PromoteToAdminResponse> {
+    const { data } = await apiClient.post<PromoteToAdminResponse>(
+      `group/${groupId}/promote-admin`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async demoteAdmin(groupId: string, targetUserId: string): Promise<DemoteAdminResponse> {
+    const { data } = await apiClient.post<DemoteAdminResponse>(
+      `group/${groupId}/demote-admin`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async kickMember(groupId: string, targetUserId: string): Promise<KickMemberResponse> {
+    const { data } = await apiClient.post<KickMemberResponse>(
+      `group/${groupId}/kick-member`,
+      { targetUserId },
+      { withCredentials: true }
+    )
     return data
   }
 }
