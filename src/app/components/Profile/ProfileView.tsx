@@ -90,6 +90,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                   <div key={`${post.id}-${index}`}>
                     <Post
                       {...post}
+                      currentUser={userInfo}
                       currentUserId={userInfo.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
