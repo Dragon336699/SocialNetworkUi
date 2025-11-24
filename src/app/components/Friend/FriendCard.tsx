@@ -5,6 +5,7 @@ import { Dropdown, Button, MenuProps } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEllipsisVertical, faComment, faUserMinus, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
 import { ActionType, Friend } from '@/app/types/Common'
+import { useNavigate } from 'react-router-dom'
 
 interface FriendCardProps {
   friend: Friend
@@ -18,6 +19,7 @@ const statusColor = {
 }
 
 const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
+  const navigate = useNavigate()
   const menuItems: MenuProps['items'] = [
     {
       key: 'message',
@@ -65,7 +67,12 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
         </div>
 
         <div>
-          <h4 className='font-semibold text-gray-900 text-base'>{friend.name}</h4>
+          <h4
+            className='font-semibold text-gray-900 text-base hover:underline hover:cursor-pointer'
+            onClick={() => navigate(`/profile/${friend.name}`)}
+          >
+            {friend.name}
+          </h4>
           <p className='text-xs text-gray-500 capitalize'>{friend.status}</p>
         </div>
       </div>

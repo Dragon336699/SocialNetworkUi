@@ -5,8 +5,9 @@ import { userService } from '@/app/services/user.service'
 import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
 import { message, Spin } from 'antd'
+import { AxiosError } from 'axios'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const initialUserInfo = {
   id: '',
@@ -23,6 +24,7 @@ const initialUserInfo = {
 
 const ProfileUser = () => {
   const { userName } = useParams()
+  const navigate = useNavigate()
   const [userInfo, setUserInfo] = useState<UserDto>(initialUserInfo)
   const [posts, setPosts] = useState<PostData[]>([])
 
@@ -39,8 +41,18 @@ const ProfileUser = () => {
         setUserInfo(res.data as UserDto)
         setCountLoading((pre) => pre - 1)
       }
-    } catch {
-      message.error('Error while getting user infomation!')
+    } catch (err) {
+      const error = err as AxiosError
+      setCountLoading((pre) => pre - 1)
+      const status = error?.response?.status
+
+      if (status === 400) {
+        message.error('User not found!')
+        navigate('/home')
+        return
+      }
+
+      message.error('Error while getting user information!')
     }
   }
 
@@ -54,6 +66,7 @@ const ProfileUser = () => {
         setCountLoading((pre) => pre - 1)
       }
     } catch (err) {
+      setCountLoading((pre) => pre - 1)
       console.log('Error to load posts!: ', err)
     }
   }
