@@ -21,7 +21,7 @@ import { postService } from '@/app/services/post.service'
 const { TextArea } = Input
 const { Text } = Typography
 
-const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: ModalProps) => {
+const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId }: ModalProps) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -123,6 +123,10 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: Mod
     images.forEach((file) => {
       formData.append('Images', file)
     })
+    if (groupId) {
+      formData.append('GroupId', groupId)
+    }
+
     setLoading(true)
     try {
       const res = await postService.createPost(formData)

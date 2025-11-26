@@ -1,9 +1,10 @@
 import { userService } from '@/app/services/user.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { faBell, faComment, faHouse } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faComment, faHouse, faUsers, faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message } from 'antd'
+import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message, Dropdown } from 'antd'
+import { SettingOutlined, LogoutOutlined } from '@ant-design/icons'
 import Sider from 'antd/es/layout/Sider'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -25,6 +26,8 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
   const { unreadMessages, unreadNotis } = useUnread()
 
   const [items, setItems] = useState<MenuItem[]>([])
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
   const baseItems = useMemo<MenuItem[]>(
     () => [
       getItem(
@@ -32,6 +35,13 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         'Home',
         <div className='flex items-center gap-6'>
           <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
+        </div>
+      ),
+      getItem(
+        'Groups',
+        'Groups',
+        <div className='flex items-center gap-6'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faUsers} />
         </div>
       ),
       getItem(
@@ -55,6 +65,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     ],
     [unreadMessages, unreadNotis]
   )
+
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
 
@@ -65,8 +76,53 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     else if (e.key === 'Notification') {
       setShowNoti((prev) => !prev)
       setCollapsed(!collapsed)
+    } else if (e.key === 'profile') {
+      navigate('/profile')
+    } else if (e.key === 'more') {
+      return
     } else navigate(`/${e.key}`)
   }
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const response = await userService.logout()
+      if (response.status === 200) {
+        message.success('Logout successful!')
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 500)
+      }
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || 'Logout failed!')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  const handleSettings = () => {
+    navigate('/settings')
+  }
+
+  // Dropdown menu items
+  const moreMenuItems: MenuProps['items'] = [
+    {
+      key: 'settings',
+      label: 'Settings',
+      icon: <SettingOutlined />,
+      onClick: handleSettings
+    },
+    {
+      type: 'divider'
+    },
+    {
+      key: 'logout',
+      label: isLoggingOut ? 'Logging out...' : 'Logout',
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+      disabled: isLoggingOut
+    }
+  ]
 
   const fetchUserInfo = async () => {
     try {
@@ -88,7 +144,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
 
   useEffect(() => {
     setItems((prev) => {
-      const profileItem = prev.find((i) => i?.key === 'Profile')
+      const profileItem = prev.find((i) => i?.key === 'profile')
       return profileItem ? [...baseItems, profileItem] : baseItems
     })
     fetchUserInfo()
@@ -122,6 +178,14 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
           }}
         >
           <Menu theme='dark' selectedKeys={[path]} mode='inline' items={items} onClick={handleNavigate} />
+          <div className='absolute bottom-[60px] left-0 right-0 px-3'>
+            <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} overlayStyle={{ minWidth: '175px' }}>
+              <div className='flex items-center py-3 px-4 cursor-pointer text-[#FFFFFFA6] rounded-lg transition-colors hover:text-white'>
+                <FontAwesomeIcon className='text-lg text-white' icon={faBars} />
+                {!collapsed && <span className='ml-3'>View more</span>}
+              </div>
+            </Dropdown>
+          </div>
         </ConfigProvider>
       </Sider>
     </ConfigProvider>
