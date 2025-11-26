@@ -107,9 +107,11 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
 
         if (exists) {
           // Update
+          setUnreadNotis((prev: number) => prev + 1)
           return prevNotis.map((noti) => (noti.id === newNoti.id ? newNoti : noti))
         } else {
           // Thêm mới
+          setUnreadNotis((prev: number) => prev + 1)
           return [newNoti, ...prevNotis]
         }
       })
@@ -134,18 +136,18 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
             }}
           >
             <div className='min-w-[60px] flex justify-center'>
-              {noti.data.subjectCount >= 2 ? (
+              {noti.imageUrls.length >= 2 ? (
                 <Avatar.Group>
-                  <Avatar src={noti.data.subjects[0].imageUrl} />
-                  <Avatar src={noti.data.subjects[1].imageUrl} />
+                  <Avatar src={noti.imageUrls[0]} />
+                  <Avatar src={noti.imageUrls[1]} />
                 </Avatar.Group>
               ) : (
-                <Avatar src={noti.data.subjects[0].imageUrl} />
+                <Avatar src={noti.imageUrls[0]} />
               )}
             </div>
             <div className='flex flex-col'>
               <span className='text-gray-800 leading-snug'>
-                {highlightText(noti.data.content, noti.data.highlights ?? []).map((p, i) =>
+                {highlightText(noti.content, noti.highlights ?? []).map((p, i) =>
                   p.highlight ? <strong key={i}>{p.text}</strong> : <span key={i}>{p.text}</span>
                 )}
               </span>
