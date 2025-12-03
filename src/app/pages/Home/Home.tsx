@@ -144,6 +144,7 @@ const Home = () => {
         isModalOpen={isOpenCreatePost}
         handleCancel={handleCloseCreatePost}
         onCreatePostSuccess={handleCreatePostSuccess}
+        currentUser={userInfo}
       />
 
       <div className='max-w-2xl mx-auto px-4'>

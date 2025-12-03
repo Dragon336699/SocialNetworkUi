@@ -21,7 +21,7 @@ import { postService } from '@/app/services/post.service'
 const { TextArea } = Input
 const { Text } = Typography
 
-const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId }: ModalProps) => {
+const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -33,6 +33,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
   const renderPrivacyIcon = () => {
     const iconClass = 'w-4 h-4 text-gray-500'
 
@@ -166,9 +167,11 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       title={
         <Flex justify='space-between'>
           <Flex align='center' gap='small'>
-            <Avatar size='large' src='https://api.dicebear.com/7.x/miniavs/svg?seed=1' />
+            <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
+              {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
+            </Avatar>
             <Flex vertical>
-              <Text strong>Seponest</Text>
+              <Text strong>{fullName}</Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>

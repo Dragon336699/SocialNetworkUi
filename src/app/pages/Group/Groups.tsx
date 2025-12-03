@@ -3,7 +3,9 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Typography, Button, Input, Avatar, message, Spin } from 'antd'
 import { PlusOutlined, SearchOutlined, UsergroupAddOutlined, ProfileOutlined, CompassOutlined } from '@ant-design/icons'
 import { groupService } from '@/app/services/group.service'
-import { GroupDto } from '@/app/types/Group/group.dto'
+import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
+import { userService } from '@/app/services/user.service'
+import { UserDto } from '@/app/types/User/user.dto'
 import CreateGroupModal from '@/app/common/Modals/Group/CreateGroupModal'
 import MyGroupsPage from './MyGroupsPage'
 import GroupsFeed from './GroupsFeed'
@@ -19,13 +21,19 @@ const Groups = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeView, setActiveView] = useState<'feed' | 'discover' | 'my-groups'>('feed')
+  const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
 
   useEffect(() => {
-    fetchMyGroups()
+    fetchCurrentUser()
   }, [])
 
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchMyGroups()
+    }
+  }, [currentUser])
+
   // Phát hiện chế độ xem hiện tại từ URL
-  // Detect active view from URL
   useEffect(() => {
     if (location.pathname === '/groups') {
       setActiveView('feed')
@@ -36,13 +44,30 @@ const Groups = () => {
     }
   }, [location.pathname])
 
+  // Lấy thông tin người dùng hiện tại
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await userService.getUserInfoByToken()
+      if (response.status === 200 && response.data && 'id' in response.data) {
+        setCurrentUser(response.data as UserDto)
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }
+
   // Lấy danh sách nhóm của người dùng
-  // Fetch user's groups
   const fetchMyGroups = async () => {
     try {
       setLoading(true)
       const response = await groupService.getMyGroups(0, 50)
-      setMyGroups(response.groups || [])
+
+      const approvedGroups = (response.groups || []).filter(group => {
+        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+        return userStatus && userStatus.roleName !== GroupRole.Pending
+      })
+
+      setMyGroups(approvedGroups)
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to fetch your groups'
       message.error(errorMessage)
@@ -52,21 +77,18 @@ const Groups = () => {
   }
 
   // Xử lý khi tạo nhóm thành công
-  // Handle successful group creation
   const handleCreateGroupSuccess = () => {
     setIsCreateModalOpen(false)
     fetchMyGroups()
   }
 
   // Lọc nhóm theo từ khóa tìm kiếm
-  // Filter groups by search term
   const filteredGroups = myGroups.filter(group =>group.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const isGroupDetailPage = location.pathname.includes('/group/')
   const currentGroupId = isGroupDetailPage ? location.pathname.split('/group/')[1] : null
 
   // Xử lý click menu
-  // Handle menu click
   const handleMenuClick = (view: 'feed' | 'discover' | 'my-groups') => {
     setActiveView(view)
     if (view === 'feed') {
@@ -79,7 +101,6 @@ const Groups = () => {
   }
 
   // Render nội dung chính
-  // Render main content
   const renderMainContent = () => {
     if (isGroupDetailPage) {
       return <Outlet />

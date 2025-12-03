@@ -1,3 +1,4 @@
+import { UserDto } from "../User/user.dto"
 export interface ModalProps {
   isModalOpen: boolean
   update?: boolean
@@ -8,4 +9,5 @@ export interface ModalProps {
   title?: string
   onCreatePostSuccess?: () => void
   groupId?: string
+  currentUser: UserDto
 }

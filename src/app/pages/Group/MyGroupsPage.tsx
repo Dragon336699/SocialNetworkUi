@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Typography, Spin, Empty, Row, Col, message } from 'antd'
 import { groupService } from '@/app/services/group.service'
 import { userService } from '@/app/services/user.service'
-import { GroupDto } from '@/app/types/Group/group.dto'
+import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { UserDto } from '@/app/types/User/user.dto'
 import GroupCard from '../../components/Group/GroupCard'
 
@@ -44,7 +44,13 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
     try {
       setLoading(true)
       const response = await groupService.getMyGroups(0, 100)
-      setGroups(response.groups || [])
+
+      const approvedGroups = (response.groups || []).filter(group => {
+        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+        return userStatus && userStatus.roleName !== GroupRole.Pending
+      })
+
+      setGroups(approvedGroups)
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to load your groups'
       message.error(errorMessage)
@@ -88,6 +94,7 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
                 group={group}
                 showActions={true}
                 isJoined={true}
+                isPending={false}
                 currentUserId={currentUser?.id || ''}
                 onGroupDeleted={handleGroupDeleted}
                 onGroupUpdated={handleGroupUpdated}

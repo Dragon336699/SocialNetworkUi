@@ -4,7 +4,9 @@ import { UserDto } from '../User/user.dto'
 export enum GroupRole {
   User = 'User',
   Administrator = 'Administrator',
-  SuperAdministrator = 'SuperAdministrator'
+  SuperAdministrator = 'SuperAdministrator',
+  Pending = 'Pending'
+
 }
 
 export interface GroupDto {

@@ -1,22 +1,12 @@
-import { Card, Button, Typography, Space, Tag, message, Popconfirm, Avatar, Dropdown } from 'antd'
+import { Card, Button, Typography, Space, message, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import {
-  UserOutlined,
-  FileTextOutlined,
-  GlobalOutlined,
-  LockOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined,
-  MoreOutlined
-} from '@ant-design/icons'
-import { GroupDto } from '@/app/types/Group/group.dto'
+import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
+import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import EditGroupModal from '../../common/Modals/Group/EditGroupModal'
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Text } = Typography
 
 interface GroupCardProps {
   group: GroupDto
@@ -24,6 +14,7 @@ interface GroupCardProps {
   onGroupUpdated?: (group: GroupDto) => void
   showActions?: boolean
   isJoined?: boolean
+  isPending?: boolean
   onJoinSuccess?: () => void
   currentUserId?: string
 }
@@ -34,36 +25,49 @@ const GroupCard = ({
   onGroupUpdated,
   showActions = true,
   isJoined = false,
+  isPending = false,
   onJoinSuccess,
   currentUserId = ''
 }: GroupCardProps) => {
   const [loading, setLoading] = useState(false)
   const [joined, setJoined] = useState(isJoined)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [pending, setPending] = useState(isPending)
   const [currentGroup, setCurrentGroup] = useState(group)
   const navigate = useNavigate()
 
-  // Kiểm tra xem người dùng hiện tại có phải là admin không
-  const isAdmin =
-    currentGroup.groupUsers?.some( gu => gu.userId === currentUserId && gu.roleName === 'Administrator') ?? false
-
-  // Xử lý tham gia nhóm
   const handleJoinGroup = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     try {
       setLoading(true)
       await groupService.joinGroup(currentGroup.id)
-      message.success('Successfully joined the group!')
-      setJoined(true)
+      message.success('Join request sent! Waiting for approval.')
+      setPending(true)
+      setJoined(false)
       if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to join group'
+      const errorMessage = error?.response?.data?.message || 'Unable to send join request'
       message.error(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
+  // Xử lý hủy yêu cầu tham gia
+  const handleCancelJoinRequest = async () => {
+    try {
+      setLoading(true)
+      await groupService.cancelJoinRequest(currentGroup.id)
+      message.success('Join request cancelled!')
+      setPending(false)
+      setJoined(false)
+      if (onJoinSuccess) onJoinSuccess()
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
+      message.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
   // Xử lý rời khỏi nhóm
   const handleLeaveGroup = async () => {
     try {
@@ -95,16 +99,9 @@ const GroupCard = ({
     }
   }
 
-  // Xử lý click nút chỉnh sửa
-  const handleEditClick = () => {
-    setIsEditModalOpen(true)
-  }
-
-  // Xử lý khi chỉnh sửa nhóm thành công
-  const handleEditGroupSuccess = (updatedGroup: GroupDto) => {
-    setCurrentGroup(updatedGroup)
-    setIsEditModalOpen(false)
-    if (onGroupUpdated) onGroupUpdated(updatedGroup)
+  // Xử lý click button khi pending
+  const handlePendingClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
   }
 
   // Xử lý xem nhóm
@@ -112,33 +109,16 @@ const GroupCard = ({
     navigate(`/group/${currentGroup.id}`)
   }
 
-  // Menu cho thành viên thường (không phải admin)
-  const memberMenuItems: MenuProps['items'] = [
+  // Menu cho pending request
+  const pendingMenuItems: MenuProps['items'] = [
     {
-      key: 'leave',
-      label: 'Leave Group',
-      icon: <DeleteOutlined />,
+      key: 'cancel',
+      label: 'Cancel Request',
+      icon: <CloseOutlined />,
       danger: true,
-      onClick: handleLeaveGroup
-    }
-  ]
-
-  // Menu cho admin
-  const adminMenuItems: MenuProps['items'] = [
-    {
-      key: 'edit',
-      label: 'Edit Group',
-      icon: <EditOutlined />,
-      onClick: handleEditClick
-    },
-    {
-      key: 'delete',
-      label: 'Delete Group',
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => {
-        // Show confirmation
-        handleDeleteGroup()
+      onClick: (e) => {
+        e?.domEvent?.stopPropagation()
+        handleCancelJoinRequest()
       }
     }
   ]
@@ -176,23 +156,8 @@ const GroupCard = ({
                 <Title level={4} className='mb-1'>
                   {currentGroup.name}
                 </Title>
-                {/* <Tag
-                  icon={currentGroup.isPublic ? <GlobalOutlined /> : <LockOutlined />}
-                  color={currentGroup.isPublic ? 'blue' : 'orange'}
-                >
-                  {currentGroup.isPublic ? 'Công khai' : 'Riêng tư'}
-                </Tag> */}
               </div>
             </div>
-            {/* Description */}
-            {/* <Paragraph
-              ellipsis={{ rows: 2 }}
-              type='secondary'
-              className='mb-0'
-              style={{ minHeight: '44px' }}
-            >
-              {currentGroup.description}
-            </Paragraph> */}
 
             {/* Stats */}
             <div className='flex gap-4'>
@@ -209,30 +174,24 @@ const GroupCard = ({
             {/* Actions */}
             {showActions && (
               <div className='flex gap-2'>
-                {!joined ? (
-                  // Not joined - "Join Group" Button
+                {!joined && !pending ? (
                   <Button type='primary' onClick={handleJoinGroup} loading={loading} block>
                     Join Group
                   </Button>
-                ) : isAdmin ? (
-                  // Admin - "View Group" Button + Dropdown (Edit, Delete)
-                  <>
+                ) : pending ? (
+
+                  <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']} placement='bottomRight'>
                     <Button
-                      icon={<EyeOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleViewGroup()
-                      }}
-                      style={{ flex: 1 }}
+                      icon={<ClockCircleOutlined />}
+                      onClick={handlePendingClick}
+                      type='default'
+                      loading={loading}
+                      block
                     >
-                      View Group
+                      Request Pending
                     </Button>
-                    <Dropdown menu={{ items: adminMenuItems }} trigger={['click']} placement='bottomRight'>
-                      <Button icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
-                    </Dropdown>
-                  </>
+                  </Dropdown>
                 ) : (
-                  // Regular member - "View Group" Button + Dropdown (Leave)
                   <>
                     <Button
                       icon={<EyeOutlined />}
@@ -244,9 +203,6 @@ const GroupCard = ({
                     >
                       View Group
                     </Button>
-                    <Dropdown menu={{ items: memberMenuItems }} trigger={['click']} placement='bottomRight'>
-                      <Button icon={<MoreOutlined />} onClick={(e) => e.stopPropagation()} />
-                    </Dropdown>
                   </>
                 )}
               </div>
@@ -254,13 +210,6 @@ const GroupCard = ({
           </Space>
         </div>
       </Card>
-
-      <EditGroupModal
-        isModalOpen={isEditModalOpen}
-        handleCancel={() => setIsEditModalOpen(false)}
-        onEditGroupSuccess={handleEditGroupSuccess}
-        group={currentGroup}
-      />
     </>
   )
 }

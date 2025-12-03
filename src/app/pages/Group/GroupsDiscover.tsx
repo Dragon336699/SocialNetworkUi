@@ -3,6 +3,7 @@ import { Typography, Button, Spin, Empty, Row, Col } from 'antd'
 import { useGroups } from '@/app/hook/useGroups'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
+import { GroupRole } from '@/app/types/Group/group.dto'
 import GroupCard from '../../components/Group/GroupCard'
 
 const { Title, Text } = Typography
@@ -76,14 +77,17 @@ const GroupsDiscover = () => {
           <Row gutter={[16, 16]}>
             {groups.map((group) => {
               // Check if current user is already a member
-              const isJoined = group.groupUsers?.some(gu => gu.userId === currentUser?.id) ?? false
+              const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+              const isJoined = userStatus && userStatus.roleName !== GroupRole.Pending
+              const isPending = userStatus?.roleName === GroupRole.Pending
 
               return (
                 <Col xs={24} sm={12} lg={8} xl={6} key={group.id}>
                   <GroupCard
                     group={group}
                     showActions={true}
-                    isJoined={isJoined}
+                    isJoined={!!isJoined}
+                    isPending={!!isPending}
                     currentUserId={currentUser?.id || ''}
                     onJoinSuccess={() => refetch()}
                   />

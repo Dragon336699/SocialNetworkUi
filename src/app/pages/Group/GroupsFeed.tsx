@@ -3,6 +3,7 @@ import { Typography, Spin, Empty, message } from 'antd'
 import { groupService } from '@/app/services/group.service'
 import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
+import { GroupRole } from '@/app/types/Group/group.dto'
 import { userService } from '@/app/services/user.service'
 import Post from '../Post/Post'
 
@@ -51,8 +52,13 @@ const GroupsFeed = () => {
       setLoading(true)
       const groupsResponse = await groupService.getMyGroups(0, 50)
 
+      const approvedGroups = groupsResponse.groups.filter(group => {
+        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser.id)
+        return userStatus && userStatus.roleName !== GroupRole.Pending
+      })
+
       const allPosts: PostData[] = []
-      groupsResponse.groups.forEach(group => {
+      approvedGroups.forEach(group => {
         if (group.posts && group.posts.length > 0) {
           allPosts.push(...(group.posts as unknown as PostData[]))
         }
