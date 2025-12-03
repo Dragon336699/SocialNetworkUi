@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { UploadChangeParam } from 'antd/es/upload'
 import ImageCropModal from '@/app/common/Modals/ImageCropModal'
 import { UserDto } from '@/app/types/User/user.dto'
@@ -53,6 +53,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
   const isMe = user?.userName === userName
+  const navigate = useNavigate()
 
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
@@ -90,6 +91,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                   <div key={`${post.id}-${index}`}>
                     <Post
                       {...post}
+                      currentUser={userInfo}
                       currentUserId={userInfo.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
@@ -262,6 +264,11 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
+        {!isMe && (
+          <Button onClick={() => navigate(-1)} type='primary' size='large' className='px-6 font-medium mb-6'>
+            Back
+          </Button>
+        )}
         <div className='rounded-xl p-6 md:p-8 shadow-sm border border-blue-100 mb-8'>
           <Row gutter={[32, 24]} align='middle'>
             <Col>
@@ -366,7 +373,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
             </Col>
           </Row>
 
-          {userName && (
+          {!isMe && (
             <div className='mt-6 pt-6 border-t border-blue-200'>
               <Row gutter={[12, 12]}>
                 {[

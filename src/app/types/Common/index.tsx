@@ -9,3 +9,14 @@ export interface ModalProps {
   onCreatePostSuccess?: () => void
   groupId?: string
 }
+
+export type FriendStatus = 'online' | 'offline' | 'away'
+
+export interface Friend {
+  id: number
+  name: string
+  avatar: string
+  status: FriendStatus
+}
+
+export type ActionType = 'unfriend' | 'unfollow' | 'block'

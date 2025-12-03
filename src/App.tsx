@@ -26,6 +26,7 @@ const PublicRoute = () => {
 }
 
 import PostDetail from './app/pages/Post/PostDetail'
+import FriendsList from './app/pages/Friend/Friend'
 function App() {
   const { isLoggedIn, fetchUser, user } = useUserStore()
 
@@ -52,6 +53,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path='/' element={<Navigate to='/home' replace />} />
             <Route path='/home' element={<Home />} />
+            <Route path='/friend' element={<FriendsList />} />
             <Route path='/profile' element={<Navigate to={`/profile/${user?.userName}`} replace />} />
             <Route path='/profile/:userName' element={<ProfileUser />} />
             <Route path='/inbox' element={<Inbox />} />
