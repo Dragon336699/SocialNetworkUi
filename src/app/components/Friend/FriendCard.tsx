@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react'
 import { Dropdown, Button, MenuProps } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

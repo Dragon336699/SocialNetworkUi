@@ -39,7 +39,21 @@ const profile = {
 }
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
-const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo: UserDto; onEdit: () => void }) => {
+const ProfileView = ({
+  posts,
+  followerList,
+  friendList,
+  followingList,
+  userInfo,
+  onEdit
+}: {
+  posts: PostData[]
+  followerList: UserDto[]
+  friendList: UserDto[]
+  followingList: UserDto[]
+  userInfo: UserDto
+  onEdit: () => void
+}) => {
   const { user } = useUserStore()
   const { userName } = useParams()
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
@@ -78,7 +92,7 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
                   onClick={() => setIsOpenCreatePost(true)}
                   className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
                 >
-                  <Avatar size={48} src='https://api.dicebear.com/7.x/miniavs/svg?seed=current-user' />
+                  <Avatar size={48} src={user?.avatarUrl} />
                   <div className='flex-1 bg-gray-100 rounded-full px-4 py-3 text-gray-600 hover:bg-gray-200 transition-colors'>
                     What's on your mind?
                   </div>
@@ -111,17 +125,20 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       case 'followers':
         return (
           <div className='space-y-3'>
-            {profile.followers > 0 ? (
-              [...Array(Math.min(profile.followers, 5))].map((_, i) => (
+            {followerList.length > 0 ? (
+              followerList.map((user, i) => (
                 <div
                   key={i}
                   className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
                 >
                   <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={`https://api.dicebear.com/7.x/miniavs/svg?seed=follower-${i}`} />
+                    <Avatar size={48} src={user.avatarUrl} />
                     <div>
-                      <p className='font-semibold text-gray-900'>User {i + 1}</p>
-                      <p className='text-sm text-gray-500'>@user{i + 1}</p>
+                      <p
+                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
+                        onClick={() => navigate(`/profile/${user.userName}`)}
+                      >{`${user.lastName} ${user.firstName}`}</p>
+                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
                   <Button size='small' className='px-4'>
@@ -141,17 +158,20 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       case 'following':
         return (
           <div className='space-y-3'>
-            {profile.following > 0 ? (
-              [...Array(Math.min(profile.following, 5))].map((_, i) => (
+            {followingList.length > 0 ? (
+              followingList.map((user, i) => (
                 <div
                   key={i}
                   className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
                 >
                   <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={`https://api.dicebear.com/7.x/miniavs/svg?seed=following-${i}`} />
+                    <Avatar size={48} src={user.avatarUrl} />
                     <div>
-                      <p className='font-semibold text-gray-900'>Following {i + 1}</p>
-                      <p className='text-sm text-gray-500'>@following{i + 1}</p>
+                      <p
+                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
+                        onClick={() => navigate(`/profile/${user.userName}`)}
+                      >{`${user.lastName} ${user.firstName}`}</p>
+                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
                   <Button size='small' type='primary' className='px-4'>
@@ -171,17 +191,20 @@ const ProfileView = ({ posts, userInfo, onEdit }: { posts: PostData[]; userInfo:
       case 'friends':
         return (
           <div className='space-y-3'>
-            {profile.friends > 0 ? (
-              [...Array(Math.min(profile.friends, 5))].map((_, i) => (
+            {friendList.length > 0 ? (
+              friendList.map((user, i) => (
                 <div
                   key={i}
                   className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
                 >
                   <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={`https://api.dicebear.com/7.x/miniavs/svg?seed=friend-${i}`} />
+                    <Avatar size={48} src={user.avatarUrl} />
                     <div>
-                      <p className='font-semibold text-gray-900'>Friend {i + 1}</p>
-                      <p className='text-sm text-gray-500'>@friend{i + 1}</p>
+                      <p
+                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
+                        onClick={() => navigate(`/profile/${user.userName}`)}
+                      >{`${user.lastName} ${user.firstName}`}</p>
+                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
                   <Button size='small' danger>

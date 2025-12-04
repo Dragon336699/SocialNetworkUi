@@ -1,6 +1,7 @@
 import ProfileEdit from '@/app/components/Profile/ProfileEdit'
 import ProfileView from '@/app/components/Profile/ProfileView'
 import { postService } from '@/app/services/post.service'
+import { relationService } from '@/app/services/relation.service'
 import { userService } from '@/app/services/user.service'
 import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
@@ -71,6 +72,43 @@ const ProfileUser = () => {
     }
   }
 
+  const [followerList, setFolloweList] = useState<UserDto[]>([])
+  const [followingList, setFollowingList] = useState<UserDto[]>([])
+  const [friendList, setFriendList] = useState<UserDto[]>([])
+
+  const getFollower = async () => {
+    try {
+      const res = await relationService.getFollowersList()
+      if (res.status === 200) {
+        setFolloweList(res.data.data.data)
+      }
+    } catch (e) {
+      console.log('Error get list follower: ', e)
+    }
+  }
+
+  const getFollowing = async () => {
+    try {
+      const res = await relationService.getFollowingList()
+      if (res.status === 200) {
+        setFollowingList(res.data.data.data)
+      }
+    } catch (e) {
+      console.log('Error get list follower: ', e)
+    }
+  }
+
+  const getFriend = async () => {
+    try {
+      const res = await relationService.getFriendsList()
+      if (res.status === 200) {
+        setFriendList(res.data.data.data)
+      }
+    } catch (e) {
+      console.log('Error get list follower: ', e)
+    }
+  }
+
   useEffect(() => {
     getUserInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,6 +117,9 @@ const ProfileUser = () => {
   useEffect(() => {
     if (userInfo.id) {
       getPost()
+      getFollower()
+      getFollowing()
+      getFriend()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInfo.id])
@@ -90,7 +131,14 @@ const ProfileUser = () => {
           (isEditing ? (
             <ProfileEdit onBack={() => setIsEditing(false)} userInfo={userInfo} refreshData={getUserInfo} />
           ) : (
-            <ProfileView posts={posts} userInfo={userInfo} onEdit={() => setIsEditing(true)} />
+            <ProfileView
+              posts={posts}
+              followerList={followerList}
+              friendList={friendList}
+              followingList={followingList}
+              userInfo={userInfo}
+              onEdit={() => setIsEditing(true)}
+            />
           ))}
       </main>
     </Spin>
