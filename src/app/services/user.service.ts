@@ -18,6 +18,13 @@ export const userService = {
     return data
   },
 
+  async logout(): Promise<BaseResponse> {
+    const { data } = await apiClient.post<BaseResponse>('user/logout', {
+      withCredentials: true
+    })
+    return data
+  },
+
   async requestOTP(requestOTPRequest: RequestOTPRequest): Promise<BaseResponse> {
     const { data } = await apiClient.post<BaseResponse>('user/forgetPassword/getOTP', null, {
       params: { email: requestOTPRequest.email }

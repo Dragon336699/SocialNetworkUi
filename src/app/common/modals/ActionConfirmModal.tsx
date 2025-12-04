@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react'
 import { Modal, Button } from 'antd'
 import { ActionType, Friend } from '@/app/types/Common'

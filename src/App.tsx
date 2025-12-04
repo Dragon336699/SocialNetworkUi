@@ -10,6 +10,8 @@ import ProfileUser from './app/pages/Profile/ProfileUser'
 import Inbox from './app/pages/Inbox/Inbox'
 import { chatService } from './app/services/chat.service'
 import { useUserStore } from './app/stores/auth'
+import PostDetail from './app/pages/Post/PostDetail'
+import FriendsList from './app/pages/Friend/Friend'
 
 const PrivateRoute = () => {
   const { isLoggedIn } = useUserStore()
@@ -21,15 +23,8 @@ const PublicRoute = () => {
   return !isLoggedIn ? <Outlet /> : <Navigate to='/home' replace />
 }
 
-import PostDetail from './app/pages/Post/PostDetail'
-import FriendsList from './app/pages/Friend/Friend'
 function App() {
-  const { isLoggedIn, fetchUser, user } = useUserStore()
-
-  useEffect(() => {
-    fetchUser()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const { isLoggedIn, user } = useUserStore()
 
   useEffect(() => {
     if (isLoggedIn) chatService.start()

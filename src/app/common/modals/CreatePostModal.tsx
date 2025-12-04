@@ -17,11 +17,13 @@ import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
+import { useUserStore } from '@/app/stores/auth'
 
 const { TextArea } = Input
 const { Text } = Typography
 
 const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: ModalProps) => {
+  const { user } = useUserStore()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -162,9 +164,9 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: Mod
       title={
         <Flex justify='space-between'>
           <Flex align='center' gap='small'>
-            <Avatar size='large' src='https://api.dicebear.com/7.x/miniavs/svg?seed=1' />
+            <Avatar size='large' src={user?.avatarUrl} />
             <Flex vertical>
-              <Text strong>Seponest</Text>
+              <Text strong>{user?.userName}</Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>

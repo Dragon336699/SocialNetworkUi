@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useMemo } from 'react'
 import { Input, Empty, Tabs } from 'antd'
 import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined } from '@ant-design/icons'
