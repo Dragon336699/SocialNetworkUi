@@ -18,7 +18,7 @@ export const postService = {
   },
 
   async getAllPosts(skip: number = 0, take: number = 10): Promise<GetAllPostsResponse> {
-    const { data } = await apiClient.get('post/all', {
+    const { data } = await apiClient.get('post/getNewsFeed', {
       params: { skip, take },
       withCredentials: true
     })
