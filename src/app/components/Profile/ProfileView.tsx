@@ -109,6 +109,7 @@ const ProfileView = ({
                       currentUserId={userInfo.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
+                      currentUser={userInfo}
                     />
                   </div>
                 ))}

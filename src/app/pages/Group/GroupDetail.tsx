@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Typography, Button, Spin, Space, Tag, message, Modal, Avatar, Card, Tabs, Empty, Dropdown, List } from 'antd'
+import { Typography, Button, Spin, Space, Tag, message, Modal, Avatar, Card, Tabs, Empty, Dropdown, List, Badge } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   GlobalOutlined,
@@ -13,15 +13,19 @@ import {
   DeleteOutlined,
   CrownOutlined,
   StarOutlined,
-  TeamOutlined
+  TeamOutlined,
+  ClockCircleOutlined,
+  CloseOutlined,
+  BellOutlined
 } from '@ant-design/icons'
 import { groupService } from '@/app/services/group.service'
-import { GroupDto } from '@/app/types/Group/group.dto'
+import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '../Post/Post'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import EditGroupModal from '@/app/common/Modals/Group/EditGroupModal'
 import ManageMembersModal from '@/app/common/Modals/Group/ManageMembersModal'
+import PendingJoinRequestsModal from '@/app/common/Modals/Group/PendingJoinRequestsModal'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
 
@@ -45,15 +49,18 @@ const GroupDetail = () => {
   const [posts, setPosts] = useState<PostData[]>([])
   const [loading, setLoading] = useState(true)
   const [isJoined, setIsJoined] = useState(false)
+  const [isPending, setIsPending] = useState(false)
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const [isEditGroupOpen, setIsEditGroupOpen] = useState(false)
   const [isManageMembersOpen, setIsManageMembersOpen] = useState(false)
+  const [isPendingRequestsOpen, setIsPendingRequestsOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserDto>(defaultUser)
+  const [pendingRequestCount, setPendingRequestCount] = useState(0)
 
   // Kiểm tra role của người dùng hiện tại
   const currentUserRole = group?.groupUsers?.find(gu => gu.userId === currentUser?.id)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
-  const isAdmin = currentUserRole === 'Administrator' || isSuperAdmin
+  const isAdmin = currentUserRole === GroupRole.Administrator || isSuperAdmin
 
   // Lấy thông tin người dùng hiện tại
   useEffect(() => {
@@ -81,11 +88,29 @@ const GroupDetail = () => {
 
         if (response.group) {
           setGroup(response.group)
-          const isUserJoined = response.group.groupUsers?.some(gu => gu.userId === currentUser.id) ?? false
-          setIsJoined(isUserJoined)
+          const userStatus = response.group.groupUsers?.find(gu => gu.userId === currentUser.id)
+
+          if (userStatus) {
+            if (userStatus.roleName === GroupRole.Pending) {
+              setIsPending(true)
+              setIsJoined(false)
+            } else {
+              setIsJoined(true)
+              setIsPending(false)
+            }
+          } else {
+            setIsJoined(false)
+            setIsPending(false)
+          }
 
           if (response.group.posts) {
             setPosts(response.group.posts as unknown as PostData[])
+          }
+
+          // Đếm số pending requests (chỉ cho admin)
+          if (userStatus && (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)) {
+            const pendingCount = response.group.groupUsers?.filter(gu => gu.roleName === GroupRole.Pending).length || 0
+            setPendingRequestCount(pendingCount)
           }
         }
       } catch (error: any) {
@@ -109,8 +134,28 @@ const GroupDetail = () => {
       const response = await groupService.getGroupById(groupId)
       if (response.group) {
         setGroup(response.group)
+        const userStatus = response.group.groupUsers?.find(gu => gu.userId === currentUser.id)
+        if (userStatus) {
+          if (userStatus.roleName === GroupRole.Pending) {
+            setIsPending(true)
+            setIsJoined(false)
+          } else {
+            setIsJoined(true)
+            setIsPending(false)
+          }
+        } else {
+          setIsJoined(false)
+          setIsPending(false)
+        }
+
         if (response.group.posts) {
           setPosts(response.group.posts as unknown as PostData[])
+        }
+
+        // Update pending count
+        if (userStatus && (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)) {
+          const pendingCount = response.group.groupUsers?.filter(gu => gu.roleName === GroupRole.Pending).length || 0
+          setPendingRequestCount(pendingCount)
         }
       }
     } catch (error) {
@@ -124,13 +169,46 @@ const GroupDetail = () => {
 
     try {
       await groupService.joinGroup(groupId)
-      message.success('Successfully joined the group!')
+      message.success('Join request sent! Waiting for approval.')
       await refreshGroupData()
-      setIsJoined(true)
+      setIsPending(true)
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to join group'
+      const errorMessage = error?.response?.data?.message || 'Unable to send join request'
       message.error(errorMessage)
     }
+  }
+
+  // Xử lý hủy yêu cầu tham gia
+  const handleCancelJoinRequest = async () => {
+    if (!groupId) return
+
+    try {
+      await groupService.cancelJoinRequest(groupId)
+      message.success('Join request cancelled')
+      setIsPending(false)
+      await refreshGroupData()
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
+      message.error(errorMessage)
+    }
+    // Modal.confirm({
+    //   title: 'Cancel Join Request',
+    //   content: 'Are you sure you want to cancel your join request?',
+    //   okText: 'Cancel Request',
+    //   cancelText: 'Keep Request',
+    //   okType: 'danger',
+    //   onOk: async () => {
+    //     try {
+    //       await groupService.cancelJoinRequest(groupId)
+    //       message.success('Join request cancelled')
+    //       setIsPending(false)
+    //       await refreshGroupData()
+    //     } catch (error: any) {
+    //       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
+    //       message.error(errorMessage)
+    //     }
+    //   }
+    // })
   }
 
   // Xử lý rời khỏi nhóm
@@ -195,6 +273,17 @@ const GroupDetail = () => {
     await refreshGroupData()
   }
 
+  // Menu cho pending request
+  const pendingMenuItems: MenuProps['items'] = [
+    {
+      key: 'cancel',
+      label: 'Cancel Request',
+      icon: <CloseOutlined />,
+      danger: true,
+      onClick: handleCancelJoinRequest
+    }
+  ]
+
   // Menu cho người dùng đã tham gia (User và Admin có thể leave)
   const joinedMenuItems: MenuProps['items'] = [
     {
@@ -208,6 +297,19 @@ const GroupDetail = () => {
 
   // Menu cho admin (Admin và SuperAdmin)
   const adminMenuItems: MenuProps['items'] = [
+    {
+      key: 'pending-requests',
+      label: (
+        <Space>
+          <span>Join Requests</span>
+          {pendingRequestCount > 0 && (
+            <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />
+          )}
+        </Space>
+      ),
+      icon: <BellOutlined />,
+      onClick: () => setIsPendingRequestsOpen(true)
+    },
     {
       key: 'manage',
       label: 'Manage Members',
@@ -247,14 +349,14 @@ const GroupDetail = () => {
 
   // Render role tag
   const renderRoleTag = (roleName: string) => {
-    if (roleName === 'SuperAdministrator') {
+    if (roleName === GroupRole.SuperAdministrator) {
       return (
         <Tag color='gold' icon={<StarOutlined />}>
           Owner
         </Tag>
       )
     }
-    if (roleName === 'Administrator') {
+    if (roleName === GroupRole.Administrator) {
       return (
         <Tag color='blue' icon={<CrownOutlined />}>
           Admin
@@ -300,6 +402,12 @@ const GroupDetail = () => {
             currentUserId={currentUser.id}
             onMembersUpdated={handleMembersUpdated}
           />
+          <PendingJoinRequestsModal
+            isModalOpen={isPendingRequestsOpen}
+            handleCancel={() => setIsPendingRequestsOpen(false)}
+            groupId={groupId || ''}
+            onRequestsUpdated={handleMembersUpdated}
+          />
         </>
       )}
 
@@ -335,19 +443,31 @@ const GroupDetail = () => {
             </div>
 
             <Space>
-              {!isJoined ? (
+              {!isJoined && !isPending ? (
                 <Button type='primary' size='large' onClick={handleJoinGroup}>
                   Join Group
                 </Button>
+              ) : isPending ? (
+                <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']}>
+                  <Button icon={<ClockCircleOutlined />} type='default'>
+                    Request Pending
+                  </Button>
+                </Dropdown>
               ) : (
                 <>
                   {isAdmin ? (
                     <Dropdown menu={{ items: adminMenuItems }} trigger={['click']} placement='bottomRight'>
-                      <Button icon={<MoreOutlined />} />
+                      <Button icon={<MoreOutlined />}>
+                        {pendingRequestCount > 0 && (
+                          <Badge count={pendingRequestCount} offset={[10, 0]} />
+                        )}
+                      </Button>
                     </Dropdown>
                   ) : (
                     <Dropdown menu={{ items: joinedMenuItems }} trigger={['click']}>
-                      <Button icon={<CheckOutlined />}>Joined</Button>
+                      <Button icon={<CheckOutlined />} type='default'>
+                        Joined
+                      </Button>
                     </Dropdown>
                   )}
                 </>
@@ -373,7 +493,7 @@ const GroupDetail = () => {
       </Card>
 
       {/* Content */}
-      {isJoined ? (
+      {isJoined && !isPending ? (
         <Tabs defaultActiveKey='posts' size='large'>
           <TabPane tab='Discussion' key='posts'>
             <div className='bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-200'>
@@ -464,6 +584,18 @@ const GroupDetail = () => {
             </Card>
           </TabPane>
         </Tabs>
+      ) : isPending ? (
+        <Card>
+          <Empty
+            description={
+              <Space direction='vertical'>
+                <Text>Your join request is pending approval</Text>
+                <Text type='secondary'>Please wait for an administrator to approve your request</Text>
+              </Space>
+            }
+            image={<ClockCircleOutlined style={{ fontSize: 48, color: '#faad14' }} />}
+          />
+        </Card>
       ) : (
         <Card>
           <Empty

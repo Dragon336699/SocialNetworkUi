@@ -19,6 +19,7 @@ import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { postService } from '@/app/services/post.service'
 import { PostData, PostImage } from '@/app/types/Post/Post'
+import { UserDto } from '@/app/types/User/user.dto'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -28,9 +29,10 @@ interface EditPostModalProps {
   onClose: () => void
   postId: string
   onSave: (updatedPost: PostData) => void
+  currentUser: UserDto
 }
 
-const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, onSave }) => {
+const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, onSave, currentUser }) => {
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [originalImages, setOriginalImages] = useState<PostImage[]>([])
@@ -43,6 +45,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
   const textAreaRef = useRef<TextAreaRef>(null)
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
 
   // Lấy dữ liệu bài viết khi modal mở
   useEffect(() => {
@@ -234,9 +238,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
       title={
         <Flex justify='space-between'>
           <Flex align='center' gap='small'>
-            <Avatar size='large' src='https://api.dicebear.com/7.x/miniavs/svg?seed=1' />
+            <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
+              {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
+            </Avatar>
             <Flex vertical>
-              <Text strong>Edit post</Text>
+              <Text strong>{fullName}</Text>
+              <Text type='secondary' style={{ fontSize: '12px' }}>
+                Edit post
+              </Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>

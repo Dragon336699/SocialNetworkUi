@@ -29,6 +29,25 @@ export interface JoinGroupResponse {
   message: string
 }
 
+export interface ApproveJoinRequestResponse {
+  message: string
+  groupUser?: GroupUserDto
+}
+
+export interface RejectJoinRequestResponse {
+  message: string
+}
+
+export interface CancelJoinRequestResponse {
+  message: string
+}
+
+export interface GetPendingJoinRequestsResponse {
+  message: string
+  pendingRequests: GroupUserDto[]
+  totalCount: number
+}
+
 export interface LeaveGroupResponse {
   message: string
 }
@@ -46,3 +65,4 @@ export interface KickMemberResponse {
   message: string
   success: boolean
 }
+

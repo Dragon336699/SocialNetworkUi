@@ -458,6 +458,7 @@ const Post: React.FC<PostProps> = ({
         onClose={() => setShowEditModal(false)}
         postId={id}
         onSave={handleSavePost}
+        currentUser={currentUser}
       />
 
       {/* Delete Post Modal */}

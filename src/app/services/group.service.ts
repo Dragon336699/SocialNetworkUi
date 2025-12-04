@@ -9,7 +9,11 @@ import {
   CreateGroupResponse,
   PromoteToAdminResponse,
   DemoteAdminResponse,
-  KickMemberResponse
+  KickMemberResponse,
+  ApproveJoinRequestResponse,
+  RejectJoinRequestResponse,
+  CancelJoinRequestResponse,
+  GetPendingJoinRequestsResponse
 } from '../types/Group/GroupResponse'
 import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
 
@@ -134,6 +138,45 @@ export const groupService = {
     const { data } = await apiClient.post<KickMemberResponse>(
       `group/${groupId}/kick-member`,
       { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async getPendingJoinRequests(
+    groupId: string,
+    skip: number = 0,
+    take: number = 10
+  ): Promise<GetPendingJoinRequestsResponse> {
+    const { data } = await apiClient.get<GetPendingJoinRequestsResponse>(`group/${groupId}/pending-join-requests`, {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async approveJoinRequest(groupId: string, targetUserId: string): Promise<ApproveJoinRequestResponse> {
+    const { data } = await apiClient.post<ApproveJoinRequestResponse>(
+      `group/${groupId}/approve-join-request`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async rejectJoinRequest(groupId: string, targetUserId: string): Promise<RejectJoinRequestResponse> {
+    const { data } = await apiClient.post<RejectJoinRequestResponse>(
+      `group/${groupId}/reject-join-request`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async cancelJoinRequest(groupId: string): Promise<CancelJoinRequestResponse> {
+    const { data } = await apiClient.post<CancelJoinRequestResponse>(
+      `group/${groupId}/cancel-join-request`,
+      {},
       { withCredentials: true }
     )
     return data

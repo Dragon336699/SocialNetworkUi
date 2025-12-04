@@ -35,6 +35,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: Mod
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
   const renderPrivacyIcon = () => {
     const iconClass = 'w-4 h-4 text-gray-500'
 
@@ -168,9 +169,11 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: Mod
       title={
         <Flex justify='space-between'>
           <Flex align='center' gap='small'>
-            <Avatar size='large' src={user?.avatarUrl} />
+            <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
+              {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
+            </Avatar>
             <Flex vertical>
-              <Text strong>{user?.userName}</Text>
+              <Text strong>{fullName}</Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>

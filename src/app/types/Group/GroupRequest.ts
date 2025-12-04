@@ -18,3 +18,11 @@ export interface PromoteToAdminRequest {
 export interface DemoteAdminRequest {
   targetUserId: string
 }
+
+export interface ApproveJoinRequestRequest {
+  targetUserId: string
+}
+
+export interface RejectJoinRequestRequest {
+  targetUserId: string
+}
