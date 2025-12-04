@@ -22,7 +22,7 @@ import { useUserStore } from '@/app/stores/auth'
 const { TextArea } = Input
 const { Text } = Typography
 
-const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess }: ModalProps) => {
+const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
   const { user } = useUserStore()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')

@@ -35,9 +35,7 @@ const ProfileUser = () => {
   const getUserInfo = async () => {
     try {
       setCountLoading((pre) => pre + 1)
-      let res
-      if (userName) res = await userService.getUserInfoByUserName(userName)
-      else res = await userService.getUserInfoByToken()
+      const res = await userService.getUserInfoByUserName(userName || '')
       if (res.status === 200) {
         setUserInfo(res.data as UserDto)
         setCountLoading((pre) => pre - 1)

@@ -9,10 +9,12 @@ import {
   WomanOutlined,
   FileTextOutlined,
   UserOutlined,
-  CameraOutlined
+  CameraOutlined,
+  UserDeleteOutlined,
+  HeartFilled
 } from '@ant-design/icons'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { UploadChangeParam } from 'antd/es/upload'
 import ImageCropModal from '@/app/common/Modals/ImageCropModal'
@@ -22,6 +24,7 @@ import { base64ToFile } from '@/app/helper'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '@/app/pages/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
+import { relationService } from '@/app/services/relation.service'
 import { useUserStore } from '@/app/stores/auth'
 
 const profile = {
@@ -55,19 +58,78 @@ const ProfileView = ({
   onEdit: () => void
 }) => {
   const { user } = useUserStore()
-  const { userName } = useParams()
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
-  const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<TabType>('posts')
 
-  // const [form] = Form.useForm()
+  const [activeTab, setActiveTab] = useState<TabType>('posts')
   const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || '')
-  const [cropModalOpen, setCropModalOpen] = useState(false)
-  const [loading, setLoading] = useState<boolean>(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
-  const isMe = user?.userName === userName
-  const navigate = useNavigate()
+  const [cropModalOpen, setCropModalOpen] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
+  const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
+  const [isSend, setIsSend] = useState<boolean>(false)
+  const [isFollowing, setIsFollowing] = useState<boolean>(false)
+
+  const isMe = user?.userName === userInfo.userName
+
+  const getSentFriendReq = async () => {
+    try {
+      const res = await relationService.getSentFriendRequest(user?.id || '')
+      if (res.status === 200) {
+        const data = res.data
+        const checkHas = data.some((r) => r.receiverId === userInfo.id)
+        setIsSend(checkHas)
+      }
+    } catch (e) {
+      console.log('False to get sent request!', e)
+    }
+  }
+
+  const handleFriendRequest = async () => {
+    try {
+      setLoadingRequestFriend(true)
+      if (isSend) {
+        const res = await relationService.cancelFriendRequest(userInfo.id)
+        if (res.status === 200) {
+          setIsSend(false)
+          setLoadingRequestFriend(false)
+          message.success('Canceled friend request')
+        }
+      } else {
+        const res = await relationService.addFriend(userInfo.id)
+        if (res.status === 200) {
+          setIsSend(true)
+          setLoadingRequestFriend(false)
+          message.success('Friend request sent')
+        }
+      }
+    } catch {
+      setLoadingRequestFriend(false)
+      message.error('Error. Try again!')
+    }
+  }
+
+  const handlleFollow = async () => {
+    try {
+      if (isFollowing) {
+        // await
+        setIsFollowing(false)
+        message.success('Unfollowed')
+      } else {
+        // await
+        setIsFollowing(true)
+        message.success('Following')
+      }
+    } catch {
+      message.error('Error. Try again!')
+    }
+  }
+
+  useEffect(() => {
+    getSentFriendReq()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
@@ -400,17 +462,51 @@ const ProfileView = ({
           {!isMe && (
             <div className='mt-6 pt-6 border-t border-blue-200'>
               <Row gutter={[12, 12]}>
-                {[
-                  { icon: <UserAddOutlined className='text-blue-500 hover:text-blue-600' />, label: 'Add friend' },
-                  { icon: <HeartOutlined className='text-red-500 hover:text-red-600' />, label: 'Follow' },
-                  { icon: <SendOutlined className='text-green-500 hover:text-green-600' />, label: 'Send message' }
-                ].map((btn) => (
-                  <Col flex='auto' key={btn.label} xs={24} sm={8}>
-                    <Button block icon={btn.icon} size='large' className='flex items-center justify-center gap-2'>
-                      {btn.label}
-                    </Button>
-                  </Col>
-                ))}
+                <Col flex='auto' xs={24} sm={8}>
+                  <Button
+                    block
+                    loading={loadingRequestFriend}
+                    size='large'
+                    icon={
+                      isSend ? (
+                        <UserDeleteOutlined className='text-blue-500 hover:text-blue-600' />
+                      ) : (
+                        <UserAddOutlined className='text-blue-500 hover:text-blue-600' />
+                      )
+                    }
+                    onClick={handleFriendRequest}
+                  >
+                    {isSend ? 'Cancel Request' : 'Add friend'}
+                  </Button>
+                </Col>
+
+                <Col flex='auto' xs={24} sm={8}>
+                  <Button
+                    block
+                    size='large'
+                    icon={
+                      isFollowing ? (
+                        <HeartFilled className='text-red-600 hover:text-red-700' />
+                      ) : (
+                        <HeartOutlined className='text-red-500 hover:text-red-600' />
+                      )
+                    }
+                    onClick={handlleFollow}
+                  >
+                    {isFollowing ? 'Unfollow' : 'Follow'}
+                  </Button>
+                </Col>
+
+                <Col flex='auto' xs={24} sm={8}>
+                  <Button
+                    block
+                    size='large'
+                    icon={<SendOutlined className='text-green-500 hover:text-green-600' />}
+                    onClick={() => {}}
+                  >
+                    Send message
+                  </Button>
+                </Col>
               </Row>
             </div>
           )}
