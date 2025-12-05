@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Typography, Button, Spin, Space, Tag, message, Modal, Avatar, Card, Tabs, Empty, Dropdown, List, Badge } from 'antd'
+import {
+  Typography,
+  Button,
+  Spin,
+  Space,
+  Tag,
+  message,
+  Modal,
+  Avatar,
+  Card,
+  Tabs,
+  Empty,
+  Dropdown,
+  List,
+  Badge
+} from 'antd'
 import type { MenuProps } from 'antd'
 import {
   GlobalOutlined,
@@ -58,7 +73,7 @@ const GroupDetail = () => {
   const [pendingRequestCount, setPendingRequestCount] = useState(0)
 
   // Kiểm tra role của người dùng hiện tại
-  const currentUserRole = group?.groupUsers?.find(gu => gu.userId === currentUser?.id)?.roleName || ''
+  const currentUserRole = group?.groupUsers?.find((gu) => gu.userId === currentUser?.id)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
   const isAdmin = currentUserRole === GroupRole.Administrator || isSuperAdmin
 
@@ -88,7 +103,7 @@ const GroupDetail = () => {
 
         if (response.group) {
           setGroup(response.group)
-          const userStatus = response.group.groupUsers?.find(gu => gu.userId === currentUser.id)
+          const userStatus = response.group.groupUsers?.find((gu) => gu.userId === currentUser.id)
 
           if (userStatus) {
             if (userStatus.roleName === GroupRole.Pending) {
@@ -108,8 +123,12 @@ const GroupDetail = () => {
           }
 
           // Đếm số pending requests (chỉ cho admin)
-          if (userStatus && (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)) {
-            const pendingCount = response.group.groupUsers?.filter(gu => gu.roleName === GroupRole.Pending).length || 0
+          if (
+            userStatus &&
+            (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)
+          ) {
+            const pendingCount =
+              response.group.groupUsers?.filter((gu) => gu.roleName === GroupRole.Pending).length || 0
             setPendingRequestCount(pendingCount)
           }
         }
@@ -134,7 +153,7 @@ const GroupDetail = () => {
       const response = await groupService.getGroupById(groupId)
       if (response.group) {
         setGroup(response.group)
-        const userStatus = response.group.groupUsers?.find(gu => gu.userId === currentUser.id)
+        const userStatus = response.group.groupUsers?.find((gu) => gu.userId === currentUser.id)
         if (userStatus) {
           if (userStatus.roleName === GroupRole.Pending) {
             setIsPending(true)
@@ -153,8 +172,11 @@ const GroupDetail = () => {
         }
 
         // Update pending count
-        if (userStatus && (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)) {
-          const pendingCount = response.group.groupUsers?.filter(gu => gu.roleName === GroupRole.Pending).length || 0
+        if (
+          userStatus &&
+          (userStatus.roleName === GroupRole.Administrator || userStatus.roleName === GroupRole.SuperAdministrator)
+        ) {
+          const pendingCount = response.group.groupUsers?.filter((gu) => gu.roleName === GroupRole.Pending).length || 0
           setPendingRequestCount(pendingCount)
         }
       }
@@ -302,9 +324,7 @@ const GroupDetail = () => {
       label: (
         <Space>
           <span>Join Requests</span>
-          {pendingRequestCount > 0 && (
-            <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />
-          )}
+          {pendingRequestCount > 0 && <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />}
         </Space>
       ),
       icon: <BellOutlined />,
@@ -385,6 +405,7 @@ const GroupDetail = () => {
         handleCancel={() => setIsCreatePostOpen(false)}
         onCreatePostSuccess={handlePostCreated}
         groupId={groupId}
+        currentUser={currentUser}
       />
 
       {group && (
@@ -458,9 +479,7 @@ const GroupDetail = () => {
                   {isAdmin ? (
                     <Dropdown menu={{ items: adminMenuItems }} trigger={['click']} placement='bottomRight'>
                       <Button icon={<MoreOutlined />}>
-                        {pendingRequestCount > 0 && (
-                          <Badge count={pendingRequestCount} offset={[10, 0]} />
-                        )}
+                        {pendingRequestCount > 0 && <Badge count={pendingRequestCount} offset={[10, 0]} />}
                       </Button>
                     </Dropdown>
                   ) : (

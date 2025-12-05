@@ -10,8 +10,8 @@ import {
   FileTextOutlined,
   UserOutlined,
   CameraOutlined,
-  UserDeleteOutlined,
-  HeartFilled
+  HeartFilled,
+  UserDeleteOutlined
 } from '@ant-design/icons'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useEffect, useState } from 'react'
@@ -24,8 +24,8 @@ import { base64ToFile } from '@/app/helper'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '@/app/pages/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
-import { relationService } from '@/app/services/relation.service'
 import { useUserStore } from '@/app/stores/auth'
+import { relationService } from '@/app/services/relation.service'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -58,20 +58,22 @@ const ProfileView = ({
   onEdit: () => void
 }) => {
   const { user } = useUserStore()
+  const { userName } = useParams()
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
-
-  const [activeTab, setActiveTab] = useState<TabType>('posts')
-  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || '')
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
-
-  const [cropModalOpen, setCropModalOpen] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
+  const [activeTab, setActiveTab] = useState<TabType>('posts')
+  const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
   const [isSend, setIsSend] = useState<boolean>(false)
   const [isFollowing, setIsFollowing] = useState<boolean>(false)
 
-  const isMe = user?.userName === userInfo.userName
+  // const [form] = Form.useForm()
+  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || '')
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+
+  const isMe = user?.userName === userName
+  const navigate = useNavigate()
 
   const getSentFriendReq = async () => {
     try {
@@ -110,7 +112,7 @@ const ProfileView = ({
     }
   }
 
-  const handlleFollow = async () => {
+  const handleFollow = async () => {
     try {
       if (isFollowing) {
         // await
@@ -126,11 +128,6 @@ const ProfileView = ({
     }
   }
 
-  useEffect(() => {
-    getSentFriendReq()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
     handlePostCreated()
@@ -142,6 +139,10 @@ const ProfileView = ({
       ? `${baseClass} bg-blue-600 text-white shadow-md hover:bg-blue-700`
       : `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`
   }
+
+  useEffect(() => {
+    getSentFriendReq()
+  }, [])
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -171,7 +172,6 @@ const ProfileView = ({
                       currentUserId={userInfo.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
-                      currentUser={userInfo}
                     />
                   </div>
                 ))}
@@ -338,6 +338,7 @@ const ProfileView = ({
         isModalOpen={isOpenCreatePost}
         handleCancel={() => setIsOpenCreatePost(false)}
         onCreatePostSuccess={handleCreatePostSuccess}
+        currentUser={userInfo}
       />
       <ImageCropModal
         open={cropModalOpen}
@@ -350,11 +351,6 @@ const ProfileView = ({
       />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
-        {!isMe && (
-          <Button onClick={() => navigate(-1)} type='primary' size='large' className='px-6 font-medium mb-6'>
-            Back
-          </Button>
-        )}
         <div className='rounded-xl p-6 md:p-8 shadow-sm border border-blue-100 mb-8'>
           <Row gutter={[32, 24]} align='middle'>
             <Col>
@@ -491,7 +487,7 @@ const ProfileView = ({
                         <HeartOutlined className='text-red-500 hover:text-red-600' />
                       )
                     }
-                    onClick={handlleFollow}
+                    onClick={handleFollow}
                   >
                     {isFollowing ? 'Unfollow' : 'Follow'}
                   </Button>
