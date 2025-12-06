@@ -1,7 +1,7 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { SentFriendRequestData } from '../types/Relations/relations'
-import { RelationData } from '../types/UserRelation/userRelation'
+import { FriendRequestStatus, RelationData } from '../types/UserRelation/userRelation'
 
 export const relationService = {
   async addFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
@@ -15,13 +15,11 @@ export const relationService = {
     return { data: response.data, status: response.status }
   },
 
-  async respondFriendRequest(requestId: string, status: boolean): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>(
+  async respondFriendRequest(senderId: string, status: FriendRequestStatus): Promise<{ data: any; status: number }> {
+    const response = await apiClient.post<any>(
       `friend-request/respond`,
-      { requestId, status },
-      {
-        withCredentials: true
-      }
+      { senderId, status },
+      { withCredentials: true }
     )
     return { data: response.data, status: response.status }
   },
@@ -34,8 +32,8 @@ export const relationService = {
     return { data: response.data, status: response.status }
   },
 
-  async getFriendRequestsSent(page?: number, pageSize?: number): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.get<BaseResponse>(`friend-request/sent`, {
+  async getFriendRequestsSent(page?: number, pageSize?: number): Promise<{ data: RelationData; status: number }> {
+    const response = await apiClient.get<RelationData>(`friend-request/sent`, {
       params: { page, pageSize },
       withCredentials: true
     })
@@ -51,24 +49,35 @@ export const relationService = {
   },
 
   async removeFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.delete<BaseResponse>(`user-relation/remove-friend`, {
-      data: userId,
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/unfriend`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 
   async followUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>(`user-relation/follow`, userId, {
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/follow`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 
   async unfollowUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>(`user-relation/unfollow`, userId, {
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/unfollow`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 

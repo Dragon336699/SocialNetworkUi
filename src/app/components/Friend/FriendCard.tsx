@@ -1,16 +1,16 @@
 import React from 'react'
 import { Dropdown, Button, MenuProps } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEllipsisVertical, faComment, faUserMinus, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsisVertical, faComment, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
 import { ActionType, Friend } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
 
 interface FriendCardProps {
-  friend: Friend
+  friend: any
   onAction: (type: ActionType, friend: Friend) => void
 }
 
-const statusColor = {
+const statusColor: { [key: string]: string } = {
   online: 'bg-green-500',
   offline: 'bg-gray-400',
   away: 'bg-yellow-500'
@@ -27,12 +27,6 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
     },
     {
       type: 'divider'
-    },
-    {
-      key: 'unfollow',
-      icon: <FontAwesomeIcon icon={faUserMinus} className='text-gray-500' />,
-      label: 'Unfollow',
-      onClick: () => onAction('unfollow', friend)
     },
     {
       key: 'unfriend',
@@ -60,14 +54,14 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
             className='h-12 w-12 rounded-full object-cover border border-gray-200'
           />
           <span
-            className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${statusColor[friend.status]}`}
+            className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${statusColor[friend.status?.toLowerCase()]}`}
           ></span>
         </div>
 
         <div>
           <h4
             className='font-semibold text-gray-900 text-base hover:underline hover:cursor-pointer'
-            onClick={() => navigate(`/profile/${friend.name}`)}
+            onClick={() => navigate(`/profile/${friend?.userName}`)}
           >
             {friend.name}
           </h4>

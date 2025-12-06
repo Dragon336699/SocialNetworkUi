@@ -40,6 +40,7 @@ const profile = {
   friends: 19,
   email: 'user@example.com'
 }
+const defaultAvatar = 'src/app/assests/icons/image-avatar.svg'
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
 const ProfileView = ({
@@ -67,7 +68,7 @@ const ProfileView = ({
   const [isFollowing, setIsFollowing] = useState<boolean>(false)
 
   // const [form] = Form.useForm()
-  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || '')
+  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || defaultAvatar)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
@@ -115,13 +116,17 @@ const ProfileView = ({
   const handleFollow = async () => {
     try {
       if (isFollowing) {
-        // await
-        setIsFollowing(false)
-        message.success('Unfollowed')
+        const res = await relationService.unfollowUser(userInfo.id)
+        if (res.status == 200) {
+          setIsFollowing(false)
+          message.success('Unfollowed')
+        }
       } else {
-        // await
-        setIsFollowing(true)
-        message.success('Following')
+        const res = await relationService.followUser(userInfo.id)
+        if (res.status === 200) {
+          setIsFollowing(true)
+          message.success('Following')
+        }
       }
     } catch {
       message.error('Error. Try again!')
@@ -142,6 +147,7 @@ const ProfileView = ({
 
   useEffect(() => {
     getSentFriendReq()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const renderTabContent = () => {
@@ -291,9 +297,9 @@ const ProfileView = ({
 
   const stats = [
     { label: 'Posts', value: posts.length, active: 'posts' },
-    { label: 'Followers', value: profile.followers, active: 'followers' },
-    { label: 'Following', value: profile.following, active: 'following' },
-    { label: 'Friends', value: profile.friends, active: 'friends' }
+    { label: 'Followers', value: followerList.length, active: 'followers' },
+    { label: 'Following', value: followingList.length, active: 'following' },
+    { label: 'Friends', value: friendList.length, active: 'friends' }
   ]
 
   const handleAvatarChange = (info: UploadChangeParam) => {

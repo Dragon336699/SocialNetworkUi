@@ -4,9 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faClock, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Friend } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
+import { getTimeAgo } from '@/app/helper'
 
 interface RequestCardProps {
-  friend: Friend & { sentAt?: string }
+  friend: Friend & { sentAt?: string; userName?: string }
   type: 'sent' | 'received'
   onConfirm?: (id: number) => void
   onDelete?: (id: number) => void
@@ -27,7 +28,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ friend, type, onConfirm, onDe
         <div>
           <h3
             className='font-semibold text-gray-900 text-base hover:underline hover:cursor-pointer'
-            onClick={() => navigate(`/profile/${friend.name}`)}
+            onClick={() => navigate(`/profile/${friend?.userName}`)}
           >
             {friend.name}
           </h3>
@@ -35,7 +36,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ friend, type, onConfirm, onDe
           {friend.sentAt && (
             <p className='flex items-center gap-1.5 text-xs text-gray-500 mt-1'>
               <FontAwesomeIcon icon={faClock} />
-              {friend.sentAt}
+              {getTimeAgo(friend.sentAt)}
             </p>
           )}
         </div>
@@ -46,6 +47,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ friend, type, onConfirm, onDe
           <>
             <Button
               type='primary'
+              size='large'
               className='flex items-center gap-2 bg-blue-600 hover:bg-blue-700'
               onClick={() => onConfirm?.(friend.id)}
               loading={loading}
@@ -56,6 +58,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ friend, type, onConfirm, onDe
 
             <Button
               type='default'
+              size='large'
               className='flex items-center gap-2 bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200'
               onClick={() => onDelete?.(friend.id)}
               disabled={loading}
@@ -67,6 +70,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ friend, type, onConfirm, onDe
         ) : (
           <Button
             danger
+            size='large'
             type='default'
             className='flex items-center gap-2 hover:bg-red-50'
             onClick={() => onDelete?.(friend.id)}

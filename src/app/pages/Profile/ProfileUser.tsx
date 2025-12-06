@@ -120,7 +120,7 @@ const ProfileUser = () => {
       getFriend()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userInfo.id])
+  }, [userName])
 
   return (
     <Spin spinning={countLoading !== 0}>
