@@ -19,12 +19,14 @@ import GroupsDiscover from './app/pages/Group/GroupsDiscover'
 import MyGroupsPage from './app/pages/Group/MyGroupsPage'
 import GroupDetail from './app/pages/Group/GroupDetail'
 const PrivateRoute = () => {
-  const { isLoggedIn } = useUserStore()
+  const { isLoggedIn, isChecked } = useUserStore()
+  if (!isChecked) return null
   return isLoggedIn ? <Outlet /> : <Navigate to='/login' replace />
 }
 
 const PublicRoute = () => {
-  const { isLoggedIn } = useUserStore()
+  const { isLoggedIn, isChecked } = useUserStore()
+  if (!isChecked) return null
   return !isLoggedIn ? <Outlet /> : <Navigate to='/home' replace />
 }
 
@@ -32,6 +34,7 @@ function App() {
   const { isLoggedIn, user } = useUserStore()
 
   useEffect(() => {
+    useUserStore.getState().fetchUser()
     if (isLoggedIn) chatService.start()
   }, [isLoggedIn])
 

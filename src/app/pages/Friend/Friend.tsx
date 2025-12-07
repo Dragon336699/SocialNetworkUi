@@ -1,52 +1,41 @@
-import React, { useState, useMemo } from 'react'
-import { Input, Empty, Tabs } from 'antd'
+import React, { useState, useMemo, useEffect } from 'react'
+import { Input, Empty, Tabs, message } from 'antd'
 import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined } from '@ant-design/icons'
 import { ActionType, Friend } from '@/app/types/Common'
 import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
-
-const MOCK_FRIENDS: Friend[] = [
-  { id: 1, name: 'Nguyen Van A', avatar: 'https://i.pravatar.cc/150?u=1', status: 'online' },
-  { id: 2, name: 'B', avatar: 'https://i.pravatar.cc/150?u=2', status: 'offline' },
-  { id: 3, name: 'Pham Minh C', avatar: 'https://i.pravatar.cc/150?u=3', status: 'online' },
-  { id: 4, name: 'Do Kien D', avatar: 'https://i.pravatar.cc/150?u=4', status: 'away' }
-]
-
-const MOCK_SENT_REQUESTS: (Friend & { sentAt: string })[] = [
-  { id: 10, name: 'Le Van E', avatar: 'https://i.pravatar.cc/150?u=10', status: 'offline', sentAt: '2 days ago' },
-  { id: 11, name: 'Hoang Thi F', avatar: 'https://i.pravatar.cc/150?u=11', status: 'online', sentAt: '5 hours ago' }
-]
-
-const MOCK_RECEIVED_REQUESTS: (Friend & { sentAt: string })[] = [
-  { id: 20, name: 'Michael Jordan', avatar: 'https://i.pravatar.cc/150?u=20', status: 'online', sentAt: '10 mins ago' },
-  { id: 21, name: 'Elon Musk', avatar: 'https://i.pravatar.cc/150?u=21', status: 'away', sentAt: '1 day ago' }
-]
+import { relationService } from '@/app/services/relation.service'
+import { SentFriendRequestData } from '@/app/types/Relations/relations'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
+import { UserDto } from '@/app/types/User/user.dto'
+import { RelationData } from '@/app/types/UserRelation/userRelation'
 
 const FriendsList: React.FC = () => {
-  const [friends, setFriends] = useState(MOCK_FRIENDS)
-  const [sentRequests, setSentRequests] = useState(MOCK_SENT_REQUESTS)
-  const [receivedRequests, setReceivedRequests] = useState(MOCK_RECEIVED_REQUESTS)
+  const [friends, setFriends] = useState<UserDto[]>([])
+  const [sentRequests, setSentRequests] = useState<SentFriendRequestData[]>([])
+  const [receivedRequests, setReceivedRequests] = useState<SentFriendRequestData[]>([])
 
   const [searchText, setSearchText] = useState('')
   const [activeTab, setActiveTab] = useState('friends')
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
+  const [selectedFriend, setSelectedFriend] = useState<UserDto | null>(null)
   const [currentAction, setCurrentAction] = useState<ActionType>('unfriend')
   const [globalLoading, setGlobalLoading] = useState(false)
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null)
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
   const filteredFriends = useMemo(
-    () => friends.filter((f) => f.name.toLowerCase().includes(searchText.toLowerCase())),
+    () => friends.filter((f: UserDto) => f.firstName.toLowerCase().includes(searchText.toLowerCase())),
     [friends, searchText]
   )
   const filteredSent = useMemo(
-    () => sentRequests.filter((f) => f.name.toLowerCase().includes(searchText.toLowerCase())),
+    () => sentRequests.filter((f) => f.receiver?.firstName.toLowerCase().includes(searchText.toLowerCase())),
     [sentRequests, searchText]
   )
   const filteredReceived = useMemo(
-    () => receivedRequests.filter((f) => f.name.toLowerCase().includes(searchText.toLowerCase())),
+    () => receivedRequests.filter((f) => f.sender?.firstName.toLowerCase().includes(searchText.toLowerCase())),
     [receivedRequests, searchText]
   )
 
@@ -55,7 +44,7 @@ const FriendsList: React.FC = () => {
     setSearchText('')
   }
 
-  const handleOpenModalAction = (type: ActionType, friend: Friend) => {
+  const handleOpenModalAction = (type: ActionType, friend: UserDto) => {
     setSelectedFriend(friend)
     setCurrentAction(type)
     setModalOpen(true)
@@ -66,32 +55,107 @@ const FriendsList: React.FC = () => {
     setGlobalLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 800))
 
-    if (currentAction === 'unfriend' || currentAction === 'block') {
-      setFriends((prev) => prev.filter((f) => f.id !== selectedFriend.id))
-    }
+    // if (currentAction === 'unfriend' || currentAction === 'block') {
+    //   setFriends((prev) => prev.filter((f) => f.id !== selectedFriend.id))
+    // }
     setGlobalLoading(false)
     setModalOpen(false)
     setSelectedFriend(null)
   }
 
-  const handleRequestAction = async (id: number, type: 'accept' | 'decline' | 'cancel') => {
-    setActionLoadingId(id)
+  const handleRequestAction = async (senderId: string, receiverId: string, type: 'accept' | 'decline' | 'cancel') => {
+    setActionLoadingId(senderId)
     await new Promise((resolve) => setTimeout(resolve, 800)) // Fake API
 
-    if (type === 'accept') {
-      const request = receivedRequests.find((r) => r.id === id)
-      if (request) {
-        setFriends((prev) => [{ ...request, status: 'online' }, ...prev])
-        setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-      }
-    } else if (type === 'decline') {
-      setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-    } else if (type === 'cancel') {
-      setSentRequests((prev) => prev.filter((r) => r.id !== id))
-    }
+    // if (type === 'accept') {
+    //   const request = receivedRequests.find((r) => r.id === id)
+    //   if (request) {
+    //     setFriends((prev) => [{ ...request, status: 'online' }, ...prev])
+    //     setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
+    //   }
+    // } else if (type === 'decline') {
+    //   setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
+    // } else if (type === 'cancel') {
+    //   setSentRequests((prev) => prev.filter((r) => r.id !== id))
+    // }
 
     setActionLoadingId(null)
   }
+
+  const getFriends = async () => {
+    try {
+      const res = await relationService.getFriendsList()
+      if (res.status === 200) {
+        const resData = res.data as ResponseHasData<UserDto[]>
+        setFriends(resData.data as UserDto[])
+      } else {
+        message.error('Error while getting friend list')
+      }
+    } catch (e) {
+      console.log('Error get list follower: ', e)
+    }
+  }
+
+  const approveFriendRequest = async (senderId: string) => {
+    try {
+      const res = await relationService.approveFriendRequest(senderId)
+      const resData = res.data as BaseResponse
+      if (res.status === 200) {
+        message.success(resData.message)
+      } else {
+        message.error(resData.message)
+      }
+    } catch (err) {
+      message.error('Error while approving friend request')
+    }
+  }
+
+  const declineFriendRequest = async (senderId: string) => {
+    try {
+      const res = await relationService.declineFriendRequest(senderId)
+      const resData = res.data as BaseResponse
+      if (res.status === 200) {
+        message.success(resData.message)
+      } else {
+        message.error(resData.message)
+      }
+    } catch (err) {
+      message.error('Error while approving friend request')
+    }
+  }
+
+  const cancelFriendRequest = async (receiverId: string) => {
+    try {
+      const res = await relationService.cancelFriendRequest(receiverId)
+      const resData = res.data as BaseResponse
+      if (res.status === 200) {
+        message.success(resData.message)
+      } else {
+        message.error(resData.message)
+      }
+    } catch (err) {
+      message.error('Error while approving friend request')
+    }
+  }
+
+  const getFriendRequestsReceived = async () => {
+    try {
+      const res = await relationService.getFriendRequestsReceived()
+      if (res.status === 200) {
+        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
+        setReceivedRequests(resData.data as SentFriendRequestData[])
+      } else {
+        message.error('Get request failed!')
+      }
+    } catch (err) {
+      message.error('Get request failed!')
+    }
+  }
+
+  useEffect(() => {
+    getFriendRequestsReceived()
+    getFriends()
+  }, [])
 
   const renderSearchBar = (placeholder: string) => (
     <Input
@@ -118,7 +182,7 @@ const FriendsList: React.FC = () => {
           {renderSearchBar('Search friends...')}
           {filteredFriends.length > 0 ? (
             <div className='grid grid-cols-1 gap-3'>
-              {filteredFriends.map((friend) => (
+              {filteredFriends.map((friend: any) => (
                 <FriendCard key={friend.id} friend={friend} onAction={handleOpenModalAction} />
               ))}
             </div>
@@ -143,12 +207,12 @@ const FriendsList: React.FC = () => {
             <div className='grid grid-cols-1 gap-3'>
               {filteredReceived.map((req) => (
                 <RequestCard
-                  key={req.id}
-                  friend={req}
+                  key={req.senderId}
+                  request={req}
                   type='received'
-                  onConfirm={(id) => handleRequestAction(id, 'accept')}
-                  onDelete={(id) => handleRequestAction(id, 'decline')}
-                  loading={actionLoadingId === req.id}
+                  onConfirm={() => approveFriendRequest(req.senderId)}
+                  onDelete={() => declineFriendRequest(req.senderId)}
+                  loading={actionLoadingId === req.senderId}
                 />
               ))}
             </div>
@@ -173,11 +237,11 @@ const FriendsList: React.FC = () => {
             <div className='grid grid-cols-1 gap-3'>
               {filteredSent.map((req) => (
                 <RequestCard
-                  key={req.id}
-                  friend={req}
+                  key={req.receiverId}
+                  request={req}
                   type='sent'
-                  onDelete={(id) => handleRequestAction(id, 'cancel')}
-                  loading={actionLoadingId === req.id}
+                  onDelete={(id) => cancelFriendRequest(req.receiverId)}
+                  loading={actionLoadingId === req.senderId}
                 />
               ))}
             </div>

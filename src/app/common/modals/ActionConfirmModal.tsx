@@ -1,10 +1,11 @@
 import React from 'react'
 import { Modal, Button } from 'antd'
-import { ActionType, Friend } from '@/app/types/Common'
+import { ActionType } from '@/app/types/Common'
+import { UserDto } from '@/app/types/User/user.dto'
 
 interface Props {
   open: boolean
-  friend: Friend | null
+  friend: UserDto | null
   type: ActionType
   onCancel: () => void
   onConfirm: () => void
@@ -47,14 +48,13 @@ const ActionConfirmModal: React.FC<Props> = ({ open, friend, type, onCancel, onC
       <div className='flex flex-col items-center text-center pt-4'>
         <div className='relative mb-4'>
           <img
-            src={friend.avatar}
-            alt={friend.name}
+            src={friend.avatarUrl || ''}
             className='h-20 w-20 rounded-full object-cover border-2 border-gray-100 shadow-sm'
           />
         </div>
 
         <h3 className='text-lg font-semibold text-gray-800 mb-1'>
-          {config.title} {friend.name}?
+          {config.title} {friend.firstName}?
         </h3>
         <p className='text-gray-500 text-sm mb-6 px-4'>
           Are you sure you want to proceed? This action cannot be undone immediately.
