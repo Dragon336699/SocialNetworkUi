@@ -26,6 +26,8 @@ import Post from '@/app/pages/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { useUserStore } from '@/app/stores/auth'
 import { relationService } from '@/app/services/relation.service'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import { SentFriendRequestData } from '@/app/types/Relations/relations'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -78,10 +80,15 @@ const ProfileView = ({
 
   const getSentFriendReq = async () => {
     try {
-      const res = await relationService.getSentFriendRequest(user?.id || '')
+      const res = await relationService.getFriendRequestsSent()
       if (res.status === 200) {
-        const data = res.data
-        const checkHas = data.some((r) => r.receiverId === userInfo.id)
+        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
+
+        // đảm bảo luôn là array
+        const list = Array.isArray(resData.data) ? (resData.data as SentFriendRequestData[]) : []
+
+        const checkHas = list.some((r) => r.receiverId === userInfo.id)
+
         setIsSend(checkHas)
       }
     } catch (e) {

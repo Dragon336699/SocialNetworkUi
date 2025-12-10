@@ -3,6 +3,7 @@ import ProfileView from '@/app/components/Profile/ProfileView'
 import { postService } from '@/app/services/post.service'
 import { relationService } from '@/app/services/relation.service'
 import { userService } from '@/app/services/user.service'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
 import { message, Spin } from 'antd'
@@ -100,7 +101,10 @@ const ProfileUser = () => {
     try {
       const res = await relationService.getFriendsList()
       if (res.status === 200) {
-        setFriendList(res.data.data.data)
+        const resData = res.data as ResponseHasData<UserDto[]>
+        setFriendList(resData.data as UserDto[])
+      } else {
+        message.error('Error while getting friend list')
       }
     } catch (e) {
       console.log('Error get list follower: ', e)

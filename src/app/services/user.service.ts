@@ -19,9 +19,13 @@ export const userService = {
   },
 
   async logout(): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>('user/logout', {}, {
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      'user/logout',
+      {},
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 

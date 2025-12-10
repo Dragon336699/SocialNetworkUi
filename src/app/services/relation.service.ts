@@ -1,7 +1,9 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
+import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import { SentFriendRequestData } from '../types/Relations/relations'
-import { FriendRequestStatus, RelationData } from '../types/UserRelation/userRelation'
+import { UserDto } from '../types/User/user.dto'
+import { RelationData } from '../types/UserRelation/userRelation'
 
 export const relationService = {
   async addFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
@@ -15,34 +17,56 @@ export const relationService = {
     return { data: response.data, status: response.status }
   },
 
-  async respondFriendRequest(senderId: string, status: FriendRequestStatus): Promise<{ data: any; status: number }> {
-    const response = await apiClient.post<any>(
-      `friend-request/respond`,
-      { senderId, status },
-      { withCredentials: true }
+  async approveFriendRequest(senderId: string): Promise<{ data: BaseResponse; status: number }> {
+    const response = await apiClient.post<BaseResponse>(
+      `friend-request/approve`,
+      { senderId: senderId },
+      {
+        withCredentials: true
+      }
     )
     return { data: response.data, status: response.status }
   },
 
-  async getFriendRequestsReceived(page?: number, pageSize?: number): Promise<{ data: RelationData; status: number }> {
-    const response = await apiClient.get<RelationData>(`friend-request/received`, {
+  async declineFriendRequest(senderId: string): Promise<{ data: BaseResponse; status: number }> {
+    const response = await apiClient.post<BaseResponse>(
+      `friend-request/decline`,
+      { senderId: senderId },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async getFriendRequestsReceived(
+    page?: number,
+    pageSize?: number
+  ): Promise<{ data: BaseResponse | ResponseHasData<SentFriendRequestData[]>; status: number }> {
+    const response = await apiClient.get<BaseResponse | ResponseHasData<SentFriendRequestData[]>>(
+      `friend-request/received`,
+      {
+        params: { page, pageSize },
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async getFriendRequestsSent(
+    page?: number,
+    pageSize?: number
+  ): Promise<{ data: ResponseHasData<SentFriendRequestData[]>; status: number }> {
+    const response = await apiClient.get<ResponseHasData<SentFriendRequestData[]>>(`friend-request/sent`, {
       params: { page, pageSize },
       withCredentials: true
     })
     return { data: response.data, status: response.status }
   },
 
-  async getFriendRequestsSent(page?: number, pageSize?: number): Promise<{ data: RelationData; status: number }> {
-    const response = await apiClient.get<RelationData>(`friend-request/sent`, {
-      params: { page, pageSize },
-      withCredentials: true
-    })
-    return { data: response.data, status: response.status }
-  },
-
-  async getFriendsList(page?: number, pageSize?: number): Promise<{ data: RelationData; status: number }> {
-    const response = await apiClient.get<RelationData>(`user-relation/friends`, {
-      params: { page, pageSize },
+  async getFriendsList(skip?: number, take?: number): Promise<{ data: ResponseHasData<UserDto[]>; status: number }> {
+    const response = await apiClient.get<ResponseHasData<UserDto[]>>(`user-relation/friends`, {
+      params: { skip, take },
       withCredentials: true
     })
     return { data: response.data, status: response.status }
@@ -109,10 +133,10 @@ export const relationService = {
     return { data: response.data, status: response.status }
   },
 
-  async cancelFriendRequest(userId: string): Promise<{ data: BaseResponse; status: number }> {
+  async cancelFriendRequest(receiverId: string): Promise<{ data: BaseResponse; status: number }> {
     const response = await apiClient.post<BaseResponse>(
       `/friend-request/cancel`,
-      { receiverId: userId },
+      { receiverId: receiverId },
       {
         withCredentials: true
       }

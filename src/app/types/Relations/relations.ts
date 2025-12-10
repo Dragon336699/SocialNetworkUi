@@ -4,6 +4,7 @@ export interface SentFriendRequestData {
   senderId: string
   receiverId: string
   message?: string
-  sender?: string
+  sender?: UserDto
   receiver: UserDto
+  createdAt: Date
 }
