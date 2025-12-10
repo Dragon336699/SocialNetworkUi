@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faClock, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router-dom'
 import { SentFriendRequestData } from '@/app/types/Relations/relations'
-import dayjs from 'dayjs'
+import { getTimeAgo } from '@/app/helper'
 
 interface RequestCardProps {
   request: SentFriendRequestData
@@ -16,20 +16,6 @@ interface RequestCardProps {
 
 const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onDelete, loading }) => {
   const navigate = useNavigate()
-
-  const formatTime = (time: Date) => {
-    const now = dayjs()
-    const updated = dayjs(time)
-
-    const diffMinutes = now.diff(updated, 'minute')
-    const diffHours = now.diff(updated, 'hour')
-    const diffDays = now.diff(updated, 'day')
-
-    if (diffMinutes < 60) return `${diffMinutes}m`
-    if (diffHours < 24) return `${diffHours}h`
-    if (diffDays <= 7) return `${diffDays}d`
-    return updated.format('DD/MM/YYYY')
-  }
   return (
     <div className='flex items-center justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-blue-100'>
       <div className='flex items-center gap-4'>
@@ -49,7 +35,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onD
           {
             <p className='flex items-center gap-1.5 text-xs text-gray-500 mt-1'>
               <FontAwesomeIcon icon={faClock} />
-              {formatTime(request.createdAt)}
+              {getTimeAgo(String(request.createdAt))}
             </p>
           }
         </div>
@@ -60,6 +46,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onD
           <>
             <Button
               type='primary'
+              size='large'
               className='flex items-center gap-2 bg-blue-600 hover:bg-blue-700'
               onClick={() => onConfirm?.(request.senderId, request.receiverId)}
               loading={loading}
@@ -70,6 +57,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onD
 
             <Button
               type='default'
+              size='large'
               className='flex items-center gap-2 bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200'
               onClick={() => onDelete?.(request.senderId, request.receiverId)}
               disabled={loading}
@@ -81,6 +69,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onD
         ) : (
           <Button
             danger
+            size='large'
             type='default'
             className='flex items-center gap-2 hover:bg-red-50'
             onClick={() => onDelete?.(request.senderId, request.receiverId)}

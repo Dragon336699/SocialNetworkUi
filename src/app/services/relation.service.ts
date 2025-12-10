@@ -73,24 +73,35 @@ export const relationService = {
   },
 
   async removeFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.delete<BaseResponse>(`user-relation/remove-friend`, {
-      data: userId,
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/unfriend`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 
   async followUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>(`user-relation/follow`, userId, {
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/follow`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 
   async unfollowUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
-    const response = await apiClient.post<BaseResponse>(`user-relation/unfollow`, userId, {
-      withCredentials: true
-    })
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/unfollow`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
     return { data: response.data, status: response.status }
   },
 

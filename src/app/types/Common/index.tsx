@@ -1,4 +1,4 @@
-import { UserDto } from "../User/user.dto"
+import { UserDto } from '../User/user.dto'
 export interface ModalProps {
   isModalOpen: boolean
   update?: boolean

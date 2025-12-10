@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Input, Empty, Tabs, message } from 'antd'
 import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined } from '@ant-design/icons'
-import { ActionType, Friend } from '@/app/types/Common'
+import { ActionType } from '@/app/types/Common'
 import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
@@ -10,7 +10,6 @@ import { SentFriendRequestData } from '@/app/types/Relations/relations'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { RelationData } from '@/app/types/UserRelation/userRelation'
 
 const FriendsList: React.FC = () => {
   const [friends, setFriends] = useState<UserDto[]>([])

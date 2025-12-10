@@ -19,6 +19,7 @@ import PostDropdownMenu from '../Post/PostDropdownMenu'
 import EditPostModal from '../Post/EditPostModal'
 import DeletePostModal from '../Post/DeletePostModal'
 import { PostData } from '@/app/types/Post/Post'
+import { getTimeAgo } from '@/app/helper'
 
 interface PostCommentModalProps {
   isOpen: boolean
@@ -381,50 +382,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
     setShowDeleteModal(false)
     onClose()
-  }
-  // Hàm tính thời gian đã trôi qua kể từ khi đăng bài
-  const getTimeAgo = (dateString: string) => {
-    // Chuẩn hóa chuỗi ngày tháng
-    let normalizedDateString = dateString
-    if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
-      normalizedDateString = dateString + 'Z'
-    }
-
-    const postTime = new Date(normalizedDateString)
-    const now = new Date()
-
-    // Kiểm tra tính hợp lệ của thời gian
-    if (isNaN(postTime.getTime())) {
-      return 'Invalid time'
-    }
-
-    // Tính chênh lệch thời gian
-    const diffInMs = now.getTime() - postTime.getTime()
-
-    const diffInSeconds = Math.floor(diffInMs / 1000)
-    const diffInMinutes = Math.floor(diffInSeconds / 60)
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    const diffInDays = Math.floor(diffInHours / 24)
-    const diffInWeeks = Math.floor(diffInDays / 7)
-    const diffInMonths = Math.floor(diffInDays / 30)
-    const diffInYears = Math.floor(diffInDays / 365)
-
-    // Trả về văn bản mô tả thời gian
-    if (diffInSeconds < 60) {
-      return 'Just now'
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} minutes ago`
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hours ago`
-    } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`
-    } else if (diffInWeeks < 4) {
-      return `${diffInWeeks} weeks ago`
-    } else if (diffInMonths < 12) {
-      return `${diffInMonths} months ago`
-    } else {
-      return `${diffInYears} years ago`
-    }
   }
 
   // Hàm hiển thị biểu tượng quyền riêng tư

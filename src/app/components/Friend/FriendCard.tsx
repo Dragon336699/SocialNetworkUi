@@ -1,8 +1,8 @@
 import React from 'react'
 import { Dropdown, Button, MenuProps } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEllipsisVertical, faComment, faUserMinus, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
-import { ActionType, Friend } from '@/app/types/Common'
+import { faEllipsisVertical, faComment, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
+import { ActionType } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
 import { UserDto } from '@/app/types/User/user.dto'
 
@@ -11,7 +11,7 @@ interface FriendCardProps {
   onAction: (type: ActionType, friend: UserDto) => void
 }
 
-const statusColor = {
+const statusColor: { [key: string]: string } = {
   online: 'bg-green-500',
   offline: 'bg-gray-400',
   away: 'bg-yellow-500'
@@ -28,12 +28,6 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
     },
     {
       type: 'divider'
-    },
-    {
-      key: 'unfollow',
-      icon: <FontAwesomeIcon icon={faUserMinus} className='text-gray-500' />,
-      label: 'Unfollow',
-      onClick: () => onAction('unfollow', friend)
     },
     {
       key: 'unfriend',
