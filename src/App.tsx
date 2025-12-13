@@ -18,6 +18,8 @@ import GroupsFeed from './app/pages/Group/GroupsFeed'
 import GroupsDiscover from './app/pages/Group/GroupsDiscover'
 import MyGroupsPage from './app/pages/Group/MyGroupsPage'
 import GroupDetail from './app/pages/Group/GroupDetail'
+import SearchPage from './app/pages/Search/SearchPage'
+
 const PrivateRoute = () => {
   const { isLoggedIn, isChecked } = useUserStore()
   if (!isChecked) return null
@@ -52,6 +54,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path='/' element={<Navigate to='/home' replace />} />
             <Route path='/home' element={<Home />} />
+            <Route path='/search' element={<SearchPage />} />
             <Route path='/friend' element={<FriendsList />} />
             <Route path='/profile' element={<Navigate to={`/profile/${user?.userName}`} replace />} />
             <Route path='/profile/:userName' element={<ProfileUser />} />
@@ -64,10 +67,9 @@ function App() {
               <Route index element={<GroupsFeed />} />
               <Route path='discover' element={<GroupsDiscover />} />
               <Route path='my-groups' element={<MyGroupsPage />} />
+              <Route path=':groupId' element={<GroupDetail />} />
             </Route>
-            <Route path='/group/:groupId' element={<Groups />}>
-              <Route index element={<GroupDetail />} />
-            </Route>
+            <Route path='/group/:groupId' element={<GroupDetail />} />
           </Route>
         </Route>
 

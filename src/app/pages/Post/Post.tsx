@@ -12,6 +12,7 @@ import { Avatar } from 'antd'
 import PostCommentModal from '../Comment/PostCommentModal'
 import { UserDto } from '@/app/types/User/user.dto'
 import { getTimeAgo } from '@/app/helper'
+import { useNavigate } from 'react-router-dom'
 
 interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
@@ -19,6 +20,7 @@ interface PostProps extends PostData {
   onPostDeleted?: (postId: string) => void
   currentUserId?: string
   currentUser: UserDto
+  hideHeader?: boolean
 }
 
 const Post: React.FC<PostProps> = ({
@@ -34,8 +36,10 @@ const Post: React.FC<PostProps> = ({
   onPostUpdated,
   onPostDeleted,
   currentUserId = '',
-  currentUser
+  currentUser,
+  hideHeader = false
 }) => {
+  const navigate = useNavigate()
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -57,6 +61,13 @@ const Post: React.FC<PostProps> = ({
   useEffect(() => {
     setLocalTotalComment(totalComment)
   }, [totalComment])
+
+  const handleUserClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (user?.userName) {
+      navigate(`/profile/${user.userName}`)
+    }
+  }
 
   const handleCommentCountChange = (newCount: number) => {
     setLocalTotalComment(newCount)
@@ -287,43 +298,53 @@ const Post: React.FC<PostProps> = ({
     <>
       <div className='bg-white rounded-lg shadow-sm border border-gray-200 mb-4'>
         {/* Header */}
-        <div className='flex items-center justify-between p-4 pb-2'>
-          <div className='flex items-center space-x-3'>
-            <Avatar
-              src={user.avatarUrl}
-              size={40}
-              className='w-10 h-10 rounded-full object-cover'
-              style={{ minWidth: 40, minHeight: 40 }}
-            >
-              {user.firstName?.[0] || user.lastName?.[0] || ''}
-            </Avatar>
-            <div>
-              <h4 className='font-semibold text-black-600 text-sm hover:underline cursor-pointer'>{fullName}</h4>
-              <div className='flex items-center space-x-1'>
-                <span className='text-xs text-gray-500'>{getTimeAgo(createdAt)}</span>
-                <span className='text-[8px] text-gray-400'>•</span>
-                {renderPrivacyIcon()}
+        {!hideHeader && (
+          <div className='flex items-center justify-between p-4 pb-2'>
+            <div className='flex items-center space-x-3'>
+              <div onClick={handleUserClick} className='cursor-pointer'>
+                <Avatar
+                  src={user.avatarUrl}
+                  size={40}
+                  className='w-10 h-10 rounded-full object-cover'
+                  style={{ minWidth: 40, minHeight: 40 }}
+                >
+                  {user.firstName?.[0] || user.lastName?.[0] || ''}
+                </Avatar>
+              </div>
+
+              <div>
+                <h4
+                  className='font-semibold text-black-600 text-sm hover:underline cursor-pointer'
+                  onClick={handleUserClick}
+                >
+                  {fullName}
+                </h4>
+                <div className='flex items-center space-x-1'>
+                  <span className='text-xs text-gray-500'>{getTimeAgo(createdAt)}</span>
+                  <span className='text-[8px] text-gray-400'>•</span>
+                  {renderPrivacyIcon()}
+                </div>
               </div>
             </div>
+            <div className='relative'>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100'
+              >
+                <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
+                  <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
+                </svg>
+              </button>
+              <PostDropdownMenu
+                isOpen={showDropdown}
+                onClose={() => setShowDropdown(false)}
+                postId={id}
+                isOwner={currentUserId === user.id}
+                {...handleDropdownActions}
+              />
+            </div>
           </div>
-          <div className='relative'>
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100'
-            >
-              <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
-                <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
-              </svg>
-            </button>
-            <PostDropdownMenu
-              isOpen={showDropdown}
-              onClose={() => setShowDropdown(false)}
-              postId={id}
-              isOwner={currentUserId === user.id}
-              {...handleDropdownActions}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Content */}
         <div className='px-4 pb-2'>
