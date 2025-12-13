@@ -98,7 +98,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
       setSearchResults(response.results || null)
     } catch (error) {
       console.error('Error searching:', error)
-      message.error('Tìm kiếm thất bại. Vui lòng thử lại.')
+      message.error('Search failed. Please try again.')
     } finally {
       setIsSearching(false)
     }
@@ -138,10 +138,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     try {
       await searchService.deleteSearchHistory(historyId)
       setSearchHistory(prev => prev.filter(item => item.id !== historyId))
-      message.success('Đã xóa lịch sử')
+      message.success('History cleared.')
     } catch (error) {
       console.error('Error deleting history:', error)
-      message.error('Không thể xóa lịch sử')
+      message.error('Unable to clear history.')
     }
   }
 
@@ -149,10 +149,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     try {
       await searchService.clearAllSearchHistory()
       setSearchHistory([])
-      message.success('Đã xóa tất cả lịch sử')
+      message.success('All history has been cleared.')
     } catch (error) {
       console.error('Error clearing history:', error)
-      message.error('Không thể xóa lịch sử')
+      message.error('Unable to clear history.')
     }
   }
 
@@ -215,7 +215,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
       if (!hasResults) {
         return (
           <div className='flex items-center justify-center h-64'>
-            <Empty description='Không có kết quả tìm kiếm.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <Empty description='No search results found.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         )
       }
@@ -258,20 +258,20 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     return (
       <div>
         <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200'>
-          <h3 className='text-base font-bold text-gray-900'>Mới đây</h3>
+          <h3 className='text-base font-bold text-gray-900'>Recent</h3>
           {searchHistory.length > 0 && (
             <button
               onClick={handleClearAllHistory}
               className='text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors'
             >
-              Xóa tất cả
+              Clear all
             </button>
           )}
         </div>
 
         {searchHistory.length === 0 ? (
           <div className='flex items-center justify-center h-64'>
-            <Empty description='Không có nội dung tìm kiếm mới đây.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <Empty description='No recent searches.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         ) : (
           <div className='overflow-y-auto'>
@@ -328,12 +328,12 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
         <div
           className={`flex flex-col h-full transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
           <div className='flex items-center justify-between px-4 py-4 border-b border-gray-200'>
-            <h2 className='text-2xl font-bold text-gray-900'>Tìm kiếm</h2>
+            <h2 className='text-2xl font-bold text-gray-900'>Search</h2>
           </div>
 
           <div className='px-4 py-3 border-b border-gray-200'>
             <Input
-              placeholder='Tìm kiếm'
+              placeholder='Search'
               value={searchValue}
               onChange={handleInputChange}
               onPressEnter={handleSearchSubmit}
@@ -353,7 +353,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
               className='rounded-lg'
               style={{
                 backgroundColor: '#efefef',
-                border: 'none',
+                border: 'none'
               }}
               size='large'
             />
