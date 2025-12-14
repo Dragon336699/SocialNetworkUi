@@ -40,7 +40,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     }
   }, [show])
 
-  // Lấy thông tin user hiện tại
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -55,7 +54,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     fetchCurrentUser()
   }, [])
 
-  // Lấy danh sách group đã tham gia
   useEffect(() => {
     const fetchMyGroups = async () => {
       try {
@@ -117,10 +115,12 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     }, 500)
   }
 
+  // Save search when user submits without selecting a suggestion
   const handleSearchSubmit = async () => {
     if (searchValue.trim()) {
       try {
-        await searchService.saveSearchHistory(searchValue.trim())
+        // Save only content when not selecting from suggestions
+        await searchService.saveSearchHistory(searchValue.trim(), undefined, undefined)
         await loadSearchHistory()
       } catch (error) {
         console.error('Error saving search history:', error)
@@ -157,15 +157,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
   }
 
   const handleHistoryClick = (history: SearchHistoryDto) => {
-    if (history.searchedUserId) {
-      navigate(`/profile/${history.searchedUserName}`)
-    } else if (history.groupId) {
-      const isJoined = myGroupIds.includes(history.groupId)
-      if (isJoined) {
-        navigate(`/groups/${history.groupId}`)
-      } else {
-        navigate(`/group/${history.groupId}`)
-      }
+    if (history.navigateUrl) {
+      navigate(history.navigateUrl)
     } else if (history.content) {
       navigate(`/search?q=${encodeURIComponent(history.content)}`)
     }
@@ -176,11 +169,14 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
 
   const handleResultClick = async (type: 'user' | 'group', item: any) => {
     try {
-      await searchService.saveSearchHistory(
-        searchValue.trim(),
-        type === 'user' ? item.id : undefined,
-        type === 'group' ? item.id : undefined
-      )
+      if (type === 'user') {
+        await searchService.saveSearchHistory(item.userName, item.avatarUrl || undefined, `/profile/${item.userName}`)
+      } else if (type === 'group') {
+        const isJoined = myGroupIds.includes(item.id)
+        const navigateUrl = isJoined ? `/groups/${item.id}` : `/group/${item.id}`
+        await searchService.saveSearchHistory(item.name, item.imageUrl || undefined, navigateUrl)
+      }
+
       await loadSearchHistory()
     } catch (error) {
       console.error('Error saving search history:', error)
@@ -282,19 +278,19 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
                 onClick={() => handleHistoryClick(history)}
               >
                 <div className='flex items-center flex-1 min-w-0'>
-                  {history.searchedUserAvatar ? (
-                    <Avatar src={history.searchedUserAvatar} size={44} />
-                  ) : history.groupImageUrl ? (
-                    <Avatar src={history.groupImageUrl} size={44} icon={<TeamOutlined />} />
+                  {history.imageUrl ? (
+                    <Avatar
+                      src={history.imageUrl}
+                      size={44} 
+                      icon={history.navigateUrl?.includes('/profile') ? <UserOutlined /> : <TeamOutlined />}
+                    />
                   ) : (
                     <div className='w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center'>
                       <SearchOutlined className='text-gray-500 text-lg' />
                     </div>
                   )}
                   <div className='ml-3 flex-1 min-w-0'>
-                    <div className='text-sm font-semibold text-gray-900 truncate'>
-                      {history.searchedUserName || history.groupName || history.content}
-                    </div>
+                    <div className='text-sm font-semibold text-gray-900 truncate'>{history.content}</div>
                   </div>
                 </div>
                 <button
@@ -314,7 +310,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
   return (
     <>
       {show && (
-        <div 
+        <div
           className='fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300'
           onClick={handleClose}
         />
@@ -326,7 +322,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
         } overflow-hidden`}
       >
         <div
-          className={`flex flex-col h-full transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+          className={`flex flex-col h-full transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        >
           <div className='flex items-center justify-between px-4 py-4 border-b border-gray-200'>
             <h2 className='text-2xl font-bold text-gray-900'>Search</h2>
           </div>
@@ -341,8 +338,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
                 isSearching ? (
                   <Spin size='small' />
                 ) : searchValue ? (
-                  <CloseOutlined 
-                    className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors' 
+                  <CloseOutlined
+                    className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
                     onClick={() => {
                       setSearchValue('')
                       setSearchResults(null)

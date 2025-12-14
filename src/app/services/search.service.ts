@@ -13,7 +13,7 @@ export const searchService = {
     type: SearchType = SearchType.All,
     skip: number = 0,
     take: number = 10,
-    saveHistory: boolean = false 
+    saveHistory: boolean = false
   ): Promise<SearchResponse> {
     const { data } = await apiClient.get<SearchResponse>('search', {
       params: { keyword, type, skip, take, saveHistory },
@@ -22,13 +22,13 @@ export const searchService = {
     return data
   },
 
-  async saveSearchHistory(keyword: string, searchedUserId?: string, groupId?: string): Promise<void> {
+  async saveSearchHistory(content: string, imageUrl?: string, navigateUrl?: string): Promise<void> {
     await apiClient.post(
       'search/save-history',
       {
-        keyword,
-        searchedUserId,
-        groupId
+        content,
+        imageUrl,
+        navigateUrl
       },
       { withCredentials: true }
     )

@@ -213,7 +213,7 @@ const SearchPage: React.FC = () => {
   const handleSearchSubmit = async () => {
     if (searchValue.trim()) {
       try {
-        await searchService.saveSearchHistory(searchValue.trim())
+        await searchService.saveSearchHistory(searchValue.trim(), undefined, undefined)
       } catch (error) {
         console.error('Error saving search history:', error)
       }
@@ -224,25 +224,15 @@ const SearchPage: React.FC = () => {
   }
 
   const handleUserClick = async (user: UserDto) => {
-    try {
-      await searchService.saveSearchHistory(searchValue.trim(), user.id)
-    } catch (error) {
-      console.error('Error saving search history:', error)
-    }
     navigate(`/profile/${user.userName}`)
   }
 
-  const handleGroupClick = async (groupId: string) => {
-    try {
-      await searchService.saveSearchHistory(searchValue.trim(), undefined, groupId)
-    } catch (error) {
-      console.error('Error saving search history:', error)
-    }
-    const isJoined = myGroupIds.includes(groupId)
+  const handleGroupClick = async (group: any) => {
+    const isJoined = myGroupIds.includes(group.id)
     if (isJoined) {
-      navigate(`/groups/${groupId}`)
+      navigate(`/groups/${group.id}`)
     } else {
-      navigate(`/group/${groupId}`)
+      navigate(`/group/${group.id}`)
     }
   }
 
@@ -407,7 +397,7 @@ const SearchPage: React.FC = () => {
           <div
             key={group.id}
             className='flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors'
-            onClick={() => handleGroupClick(group.id)}
+            onClick={() => handleGroupClick(group)}
           >
             <Avatar src={group.imageUrl} size={56} icon={<TeamOutlined />} />
             <div className='ml-4 flex-1 min-w-0'>

@@ -296,7 +296,7 @@ const Post: React.FC<PostProps> = ({
 
   return (
     <>
-      <div className='bg-white rounded-lg shadow-sm border border-gray-200 mb-4'>
+      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 mb-4 ${hideHeader ? 'border-t-0' : ''}`}>
         {/* Header */}
         {!hideHeader && (
           <div className='flex items-center justify-between p-4 pb-2'>

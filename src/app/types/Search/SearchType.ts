@@ -28,11 +28,7 @@ export interface SearchResultDto {
 export interface SearchHistoryDto {
   id: string
   content?: string
-  searchedUserId?: string
-  searchedUserName?: string
-  searchedUserAvatar?: string
-  groupId?: string
-  groupName?: string
-  groupImageUrl?: string
-  createdAt: string
+  imageUrl?: string
+  navigateUrl?: string
+  createdAt?: string
 }
