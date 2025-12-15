@@ -1,6 +1,7 @@
 import { BaseResponse } from '../Base/Responses/baseResponse'
 import { FeedDto } from '../Base/Responses/Feed/FeedDto.dto'
 
+import { UserDto } from '../User/user.dto'
 export interface User {
   id: string
   firstName?: string
@@ -13,6 +14,13 @@ export interface PostImage {
   imageUrl: string
 }
 
+export interface PostGroup {
+  id: string
+  name: string
+  imageUrl?: string
+  isPublic: boolean
+}
+
 export interface PostData {
   id: string
   content: string
@@ -23,7 +31,8 @@ export interface PostData {
   userId: string
   groupId?: string
   postPrivacy: 'Public' | 'Friends' | 'Private'
-  user: User
+  user: UserDto
+  group?: PostGroup
   postImages?: PostImage[]
   postReactionUsers: PostReactionDto[]
 }

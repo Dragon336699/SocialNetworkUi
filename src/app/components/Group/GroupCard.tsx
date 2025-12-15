@@ -106,7 +106,11 @@ const GroupCard = ({
 
   // Xử lý xem nhóm
   const handleViewGroup = () => {
-    navigate(`/group/${currentGroup.id}`)
+    if (joined) {
+      navigate(`/groups/${currentGroup.id}`)
+    } else {
+      navigate(`/group/${currentGroup.id}`)
+    }
   }
 
   // Menu cho pending request

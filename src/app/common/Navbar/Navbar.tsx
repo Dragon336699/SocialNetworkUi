@@ -1,7 +1,7 @@
 import { userService } from '@/app/services/user.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { faBell, faComment, faHouse, faUsers, faBars, faUserFriends } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faComment, faHouse, faUsers, faBars, faUserFriends, faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message, Dropdown } from 'antd'
 import { SettingOutlined, LogoutOutlined } from '@ant-design/icons'
@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
 import { NavbarProps } from '../Interfaces/NavbarProps'
+import SearchComponent from '@/app/components/Search/SearchComponent'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -24,6 +25,7 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
 const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
   const navigate = useNavigate()
   const { unreadMessages, unreadNotis } = useUnread()
+  const [showSearch, setShowSearch] = useState(false)
 
   const [items, setItems] = useState<MenuItem[]>([])
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -35,6 +37,13 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         'Home',
         <div className='flex items-center gap-6'>
           <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
+        </div>
+      ),
+      getItem(
+        'Search',
+        'Search',
+        <div className='flex items-center gap-6'>
+          <FontAwesomeIcon className='text-lg text-white' icon={faSearch} /> {/* Cần import faSearch */}
         </div>
       ),
       getItem(
@@ -83,11 +92,18 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     else if (e.key === 'Notification') {
       setShowNoti((prev) => !prev)
       setCollapsed(!collapsed)
+    } else if (e.key === 'Search') {
+      setShowSearch((prev) => !prev)
+      setCollapsed(!collapsed)
     } else if (e.key === 'profile') {
       navigate('/profile')
     } else if (e.key === 'more') {
       return
     } else navigate(`/${e.key}`)
+  }
+
+  const handleCollapseNavbar = () => {
+    setCollapsed(true)
   }
 
   const handleLogout = async () => {
@@ -195,6 +211,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
           </div>
         </ConfigProvider>
       </Sider>
+      <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} />
     </ConfigProvider>
   )
 }

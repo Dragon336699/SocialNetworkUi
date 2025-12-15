@@ -85,8 +85,8 @@ const Groups = () => {
   // Lọc nhóm theo từ khóa tìm kiếm
   const filteredGroups = myGroups.filter(group =>group.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
-  const isGroupDetailPage = location.pathname.includes('/group/')
-  const currentGroupId = isGroupDetailPage ? location.pathname.split('/group/')[1] : null
+  const isGroupDetailPage = location.pathname.startsWith('/groups/') && location.pathname.split('/').length === 3
+  const currentGroupId = isGroupDetailPage ? location.pathname.split('/groups/')[1] : null
 
   // Xử lý click menu
   const handleMenuClick = (view: 'feed' | 'discover' | 'my-groups') => {
@@ -213,7 +213,7 @@ const Groups = () => {
                   {filteredGroups.map((group) => (
                     <div
                       key={group.id}
-                      onClick={() => navigate(`/group/${group.id}`)}
+                      onClick={() => navigate(`/groups/${group.id}`)}
                       className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                         currentGroupId === group.id ? 'bg-blue-50' : 'hover:bg-gray-100'
                       }`}
