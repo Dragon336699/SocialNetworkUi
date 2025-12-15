@@ -5,7 +5,8 @@ import {
   GetPostByIdResponse,
   UpdatePostResponse,
   DeletePostResponse,
-  PostReactionResponse
+  PostReactionResponse,
+  GetNewsFeedResponse
 } from '../types/Post/Post'
 
 export const postService = {
@@ -17,7 +18,7 @@ export const postService = {
     return data
   },
 
-  async getAllPosts(skip: number = 0, take: number = 10): Promise<GetAllPostsResponse> {
+  async getAllPosts(skip: number = 0, take: number = 10): Promise<GetNewsFeedResponse> {
     const { data } = await apiClient.get('post/getNewsFeed', {
       params: { skip, take },
       withCredentials: true

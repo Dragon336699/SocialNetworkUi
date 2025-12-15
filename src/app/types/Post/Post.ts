@@ -1,4 +1,5 @@
 import { BaseResponse } from '../Base/Responses/baseResponse'
+import { FeedDto } from '../Base/Responses/Feed/FeedDto.dto'
 
 export interface User {
   id: string
@@ -29,7 +30,13 @@ export interface PostData {
 
 export interface GetAllPostsResponse {
   message: string
-  posts: PostData[]
+  posts: FeedDto[]
+  totalCount: number
+}
+
+export interface GetNewsFeedResponse {
+  message: string
+  posts: FeedDto[]
   totalCount: number
 }
 

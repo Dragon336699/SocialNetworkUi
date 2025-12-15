@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { PostData } from '../types/Post/Post'
 import { postService } from '../services/post.service'
 import { message } from 'antd'
+import { FeedDto } from '../types/Base/Responses/Feed/FeedDto.dto'
 
 interface UsePostsReturn {
-  posts: PostData[]
+  posts: FeedDto[]
   loading: boolean
   error: string | null
   hasMore: boolean
@@ -19,26 +20,11 @@ interface UsePostsReturn {
 const POSTS_PER_PAGE = 10
 
 export const usePosts = (): UsePostsReturn => {
-  const [posts, setPosts] = useState<PostData[]>([])
+  const [posts, setPosts] = useState<FeedDto[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [currentSkip, setCurrentSkip] = useState<number>(0)
-
-  // Chuyển đổi dữ liệu bài đăng
-  const transformPostData = (post: any): PostData => {
-    return {
-      ...post,
-      postPrivacy: post.postPrivacy || 'Public',
-      user: {
-        id: post.userId || post.user?.id || '',
-        firstName: post.user?.firstName || 'Unknown',
-        lastName: post.user?.lastName,
-        avatarUrl: post.user?.avatarUrl || `https://api.dicebear.com/7.x/miniavs/svg?seed=${post.userId}`
-      },
-      postImages: post.postImages || []
-    }
-  }
 
   // Lấy danh sách bài đăng
   const fetchPosts = useCallback(
@@ -54,17 +40,16 @@ export const usePosts = (): UsePostsReturn => {
 
         if (response.message && response.message.includes('successfully')) {
           const postsData = response.posts || []
-          const transformedData = postsData.map(transformPostData)
 
           if (reset) {
-            setPosts(transformedData)
+            setPosts(postsData)
             setCurrentSkip(POSTS_PER_PAGE)
           } else {
-            setPosts(prev => [...prev, ...transformedData])
-            setCurrentSkip(prev => prev + POSTS_PER_PAGE)
+            setPosts((prev) => [...prev, ...postsData])
+            setCurrentSkip((prev) => prev + POSTS_PER_PAGE)
           }
           // Kiểm tra còn bài đăng để tải không
-          setHasMore(transformedData.length === POSTS_PER_PAGE)
+          setHasMore(postsData.length === POSTS_PER_PAGE)
         } else {
           throw new Error('Failed to load posts')
         }
@@ -91,19 +76,15 @@ export const usePosts = (): UsePostsReturn => {
   }, [refetch])
 
   const handlePostUpdated = useCallback((updatedPost: PostData) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => 
-        post.id === updatedPost.id 
-          ? { ...post, ...updatedPost }
-          : post
+    setPosts((prevFeeds) =>
+      prevFeeds.map((feed) =>
+        feed.post.id === updatedPost.id ? { ...feed, post: { ...feed.post, ...updatedPost } } : feed
       )
     )
   }, [])
 
   const handlePostDeleted = useCallback((postId: string) => {
-    setPosts(prevPosts => 
-      prevPosts.filter(post => post.id !== postId)
-    )
+    setPosts((prevPosts) => prevPosts.filter((feed) => feed.post.id !== postId))
   }, [])
 
   // Tải thêm bài đăng
@@ -121,7 +102,7 @@ export const usePosts = (): UsePostsReturn => {
   // Tải bài đăng lần đầu khi component được gắn
   useEffect(() => {
     fetchPosts(true)
-  },[])
+  }, [])
 
   return {
     posts,

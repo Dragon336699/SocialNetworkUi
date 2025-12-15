@@ -14,6 +14,8 @@ import { UserDto } from '@/app/types/User/user.dto'
 import { getTimeAgo } from '@/app/helper'
 
 interface PostProps extends PostData {
+  feedId?: string
+  feedCreatedAt?: Date
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
   onPostDeleted?: (postId: string) => void
@@ -27,6 +29,8 @@ const Post: React.FC<PostProps> = ({
   totalLiked,
   totalComment,
   createdAt,
+  feedId,
+  feedCreatedAt,
   user,
   postImages,
   postPrivacy = 'Public',

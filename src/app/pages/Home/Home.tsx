@@ -166,10 +166,12 @@ const Home = () => {
           {posts.length > 0 ? (
             <>
               <div className='space-y-4'>
-                {posts.map((post, index) => (
-                  <div key={`${post.id}-${index}`}>
+                {posts.map((feed) => (
+                  <div key={feed.feedId}>
                     <Post
-                      {...post}
+                      {...feed.post}
+                      feedId={feed.feedId}
+                      feedCreatedAt={feed.createdAt}
                       currentUserId={userInfo?.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
