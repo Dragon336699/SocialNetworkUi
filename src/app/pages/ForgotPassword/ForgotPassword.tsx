@@ -4,7 +4,8 @@ import { LockOutlined, UserOutlined, MailOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { useState, useEffect } from 'react'
 import { userService } from '@/app/services/user.service'
-import { RequestOTPRequest, ResetPasswordRequest, VerifyOTPRequest } from '@/app/types/User/Request/User/otpReq'
+import { RequestOTPRequest, VerifyOTPRequest } from '@/app/types/User/Requests/otpReq'
+import { ResetPasswordRequest } from '@/app/types/User/Requests/passwordReq'
 
 const ForgotPassword: React.FC = () => {
   const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email')
@@ -130,8 +131,8 @@ const ForgotPassword: React.FC = () => {
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
       <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg`}>
-        <div className={`${styles.loginHeader} absolute flex items-center justify-center`} style={{ width: '240px' }}>
-          <span className='select-none' style={{ fontSize: '24px' }}>
+        <div className={`${styles.loginHeader} absolute flex items-center justify-center !w-[250px] max-xs:!w-[185px]`}>
+          <span className='select-none font-sans whitespace-nowrap'>
             {step === 'email' ? 'Forgot Password' : step === 'otp' ? 'Verify OTP' : 'Reset Password'}
           </span>
         </div>
@@ -148,7 +149,11 @@ const ForgotPassword: React.FC = () => {
           }}
         >
           {step === 'email' && (
-            <form id='emailForm' onSubmit={handleEmailSubmit(onEmailSubmit)} className='flex flex-col gap-4 mt-24'>
+            <form
+              id='emailForm'
+              onSubmit={handleEmailSubmit(onEmailSubmit)}
+              className='flex flex-col gap-4 mt-20 max-xs:mt-14'
+            >
               <div>
                 <Controller
                   name='email'
@@ -184,7 +189,11 @@ const ForgotPassword: React.FC = () => {
           )}
 
           {step === 'otp' && (
-            <form id='otpForm' onSubmit={handleOTPSubmit(onOTPSubmit)} className='flex flex-col gap-4 mt-24'>
+            <form
+              id='otpForm'
+              onSubmit={handleOTPSubmit(onOTPSubmit)}
+              className='flex flex-col gap-4 mt-20 max-xs:mt-14'
+            >
               <div>
                 <Controller
                   name='otp'
@@ -231,7 +240,8 @@ const ForgotPassword: React.FC = () => {
             <form
               id='resetForm'
               onSubmit={handleResetSubmit(onResetPasswordSubmit)}
-              className='flex flex-col gap-4 mt-24'>
+              className='flex flex-col gap-4 mt-20 max-xs:mt-14'
+            >
               <div>
                 <Controller
                   name='newPassword'
@@ -257,9 +267,9 @@ const ForgotPassword: React.FC = () => {
                     />
                   )}
                 />
-                {resetErrors.newPassword && 
+                {resetErrors.newPassword && (
                   <p className='text-red-500 text-sm pt-1 pl-5'>{resetErrors.newPassword.message}</p>
-                }
+                )}
               </div>
               <div className={styles.inputBox}>
                 <input
@@ -283,7 +293,7 @@ const ForgotPassword: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default ForgotPassword
