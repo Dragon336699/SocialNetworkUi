@@ -62,7 +62,7 @@ const ProfileUser = () => {
       setCountLoading((pre) => pre + 1)
       const res = await postService.getPostsByUser(userInfo.id)
       if (res.status === 200) {
-        setPosts(res.data.posts)
+        setPosts(Array.isArray(res.data.post) ? res.data.post : [res.data.post])
         setCountLoading((pre) => pre - 1)
       }
     } catch (err) {

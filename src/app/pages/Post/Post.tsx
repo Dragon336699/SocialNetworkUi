@@ -20,7 +20,7 @@ interface PostProps extends PostData {
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
   onPostDeleted?: (postId: string) => void
-  onSeen: (item: SeenPost) => void
+  onSeen?: (item: SeenPost) => void
   currentUserId?: string
   currentUser: UserDto
   hideHeader?: boolean
@@ -83,7 +83,7 @@ const Post: React.FC<PostProps> = ({
             createdAt: feedCreatedAt,
             postId: id
           }
-          onSeen(seenPostObject)
+          onSeen?.(seenPostObject)
           observer.unobserve(el)
         }
       },
