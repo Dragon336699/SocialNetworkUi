@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { PostData, PostReactionDto } from '@/app/types/Post/Post'
+import React, { useState, useEffect, useRef } from 'react'
+import { PostData, PostReactionDto, SeenPost } from '@/app/types/Post/Post'
 import PostDropdownMenu from './PostDropdownMenu'
 import ImageCarousel from './ImageCarousel'
 import ImageModal from './ImageModal'
@@ -16,10 +16,11 @@ import { useNavigate } from 'react-router-dom'
 
 interface PostProps extends PostData {
   feedId?: string
-  feedCreatedAt?: Date
+  feedCreatedAt?: number
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
   onPostDeleted?: (postId: string) => void
+  onSeen: (item: SeenPost) => void
   currentUserId?: string
   currentUser: UserDto
   hideHeader?: boolean
@@ -39,11 +40,13 @@ const Post: React.FC<PostProps> = ({
   postReactionUsers,
   onPostUpdated,
   onPostDeleted,
+  onSeen,
   currentUserId = '',
   currentUser,
   hideHeader = false
 }) => {
   const navigate = useNavigate()
+  const postRef = useRef<HTMLDivElement | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -65,6 +68,33 @@ const Post: React.FC<PostProps> = ({
   useEffect(() => {
     setLocalTotalComment(totalComment)
   }, [totalComment])
+
+  useEffect(() => {
+    const el = postRef.current
+
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!feedId || !feedCreatedAt) return
+          const seenPostObject: SeenPost = {
+            feedId,
+            createdAt: feedCreatedAt,
+            postId: id
+          }
+          onSeen(seenPostObject)
+          observer.unobserve(el)
+        }
+      },
+      {
+        threshold: 0.6
+      }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [id, onSeen])
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -96,18 +126,18 @@ const Post: React.FC<PostProps> = ({
     try {
       const response = await postService.reactionPost(postId, reaction)
       if (response.message && response.message.includes('successfully')) {
-        const currentUserReaction = reactions.find(r => r.userId === currentUserId)
+        const currentUserReaction = reactions.find((r) => r.userId === currentUserId)
         let newReactions: PostReactionDto[] = []
         let newTotalLiked = localTotalLiked
 
         if (currentUserReaction) {
           if (currentUserReaction.reaction === reaction) {
-            newReactions = reactions.filter(r => r.userId !== currentUserId)
+            newReactions = reactions.filter((r) => r.userId !== currentUserId)
             newTotalLiked = Math.max(0, localTotalLiked - 1)
             setReactions(newReactions)
             setLocalTotalLiked(newTotalLiked)
           } else {
-            newReactions = reactions.map(r => r.userId === currentUserId ? { ...r, reaction: reaction }: r)
+            newReactions = reactions.map((r) => (r.userId === currentUserId ? { ...r, reaction: reaction } : r))
             newTotalLiked = localTotalLiked
             setReactions(newReactions)
           }
@@ -275,11 +305,11 @@ const Post: React.FC<PostProps> = ({
   }
 
   const goToPrevious = () => {
-    setCurrentImageIndex(prev => prev === 0 ? (postImages?.length || 1) - 1 : prev - 1)
+    setCurrentImageIndex((prev) => (prev === 0 ? (postImages?.length || 1) - 1 : prev - 1))
   }
 
   const goToNext = () => {
-    setCurrentImageIndex(prev => prev === (postImages?.length || 1) - 1 ? 0 : prev + 1)
+    setCurrentImageIndex((prev) => (prev === (postImages?.length || 1) - 1 ? 0 : prev + 1))
   }
 
   const goToImage = (index: number) => {
@@ -300,7 +330,10 @@ const Post: React.FC<PostProps> = ({
 
   return (
     <>
-      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 mb-4 ${hideHeader ? 'border-t-0' : ''}`}>
+      <div
+        ref={postRef}
+        className={`bg-white rounded-lg shadow-sm border border-gray-200 mb-4 ${hideHeader ? 'border-t-0' : ''}`}
+      >
         {/* Header */}
         {!hideHeader && (
           <div className='flex items-center justify-between p-4 pb-2'>

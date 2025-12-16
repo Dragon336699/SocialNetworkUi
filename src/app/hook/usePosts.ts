@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { PostData } from '../types/Post/Post'
+import { PostData, SeenPost } from '../types/Post/Post'
 import { postService } from '../services/post.service'
 import { message } from 'antd'
 import { FeedDto } from '../types/Base/Responses/Feed/FeedDto.dto'
@@ -15,6 +15,7 @@ interface UsePostsReturn {
   handlePostCreated: () => void
   handlePostUpdated: (updatedPost: PostData) => void
   handlePostDeleted: (postId: string) => void
+  handleSeenPost: (post: SeenPost[]) => void
 }
 
 const POSTS_PER_PAGE = 10
@@ -83,6 +84,14 @@ export const usePosts = (): UsePostsReturn => {
     )
   }, [])
 
+  const handleSeenPost = (postsInfo: SeenPost[]) => {
+    try {
+      postService.seenPost(postsInfo)
+    } catch (err) {
+      console.log('Seen post failed')
+    }
+  }
+
   const handlePostDeleted = useCallback((postId: string) => {
     setPosts((prevPosts) => prevPosts.filter((feed) => feed.post.id !== postId))
   }, [])
@@ -114,6 +123,7 @@ export const usePosts = (): UsePostsReturn => {
     clearError,
     handlePostCreated,
     handlePostUpdated,
-    handlePostDeleted
+    handlePostDeleted,
+    handleSeenPost
   }
 }

@@ -78,3 +78,9 @@ export interface PostReactionDto {
 export interface PostReactionResponse extends BaseResponse {
   data: PostReactionDto
 }
+
+export type SeenPost = {
+  feedId: string
+  createdAt: number
+  postId: string
+}

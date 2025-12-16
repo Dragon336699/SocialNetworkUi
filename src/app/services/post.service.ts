@@ -6,7 +6,8 @@ import {
   UpdatePostResponse,
   DeletePostResponse,
   PostReactionResponse,
-  GetNewsFeedResponse
+  GetNewsFeedResponse,
+  SeenPost
 } from '../types/Post/Post'
 
 export const postService = {
@@ -73,6 +74,13 @@ export const postService = {
         withCredentials: true
       }
     )
+    return data
+  },
+
+  async seenPost(postsInfo: SeenPost[]): Promise<BaseResponse> {
+    const { data } = await apiClient.post<BaseResponse>('post/seen', postsInfo, {
+      withCredentials: true
+    })
     return data
   }
 }

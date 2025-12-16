@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { ReloadOutlined } from '@ant-design/icons'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
+import { SeenPost } from '@/app/types/Post/Post'
+import { useSeenPost } from '@/app/hook/useSeenPost'
 
 const { Title, Text } = Typography
 
@@ -51,7 +53,8 @@ const Home = () => {
     clearError,
     handlePostCreated,
     handlePostUpdated,
-    handlePostDeleted
+    handlePostDeleted,
+    handleSeenPost
   } = usePosts()
 
   // Đóng modal tạo bài đăng
@@ -64,6 +67,16 @@ const Home = () => {
     setIsOpenCreatePost(false)
     handlePostCreated()
   }
+
+  const { addSeen, flushNow } = useSeenPost(async (postsInfo: SeenPost[]) => {
+    handleSeenPost(postsInfo)
+  })
+
+  useEffect(() => {
+    return () => {
+      flushNow()
+    }
+  }, [flushNow])
 
   // Cuộn vô hạn được cải thiện với giới hạn tần suất
   const handleScroll = useCallback(() => {
@@ -175,6 +188,7 @@ const Home = () => {
                       currentUserId={userInfo?.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
+                      onSeen={addSeen}
                       currentUser={userInfo}
                     />
                   </div>
