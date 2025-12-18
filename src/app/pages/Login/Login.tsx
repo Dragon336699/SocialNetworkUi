@@ -63,7 +63,7 @@ const Login: React.FC = () => {
 
   return (
     <div className={`${styles.loginContainer} h-screen bg-center bg-cover flex items-center justify-center`}>
-      <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg max-md:!px-9`}>
+      <div className={`${styles.loginBox} relative flex flex-col backdrop-blur-lg max-md:!px-9 mx-4`}>
         <div className={`${styles.loginHeader} absolute flex items-center justify-center`}>
           <span className='select-none'>Login</span>
         </div>
@@ -79,7 +79,11 @@ const Login: React.FC = () => {
             }
           }}
         >
-          <form id='loginForm' onSubmit={handleSubmit(onLoginSubmit)} className='flex flex-col gap-6 mt-24'>
+          <form
+            id='loginForm'
+            onSubmit={handleSubmit(onLoginSubmit)}
+            className='flex flex-col gap-6 mt-24 max-md:mt-20'
+          >
             <div>
               <Controller
                 name='email'
