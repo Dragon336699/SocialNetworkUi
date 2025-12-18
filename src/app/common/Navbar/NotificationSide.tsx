@@ -6,8 +6,10 @@ import { Avatar } from 'antd'
 import { chatService } from '@/app/services/chat.service'
 import dayjs from 'dayjs'
 import { useUnread } from '../Contexts/UnreadContext'
+import { useNavigate } from 'react-router-dom'
 
 const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
+  const navigate = useNavigate()
   const [skip, setSkip] = useState(0)
   const [take, setTake] = useState(10)
   const [notifications, setNotifications] = useState<NotificationDto[]>([])
@@ -133,6 +135,9 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
             className={`w-[96%] flex items-center gap-3 px-4 py-3 hover:bg-gray-400 ${noti.unread ? 'bg-gray-300' : ''} transition-colors duration-200 cursor-pointer`}
             onMouseEnter={() => {
               if (noti.unread) markNotiAsRead(noti.id)
+            }}
+            onClick={() => {
+              navigate(`${noti.navigateUrl}`)
             }}
           >
             <div className='min-w-[60px] flex justify-center'>

@@ -185,6 +185,7 @@ const ProfileView = ({
                       currentUserId={userInfo.id || ''}
                       onPostUpdated={handlePostUpdated}
                       onPostDeleted={handlePostDeleted}
+                      onSeen={() => {}}
                     />
                   </div>
                 ))}
@@ -327,7 +328,8 @@ const ProfileView = ({
   const changeAvatar = async (croppedImg: string) => {
     try {
       setLoading(true)
-      const newAvatar = base64ToFile(croppedImg, 'avatar.png')
+      const fileName = `avatar_${Date.now()}.png`
+      const newAvatar = base64ToFile(croppedImg, fileName)
       const formData = new FormData()
       formData.append('Avatar', newAvatar)
 
@@ -368,9 +370,11 @@ const ProfileView = ({
           <Row gutter={[32, 24]} align='middle'>
             <Col>
               <Image
-                src={previewImage}
+                src={
+                  previewImage ||
+                  'https://res.cloudinary.com/dhnjbohwa/image/upload/v1766045971/default-avatar_ko3tz9.jpg'
+                }
                 className='rounded-full object-cover border'
-                alt='avatar'
                 style={{ width: 140, height: 140 }}
                 preview={{
                   mask: false,
