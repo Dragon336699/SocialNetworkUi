@@ -11,7 +11,7 @@ import {
   UserOutlined,
   CameraOutlined,
   HeartFilled,
-  UserDeleteOutlined
+  CloseOutlined
 } from '@ant-design/icons'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useEffect, useState } from 'react'
@@ -26,8 +26,10 @@ import Post from '@/app/pages/Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { useUserStore } from '@/app/stores/auth'
 import { relationService } from '@/app/services/relation.service'
-import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
-import { SentFriendRequestData } from '@/app/types/Relations/relations'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUserFriends } from '@fortawesome/free-solid-svg-icons'
+import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
+import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -45,12 +47,15 @@ const profile = {
 const defaultAvatar = 'src/app/assests/icons/image-avatar.svg'
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
+type statusRelation = 'default' | 'sendRequest' | 'friend' | 'receiveRequest'
 const ProfileView = ({
   posts,
   followerList,
   friendList,
   followingList,
   userInfo,
+  sentList,
+  receivedList,
   onEdit
 }: {
   posts: PostData[]
@@ -58,15 +63,19 @@ const ProfileView = ({
   friendList: UserDto[]
   followingList: UserDto[]
   userInfo: UserDto
+  sentList: SentFriendRequestData[]
+  receivedList: SentFriendRequestData[]
   onEdit: () => void
 }) => {
   const { user } = useUserStore()
   const { userName } = useParams()
+  const isFriend = friendList.some((friend) => friend.id === user?.id)
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
+  const [isOpenDeleteFriend, setIsOpenDeleteFriend] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<TabType>('posts')
   const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
-  const [isSend, setIsSend] = useState<boolean>(false)
+  const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
   const [isFollowing, setIsFollowing] = useState<boolean>(false)
 
   // const [form] = Form.useForm()
@@ -78,41 +87,70 @@ const ProfileView = ({
   const isMe = user?.userName === userName
   const navigate = useNavigate()
 
-  const getSentFriendReq = async () => {
-    try {
-      const res = await relationService.getFriendRequestsSent()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
-
-        // đảm bảo luôn là array
-        const list = Array.isArray(resData.data) ? (resData.data as SentFriendRequestData[]) : []
-
-        const checkHas = list.some((r) => r.receiverId === userInfo.id)
-
-        setIsSend(checkHas)
-      }
-    } catch (e) {
-      console.log('False to get sent request!', e)
+  useEffect(() => {
+    if (!user || !userInfo) return
+    const isFriend = friendList.some((f) => f.id === user.id)
+    if (isFriend) {
+      setRelation('friend')
+      return
     }
-  }
+    const hasSent = sentList.some((req) => req.receiverId === userInfo.id)
+    if (hasSent) {
+      setRelation('sendRequest')
+      return
+    }
 
-  const handleFriendRequest = async () => {
+    const hasReceived = receivedList.some((req) => req.senderId === userInfo.id)
+    if (hasReceived) {
+      setRelation('receiveRequest')
+      return
+    }
+    setRelation('default')
+  }, [user, userInfo, friendList, sentList, receivedList])
+
+  const handleFriend = async () => {
     try {
       setLoadingRequestFriend(true)
-      if (isSend) {
+      if (relation === 'sendRequest') {
         const res = await relationService.cancelFriendRequest(userInfo.id)
         if (res.status === 200) {
-          setIsSend(false)
+          setRelation('default')
           setLoadingRequestFriend(false)
           message.success('Canceled friend request')
         }
-      } else {
+      } else if (relation === 'default') {
         const res = await relationService.addFriend(userInfo.id)
         if (res.status === 200) {
-          setIsSend(true)
+          setRelation('sendRequest')
           setLoadingRequestFriend(false)
           message.success('Friend request sent')
         }
+      } else if (relation === 'friend') {
+        setIsOpenDeleteFriend(true)
+        setLoadingRequestFriend(false)
+      } else {
+        const res = await relationService.approveFriendRequest(userInfo.id)
+        if (res.status === 200) {
+          setRelation('friend')
+          setLoadingRequestFriend(false)
+          message.success('Accepted successfully')
+        }
+      }
+    } catch {
+      setLoadingRequestFriend(false)
+      message.error('Error. Try again!')
+    }
+  }
+
+  const handleUnFriend = async () => {
+    try {
+      setLoadingRequestFriend(true)
+      const res = await relationService.unFriend(userInfo.id)
+      if (res.status === 200) {
+        setRelation('default')
+        setLoadingRequestFriend(false)
+        setIsOpenDeleteFriend(false)
+        message.success('Unfriended successfully')
       }
     } catch {
       setLoadingRequestFriend(false)
@@ -152,11 +190,6 @@ const ProfileView = ({
       : `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`
   }
 
-  useEffect(() => {
-    getSentFriendReq()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'posts':
@@ -177,8 +210,8 @@ const ProfileView = ({
             )}
             {posts.length > 0 ? (
               <div className='space-y-4'>
-                {posts.map((post, index) => (
-                  <div key={`${post.id}-${index}`}>
+                {/* {posts.map((post, index) => (
+                  <div key={index}>
                     <Post
                       {...post}
                       currentUser={userInfo}
@@ -187,7 +220,7 @@ const ProfileView = ({
                       onPostDeleted={handlePostDeleted}
                     />
                   </div>
-                ))}
+                ))} */}
               </div>
             ) : (
               <div className='text-center py-12'>
@@ -217,9 +250,11 @@ const ProfileView = ({
                       <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
-                  <Button size='small' className='px-4'>
-                    Follow
-                  </Button>
+                  {isMe && (
+                    <Button size='small' className='px-4'>
+                      Follow
+                    </Button>
+                  )}
                 </div>
               ))
             ) : (
@@ -250,9 +285,11 @@ const ProfileView = ({
                       <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
-                  <Button size='small' type='primary' className='px-4'>
-                    Following
-                  </Button>
+                  {isMe && (
+                    <Button size='small' type='primary' className='px-4'>
+                      Following
+                    </Button>
+                  )}
                 </div>
               ))
             ) : (
@@ -283,9 +320,11 @@ const ProfileView = ({
                       <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
-                  <Button size='small' danger>
-                    Remove
-                  </Button>
+                  {isMe && (
+                    <Button size='small' danger>
+                      Remove
+                    </Button>
+                  )}
                 </div>
               ))
             ) : (
@@ -308,6 +347,25 @@ const ProfileView = ({
     { label: 'Following', value: followingList.length, active: 'following' },
     { label: 'Friends', value: friendList.length, active: 'friends' }
   ]
+
+  const friendButtonConfig = {
+    default: {
+      text: 'Add friend',
+      icon: <UserAddOutlined className='text-blue-500 hover:text-blue-600' />
+    },
+    sendRequest: {
+      text: 'Cancel request',
+      icon: <CloseOutlined className='text-gray-500 hover:text-gray-600' />
+    },
+    friend: {
+      text: 'Friend',
+      icon: <FontAwesomeIcon className='text-base text-white' icon={faUserFriends} />
+    },
+    receiveRequest: {
+      text: 'Respond to request',
+      icon: <UserAddOutlined className='text-green-500 hover:text-green-600' />
+    }
+  }
 
   const handleAvatarChange = (info: UploadChangeParam) => {
     const file = info.file.originFileObj
@@ -361,6 +419,14 @@ const ProfileView = ({
         onCropDone={(croppedImg) => {
           changeAvatar(croppedImg)
         }}
+      />
+      <ActionConfirmModal
+        open={isOpenDeleteFriend}
+        friend={userInfo}
+        type={'unfriend'}
+        onCancel={() => setIsOpenDeleteFriend(false)}
+        loading={loadingRequestFriend}
+        onConfirm={handleUnFriend}
       />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
@@ -476,16 +542,10 @@ const ProfileView = ({
                     block
                     loading={loadingRequestFriend}
                     size='large'
-                    icon={
-                      isSend ? (
-                        <UserDeleteOutlined className='text-blue-500 hover:text-blue-600' />
-                      ) : (
-                        <UserAddOutlined className='text-blue-500 hover:text-blue-600' />
-                      )
-                    }
-                    onClick={handleFriendRequest}
+                    icon={friendButtonConfig[relation].icon}
+                    onClick={handleFriend}
                   >
-                    {isSend ? 'Cancel Request' : 'Add friend'}
+                    {friendButtonConfig[relation].text}
                   </Button>
                 </Col>
 

@@ -3,15 +3,17 @@ import ProfileView from '@/app/components/Profile/ProfileView'
 import { postService } from '@/app/services/post.service'
 import { relationService } from '@/app/services/relation.service'
 import { userService } from '@/app/services/user.service'
+import { useUserStore } from '@/app/stores/auth'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { PostData } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
+import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 import { message, Spin } from 'antd'
 import { AxiosError } from 'axios'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const initialUserInfo = {
+const initialUserInfo: UserDto = {
   id: '',
   status: '',
   email: '',
@@ -25,119 +27,126 @@ const initialUserInfo = {
 }
 
 const ProfileUser = () => {
-  const { userName } = useParams()
+  const { userName } = useParams<{ userName: string }>()
+  const { user } = useUserStore()
   const navigate = useNavigate()
+
   const [userInfo, setUserInfo] = useState<UserDto>(initialUserInfo)
   const [posts, setPosts] = useState<PostData[]>([])
-
-  const [isEditing, setIsEditing] = useState(false)
-  const [countLoading, setCountLoading] = useState<number>(0)
-
-  const getUserInfo = async () => {
-    try {
-      setCountLoading((pre) => pre + 1)
-      const res = await userService.getUserInfoByUserName(userName || '')
-      if (res.status === 200) {
-        setUserInfo(res.data as UserDto)
-        setCountLoading((pre) => pre - 1)
-      }
-    } catch (err) {
-      const error = err as AxiosError
-      setCountLoading((pre) => pre - 1)
-      const status = error?.response?.status
-
-      if (status === 400) {
-        message.error('User not found!')
-        navigate('/home')
-        return
-      }
-
-      message.error('Error while getting user information!')
-    }
-  }
-
-  const getPost = async () => {
-    try {
-      if (!userInfo.id && userName) return
-      setCountLoading((pre) => pre + 1)
-      const res = await postService.getPostsByUser(userInfo.id)
-      if (res.status === 200) {
-        setPosts(Array.isArray(res.data.post) ? res.data.post : [res.data.post])
-        setCountLoading((pre) => pre - 1)
-      }
-    } catch (err) {
-      setCountLoading((pre) => pre - 1)
-      console.log('Error to load posts!: ', err)
-    }
-  }
-
   const [followerList, setFolloweList] = useState<UserDto[]>([])
   const [followingList, setFollowingList] = useState<UserDto[]>([])
   const [friendList, setFriendList] = useState<UserDto[]>([])
+  const [sentList, setSentList] = useState<SentFriendRequestData[]>([])
+  const [receivedList, setReceivedList] = useState<SentFriendRequestData[]>([])
 
-  const getFollower = async () => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const getSentFriendReq = async () => {
     try {
-      const res = await relationService.getFollowersList()
+      const res = await relationService.getFriendRequestsSent()
       if (res.status === 200) {
-        setFolloweList(res.data.data.data)
+        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
+
+        // đảm bảo luôn là array
+        const list = Array.isArray(resData.data) ? (resData.data as SentFriendRequestData[]) : []
+        setSentList(list)
       }
     } catch (e) {
-      console.log('Error get list follower: ', e)
+      console.log('False to get sent request!', e)
     }
   }
 
-  const getFollowing = async () => {
+  const getFriendRequestsReceived = async () => {
     try {
-      const res = await relationService.getFollowingList()
+      const res = await relationService.getFriendRequestsReceived()
       if (res.status === 200) {
-        setFollowingList(res.data.data.data)
-      }
-    } catch (e) {
-      console.log('Error get list follower: ', e)
-    }
-  }
-
-  const getFriend = async () => {
-    try {
-      const res = await relationService.getFriendsList()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<UserDto[]>
-        setFriendList(resData.data as UserDto[])
+        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
+        setReceivedList(resData.data as SentFriendRequestData[])
       } else {
-        message.error('Error while getting friend list')
+        message.error('Get request failed!')
       }
-    } catch (e) {
-      console.log('Error get list follower: ', e)
+    } catch {
+      message.error('Get request failed!')
     }
   }
 
-  useEffect(() => {
-    getUserInfo()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userName])
+  const fetchData = useCallback(async () => {
+    if (!userName) return
+
+    try {
+      setIsLoading(true)
+
+      const userRes = await userService.getUserInfoByUserName(userName)
+      if (userRes.status !== 200) throw new Error('User not found')
+
+      const userData = userRes.data as UserDto
+      setUserInfo(userData)
+
+      const results = await Promise.allSettled([
+        postService.getPostsByUser(userData.id),
+        relationService.getFollowersList(),
+        relationService.getFollowingList(),
+        relationService.getFriendsList(userData.id)
+      ])
+
+      if (results[0].status === 'fulfilled') {
+        const res = results[0].value
+        setPosts(Array.isArray(res.data.post) ? res.data.post : [res.data.post])
+      }
+
+      if (results[1].status === 'fulfilled') {
+        setFolloweList(results[1].value.data.data.data)
+      }
+
+      if (results[2].status === 'fulfilled') {
+        setFollowingList(results[2].value.data.data.data)
+      }
+
+      if (results[3].status === 'fulfilled') {
+        const resData = results[3].value.data as ResponseHasData<UserDto[]>
+        setFriendList(resData.data as UserDto[])
+      }
+    } catch (err) {
+      const error = err as AxiosError
+      if (error?.response?.status === 400) {
+        message.error('User not found!')
+        navigate('/home')
+      } else {
+        message.error('Error while loading profile data!')
+      }
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userName, navigate])
 
   useEffect(() => {
-    if (userInfo.id) {
-      getPost()
-      getFollower()
-      getFollowing()
-      getFriend()
-    }
+    fetchData()
+  }, [fetchData])
+
+  useEffect(() => {
+    if (userName === user?.userName) return
+    getSentFriendReq()
+    getFriendRequestsReceived()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userName])
 
   return (
-    <Spin spinning={countLoading !== 0}>
+    <Spin spinning={isLoading}>
       <main className='min-h-screen bg-background'>
-        {countLoading === 0 &&
+        {!isLoading &&
+          userInfo.id &&
           (isEditing ? (
-            <ProfileEdit onBack={() => setIsEditing(false)} userInfo={userInfo} refreshData={getUserInfo} />
+            <ProfileEdit onBack={() => setIsEditing(false)} userInfo={userInfo} refreshData={fetchData} />
           ) : (
             <ProfileView
               posts={posts}
               followerList={followerList}
               friendList={friendList}
               followingList={followingList}
+              sentList={sentList}
+              receivedList={receivedList}
               userInfo={userInfo}
               onEdit={() => setIsEditing(true)}
             />

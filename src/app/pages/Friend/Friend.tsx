@@ -6,10 +6,10 @@ import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { relationService } from '@/app/services/relation.service'
-import { SentFriendRequestData } from '@/app/types/Relations/relations'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
+import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 
 const FriendsList: React.FC = () => {
   const [friends, setFriends] = useState<UserDto[]>([])
@@ -62,24 +62,24 @@ const FriendsList: React.FC = () => {
     setSelectedFriend(null)
   }
 
-  const handleRequestAction = async (senderId: string, receiverId: string, type: 'accept' | 'decline' | 'cancel') => {
-    setActionLoadingId(senderId)
-    await new Promise((resolve) => setTimeout(resolve, 800)) // Fake API
+  // const handleRequestAction = async (senderId: string, receiverId: string, type: 'accept' | 'decline' | 'cancel') => {
+  //   setActionLoadingId(senderId)
+  //   await new Promise((resolve) => setTimeout(resolve, 800)) // Fake API
 
-    // if (type === 'accept') {
-    //   const request = receivedRequests.find((r) => r.id === id)
-    //   if (request) {
-    //     setFriends((prev) => [{ ...request, status: 'online' }, ...prev])
-    //     setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-    //   }
-    // } else if (type === 'decline') {
-    //   setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-    // } else if (type === 'cancel') {
-    //   setSentRequests((prev) => prev.filter((r) => r.id !== id))
-    // }
+  //   // if (type === 'accept') {
+  //   //   const request = receivedRequests.find((r) => r.id === id)
+  //   //   if (request) {
+  //   //     setFriends((prev) => [{ ...request, status: 'online' }, ...prev])
+  //   //     setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
+  //   //   }
+  //   // } else if (type === 'decline') {
+  //   //   setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
+  //   // } else if (type === 'cancel') {
+  //   //   setSentRequests((prev) => prev.filter((r) => r.id !== id))
+  //   // }
 
-    setActionLoadingId(null)
-  }
+  //   setActionLoadingId(null)
+  // }
 
   const getFriends = async () => {
     try {
@@ -97,42 +97,48 @@ const FriendsList: React.FC = () => {
 
   const approveFriendRequest = async (senderId: string) => {
     try {
+      setActionLoadingId(senderId)
       const res = await relationService.approveFriendRequest(senderId)
       const resData = res.data as BaseResponse
       if (res.status === 200) {
+        setActionLoadingId(null)
         message.success(resData.message)
       } else {
         message.error(resData.message)
       }
-    } catch (err) {
+    } catch {
       message.error('Error while approving friend request')
     }
   }
 
   const declineFriendRequest = async (senderId: string) => {
     try {
+      setActionLoadingId(senderId)
       const res = await relationService.declineFriendRequest(senderId)
       const resData = res.data as BaseResponse
       if (res.status === 200) {
+        setActionLoadingId(null)
         message.success(resData.message)
       } else {
         message.error(resData.message)
       }
-    } catch (err) {
+    } catch {
       message.error('Error while approving friend request')
     }
   }
 
   const cancelFriendRequest = async (receiverId: string) => {
     try {
+      setActionLoadingId(receiverId)
       const res = await relationService.cancelFriendRequest(receiverId)
       const resData = res.data as BaseResponse
       if (res.status === 200) {
+        setActionLoadingId(null)
         message.success(resData.message)
       } else {
         message.error(resData.message)
       }
-    } catch (err) {
+    } catch {
       message.error('Error while approving friend request')
     }
   }
@@ -146,14 +152,29 @@ const FriendsList: React.FC = () => {
       } else {
         message.error('Get request failed!')
       }
-    } catch (err) {
+    } catch {
       message.error('Get request failed!')
+    }
+  }
+
+  const getFriendRequestsSent = async () => {
+    try {
+      const res = await relationService.getFriendRequestsSent()
+      if (res.status === 200) {
+        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
+        setSentRequests(resData.data as SentFriendRequestData[])
+      } else {
+        message.error('Get sent request failed!')
+      }
+    } catch {
+      message.error('Get sent request failed!')
     }
   }
 
   useEffect(() => {
     getFriendRequestsReceived()
     getFriends()
+    getFriendRequestsSent()
   }, [])
 
   const renderSearchBar = (placeholder: string) => (
@@ -239,7 +260,7 @@ const FriendsList: React.FC = () => {
                   key={req.receiverId}
                   request={req}
                   type='sent'
-                  onDelete={(id) => cancelFriendRequest(req.receiverId)}
+                  onDelete={() => cancelFriendRequest(req.receiverId)}
                   loading={actionLoadingId === req.senderId}
                 />
               ))}
@@ -253,7 +274,7 @@ const FriendsList: React.FC = () => {
   ]
 
   return (
-    <div className='mx-auto max-w-3xl p-4 md:p-6'>
+    <div className='mx-auto max-w-4xl p-4 md:p-6'>
       <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
         <h1 className='text-2xl font-bold mb-4 text-gray-800'>Friends List</h1>
         <Tabs activeKey={activeTab} onChange={handleTabChange} items={items} className='custom-tabs' />

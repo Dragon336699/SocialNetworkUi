@@ -1,9 +1,8 @@
 import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
-import { SentFriendRequestData } from '../types/Relations/relations'
 import { UserDto } from '../types/User/user.dto'
-import { RelationData } from '../types/UserRelation/userRelation'
+import { RelationData, SentFriendRequestData } from '../types/UserRelation/userRelation'
 
 export const relationService = {
   async addFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
@@ -64,15 +63,19 @@ export const relationService = {
     return { data: response.data, status: response.status }
   },
 
-  async getFriendsList(skip?: number, take?: number): Promise<{ data: ResponseHasData<UserDto[]>; status: number }> {
+  async getFriendsList(
+    userId?: string,
+    skip?: number,
+    take?: number
+  ): Promise<{ data: ResponseHasData<UserDto[]>; status: number }> {
     const response = await apiClient.get<ResponseHasData<UserDto[]>>(`user-relation/friends`, {
-      params: { skip, take },
+      params: { userId, skip, take },
       withCredentials: true
     })
     return { data: response.data, status: response.status }
   },
 
-  async removeFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
+  async unFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
     const response = await apiClient.post<BaseResponse>(
       `user-relation/unfriend`,
       { targetUserId: userId },

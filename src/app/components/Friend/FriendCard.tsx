@@ -5,7 +5,7 @@ import { faEllipsisVertical, faComment, faUserXmark, faBan } from '@fortawesome/
 import { ActionType } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
 import { UserDto } from '@/app/types/User/user.dto'
-
+const defaultAvatar = 'src/app/assests/icons/image-avatar.svg'
 interface FriendCardProps {
   friend: UserDto
   onAction: (type: ActionType, friend: UserDto) => void
@@ -49,7 +49,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
     <div className='flex items-center justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-blue-100'>
       <div className='flex gap-4 items-center'>
         <div className='relative'>
-          <img src={friend.avatarUrl || ''} className='h-12 w-12 rounded-full object-cover border border-gray-200' />
+          <img src={friend.avatarUrl || defaultAvatar} className='h-12 w-12 rounded-full object-cover border border-gray-200' />
           <span
             className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${statusColor[friend.status.toLowerCase() as keyof typeof statusColor]}`}
           ></span>

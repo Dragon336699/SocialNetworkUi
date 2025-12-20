@@ -3,8 +3,8 @@ import { Button } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faClock, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router-dom'
-import { SentFriendRequestData } from '@/app/types/Relations/relations'
 import { getTimeAgo } from '@/app/helper'
+import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 
 interface RequestCardProps {
   request: SentFriendRequestData
@@ -16,20 +16,21 @@ interface RequestCardProps {
 
 const RequestCard: React.FC<RequestCardProps> = ({ request, type, onConfirm, onDelete, loading }) => {
   const navigate = useNavigate()
+  const displayUser = request?.sender ?? request?.receiver
   return (
     <div className='flex items-center justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-blue-100'>
       <div className='flex items-center gap-4'>
         <img
-          src={request?.sender?.avatarUrl || '/placeholder.svg'}
+          src={displayUser.avatarUrl || '/placeholder.svg'}
           className='h-14 w-14 rounded-full object-cover border border-gray-200'
         />
 
         <div>
           <h3
             className='font-semibold text-gray-900 text-base hover:underline hover:cursor-pointer'
-            onClick={() => navigate(`/profile/${request?.sender?.userName}`)}
+            onClick={() => navigate(`/profile/${displayUser.userName}`)}
           >
-            {request?.sender?.lastName || '' + request?.sender?.firstName || ''}
+            {displayUser.lastName + ' ' + displayUser.firstName}
           </h3>
 
           {
