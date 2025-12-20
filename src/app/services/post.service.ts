@@ -31,7 +31,7 @@ export const postService = {
     userId: string,
     skip: number = 0,
     take: number = 10
-  ): Promise<{ data: GetAllPostsResponse; status: number }> {
+  ): Promise<{ data: GetPostByIdResponse; status: number }> {
     const res = await apiClient.get(`post/user/${userId}`, {
       params: { skip, take },
       withCredentials: true
