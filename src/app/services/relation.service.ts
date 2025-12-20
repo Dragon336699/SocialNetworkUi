@@ -2,7 +2,7 @@ import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import { UserDto } from '../types/User/user.dto'
-import { RelationData, SentFriendRequestData } from '../types/UserRelation/userRelation'
+import { RelationData, SentFriendRequestData, SuggestUsers } from '../types/UserRelation/userRelation'
 
 export const relationService = {
   async addFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
@@ -145,5 +145,16 @@ export const relationService = {
       }
     )
     return { data: response.data, status: response.status }
-  }
+  },
+
+  async getSuggestFriends(
+    skip?: number,
+    take?: number
+  ): Promise<{ data: ResponseHasData<SuggestUsers[]>; status: number }> {
+    const response = await apiClient.get<ResponseHasData<SuggestUsers[]>>(`user-relation/suggest`, {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
+  },
 }

@@ -23,3 +23,8 @@ export interface RelationData {
     totalPages: number
   }
 }
+
+export interface SuggestUsers {
+  mutualFriendCount: number
+  user: UserDto
+}

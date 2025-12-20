@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Input, Empty, Tabs, message } from 'antd'
-import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined } from '@ant-design/icons'
+import { Input, Empty, Tabs, message, Avatar, Button } from 'antd'
+import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined, UserAddOutlined, CheckOutlined } from '@ant-design/icons'
 import { ActionType } from '@/app/types/Common'
 import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
@@ -9,12 +9,15 @@ import { relationService } from '@/app/services/relation.service'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
+import { SentFriendRequestData, SuggestUsers } from '@/app/types/UserRelation/userRelation'
 
 const FriendsList: React.FC = () => {
+  const defaultAvatar = 'https://res.cloudinary.com/dhnjbohwa/image/upload/v1766045971/default-avatar_ko3tz9.jpg'
   const [friends, setFriends] = useState<UserDto[]>([])
+  const [requestedSuggestIds, setRequestedSuggestIds] = useState<string[]>([])
   const [sentRequests, setSentRequests] = useState<SentFriendRequestData[]>([])
   const [receivedRequests, setReceivedRequests] = useState<SentFriendRequestData[]>([])
+  const [suggestUser, setSuggestUsers] = useState<SuggestUsers[]>([])
 
   const [searchText, setSearchText] = useState('')
   const [activeTab, setActiveTab] = useState('friends')
@@ -26,15 +29,30 @@ const FriendsList: React.FC = () => {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
   const filteredFriends = useMemo(
-    () => friends.filter((f: UserDto) => f.firstName.toLowerCase().includes(searchText.toLowerCase())),
+    () =>
+      friends.filter(
+        (f: UserDto) =>
+          f.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
+          f.lastName?.toLowerCase().includes(searchText.toLowerCase())
+      ),
     [friends, searchText]
   )
   const filteredSent = useMemo(
-    () => sentRequests.filter((f) => f.receiver?.firstName.toLowerCase().includes(searchText.toLowerCase())),
+    () =>
+      sentRequests.filter(
+        (f) =>
+          f.receiver?.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
+          f.receiver?.lastName?.toLowerCase().includes(searchText.toLowerCase())
+      ),
     [sentRequests, searchText]
   )
   const filteredReceived = useMemo(
-    () => receivedRequests.filter((f) => f.sender?.firstName.toLowerCase().includes(searchText.toLowerCase())),
+    () =>
+      receivedRequests.filter(
+        (f) =>
+          f.sender?.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
+          f.sender?.lastName?.toLowerCase().includes(searchText.toLowerCase())
+      ),
     [receivedRequests, searchText]
   )
 
@@ -171,10 +189,32 @@ const FriendsList: React.FC = () => {
     }
   }
 
+  const getSuggestFriends = async () => {
+    try {
+      const res = await relationService.getSuggestFriends()
+      if (res.status === 200) {
+        const resData = res.data as ResponseHasData<SuggestUsers[]>
+        setSuggestUsers(resData.data as SuggestUsers[])
+      } else {
+        message.error('Get sent request failed!')
+      }
+    } catch {
+      message.error('Get sent request failed!')
+    }
+  }
+
+  const handleAddFriend = async (userId: string) => {
+    const res = await relationService.addFriend(userId)
+    if (res.status === 200) {
+      message.success('Friend request sent')
+      setRequestedSuggestIds((prev) => [...prev, userId])
+    }
+  }
   useEffect(() => {
     getFriendRequestsReceived()
     getFriends()
     getFriendRequestsSent()
+    getSuggestFriends()
   }, [])
 
   const renderSearchBar = (placeholder: string) => (
@@ -267,6 +307,45 @@ const FriendsList: React.FC = () => {
             </div>
           ) : (
             <Empty description='No sent requests found' className='my-10' />
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'suggest',
+      label: (
+        <span>
+          <SendOutlined className='mr-2' />
+          Suggest ({suggestUser.length})
+        </span>
+      ),
+      children: (
+        <div className='mt-4'>
+          {suggestUser.length > 0 ? (
+            <div className='grid grid-cols-1 gap-4'>
+              {suggestUser.map((req) => {
+                const isRequested = requestedSuggestIds.includes(req.user.id)
+                return (
+                  <div key={req.user.id} className='flex justify-between'>
+                    <div className='flex gap-3 items-center'>
+                      <Avatar src={req.user.avatarUrl || defaultAvatar} />
+                      <h3 className='font-bold'>{req.user.lastName + ' ' + req.user.firstName}</h3>
+                    </div>
+
+                    <Button
+                      type={isRequested ? 'default' : 'primary'}
+                      icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
+                      disabled={isRequested}
+                      onClick={() => handleAddFriend(req.user.id)}
+                    >
+                      {isRequested ? 'Requested' : 'Add friend'}
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <Empty description='No suggest friend found' className='my-10' />
           )}
         </div>
       )
