@@ -92,7 +92,9 @@ const ProfileUser = () => {
 
       if (results[0].status === 'fulfilled') {
         const res = results[0].value
-        setPosts(Array.isArray(res.data.post) ? res.data.post : [res.data.post])
+        const responseData = res.data as any
+        const postsData = responseData.posts || responseData.post
+        setPosts(Array.isArray(postsData) ? postsData : [])
       }
 
       if (results[1].status === 'fulfilled') {
