@@ -43,6 +43,8 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
 import ModalNewMessage from './ModalNewMessage'
 import { useUnread } from '@/app/common/Contexts/UnreadContext'
+import AvatarGroup from 'antd/es/avatar/AvatarGroup'
+import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 
 const Inbox: React.FC = () => {
   const navigate = useNavigate()
@@ -586,12 +588,29 @@ const Inbox: React.FC = () => {
                       onClick={() => navigateToInbox(conversation.id)}
                       className={`flex items-center gap-2 cursor-pointer hover:bg-[#cbcdd1a6] ${conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-[#cbcdd1a6]' : ''} rounded-[20px] py-[10px] px-[20px]`}
                     >
-                      <Avatar
-                        draggable='false'
-                        className='select-none'
-                        size={48}
-                        src={conversation.conversationUsers[0].user.avatarUrl}
-                      ></Avatar>
+                      {conversation.type === 'Personal' ? (
+                        <Avatar
+                          draggable='false'
+                          className='select-none mw-[20px]'
+                          size={42}
+                          src={conversation.conversationUsers[0].user.avatarUrl || DEFAULT_AVATAR_URL}
+                        ></Avatar>
+                      ) : (
+                        <Avatar.Group>
+                          <Avatar
+                            draggable='false'
+                            className='select-none mw-[20px]'
+                            size={40}
+                            src={conversation.conversationUsers[0].user.avatarUrl || DEFAULT_AVATAR_URL}
+                          ></Avatar>
+                          <Avatar
+                            draggable='false'
+                            className='select-none mw-[20px]'
+                            size={40}
+                            src={conversation.conversationUsers[1].user.avatarUrl || DEFAULT_AVATAR_URL}
+                          ></Avatar>
+                        </Avatar.Group>
+                      )}
                       <div className='flex flex-col justify-around overflow-hidden'>
                         <p className={`text-lg font-medium select-none truncate ${seenByMe ? '' : 'font-bold'}`}>
                           {conversation.type === 'Personal'

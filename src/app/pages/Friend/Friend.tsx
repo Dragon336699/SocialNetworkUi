@@ -10,9 +10,9 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
 import { SentFriendRequestData, SuggestUsers } from '@/app/types/UserRelation/userRelation'
+import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 
 const FriendsList: React.FC = () => {
-  const defaultAvatar = 'https://res.cloudinary.com/dhnjbohwa/image/upload/v1766045971/default-avatar_ko3tz9.jpg'
   const [friends, setFriends] = useState<UserDto[]>([])
   const [requestedSuggestIds, setRequestedSuggestIds] = useState<string[]>([])
   const [sentRequests, setSentRequests] = useState<SentFriendRequestData[]>([])
@@ -328,7 +328,7 @@ const FriendsList: React.FC = () => {
                 return (
                   <div key={req.user.id} className='flex justify-between'>
                     <div className='flex gap-3 items-center'>
-                      <Avatar src={req.user.avatarUrl || defaultAvatar} />
+                      <Avatar src={req.user.avatarUrl || DEFAULT_AVATAR_URL} />
                       <h3 className='font-bold'>{req.user.lastName + ' ' + req.user.firstName}</h3>
                     </div>
 
