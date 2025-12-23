@@ -31,6 +31,7 @@ import { faUserFriends } from '@fortawesome/free-solid-svg-icons'
 import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { ActionType } from '@/app/types/Common'
+import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -45,7 +46,6 @@ const profile = {
   friends: 19,
   email: 'user@example.com'
 }
-const defaultAvatar = 'src/app/assests/icons/image-avatar.svg'
 
 type TabType = 'posts' | 'followers' | 'following' | 'friends'
 type statusRelation = 'default' | 'sendRequest' | 'friend' | 'receiveRequest'
@@ -79,7 +79,7 @@ const ProfileView = ({
   const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [activeTab, setActiveTab] = useState<TabType>('posts')
   const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
-  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || defaultAvatar)
+  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
   const [currentAction, setCurrentAction] = useState<ActionType>('unfriend')
   const [selectedFriend, setSelectedFriend] = useState<UserDto | null>(null)
@@ -480,10 +480,7 @@ const ProfileView = ({
           <Row gutter={[32, 24]} align='middle'>
             <Col>
               <Image
-                src={
-                  previewImage ||
-                  'https://res.cloudinary.com/dhnjbohwa/image/upload/v1766045971/default-avatar_ko3tz9.jpg'
-                }
+                src={previewImage || DEFAULT_AVATAR_URL}
                 className='rounded-full object-cover border'
                 style={{ width: 140, height: 140 }}
                 preview={{
