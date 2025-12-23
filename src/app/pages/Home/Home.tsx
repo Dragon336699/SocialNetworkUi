@@ -8,6 +8,7 @@ import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
 import { SeenPost } from '@/app/types/Post/Post'
 import { useSeenPost } from '@/app/hook/useSeenPost'
+import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 
 const { Title, Text } = Typography
 
@@ -167,7 +168,7 @@ const Home = () => {
             onClick={() => setIsOpenCreatePost(true)}
             className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
           >
-            <Avatar size={48} src={userInfo?.avatarUrl} />
+            <Avatar size={48} src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL} />
             <div className='flex-1 bg-neutral-100 rounded-full px-4 py-3 text-neutral-600 hover:bg-neutral-200 transition-colors'>
               What's on your mind?
             </div>

@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
 import { NavbarProps } from '../Interfaces/NavbarProps'
 import SearchComponent from '@/app/components/Search/SearchComponent'
+import { DEFAULT_AVATAR_URL } from '../Assests/CommonVariable'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -157,7 +158,10 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         const resData = response.data as UserDto
         setItems((prev) => {
           if (prev.some((i) => i?.key === 'profile')) return prev
-          return [...prev, getItem('Profile', 'profile', <Avatar src={resData.avatarUrl} size='small' />)]
+          return [
+            ...prev,
+            getItem('Profile', 'profile', <Avatar src={resData.avatarUrl || DEFAULT_AVATAR_URL} size='small' />)
+          ]
         })
       }
     } catch (err) {

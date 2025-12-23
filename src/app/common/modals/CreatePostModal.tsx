@@ -17,13 +17,12 @@ import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
-import { useUserStore } from '@/app/stores/auth'
+import { DEFAULT_AVATAR_URL } from '../Assests/CommonVariable'
 
 const { TextArea } = Input
 const { Text } = Typography
 
 const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
-  const { user } = useUserStore()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -169,9 +168,11 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       title={
         <Flex justify='space-between'>
           <Flex align='center' gap='small'>
-            <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
-              {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
-            </Avatar>
+            <Avatar
+              size={40}
+              src={currentUser?.avatarUrl || DEFAULT_AVATAR_URL}
+              style={{ minWidth: 40, minHeight: 40 }}
+            ></Avatar>
             <Flex vertical>
               <Text strong>{fullName}</Text>
             </Flex>
