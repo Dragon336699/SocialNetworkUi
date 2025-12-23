@@ -799,6 +799,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
         onClose={() => setShowEditModal(false)}
         postId={postId}
         onSave={handleSavePost}
+        currentUser={currentUser}
       />
 
       <DeletePostModal

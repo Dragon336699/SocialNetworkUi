@@ -208,20 +208,28 @@ const ProfileView = ({
                 </div>
               </div>
             )}
-            {posts.length > 0 ? (
+            {posts.length > 0 && userInfo ? (
               <div className='space-y-4'>
-                {/* {posts.map((post, index) => (
-                  <div key={index}>
-                    <Post
-                      {...post}
-                      currentUser={userInfo}
-                      currentUserId={userInfo.id || ''}
-                      onPostUpdated={handlePostUpdated}
-                      onPostDeleted={handlePostDeleted}
-                      onSeen={() => {}}
-                    />
-                  </div>
-                ))} */}
+                {posts.map((post, index) => {
+                  // Kiểm tra post có tồn tại và có đầy đủ dữ liệu cần thiết
+                  if (!post || !post.id || !post.user) {
+                    console.warn('Post thiếu dữ liệu hoặc undefined:', { post, index })
+                    return null
+                  }
+                  return (
+                    <div key={post.id}>
+                      <Post
+                        {...post}
+                        postReactionUsers={post.postReactionUsers || []}
+                        currentUser={userInfo}
+                        currentUserId={userInfo.id || ''}
+                        onPostUpdated={handlePostUpdated}
+                        onPostDeleted={handlePostDeleted}
+                        onSeen={() => {}}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className='text-center py-12'>
