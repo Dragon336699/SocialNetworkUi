@@ -351,10 +351,10 @@ const ProfileView = ({
   }
 
   const stats = [
-    { label: 'Posts', value: posts.length, active: 'posts' },
-    { label: 'Followers', value: followerList.length, active: 'followers' },
-    { label: 'Following', value: followingList.length, active: 'following' },
-    { label: 'Friends', value: friendList.length, active: 'friends' }
+    { label: 'Posts', value: posts?.length, active: 'posts' },
+    { label: 'Followers', value: followerList?.length, active: 'followers' },
+    { label: 'Following', value: followingList?.length, active: 'following' },
+    { label: 'Friends', value: friendList?.length, active: 'friends' }
   ]
 
   const friendButtonConfig = {
