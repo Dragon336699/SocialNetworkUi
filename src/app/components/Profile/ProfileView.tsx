@@ -30,6 +30,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserFriends } from '@fortawesome/free-solid-svg-icons'
 import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
+import { ActionType } from '@/app/types/Common'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -56,6 +57,7 @@ const ProfileView = ({
   userInfo,
   sentList,
   receivedList,
+  refreshData,
   onEdit
 }: {
   posts: PostData[]
@@ -65,31 +67,35 @@ const ProfileView = ({
   userInfo: UserDto
   sentList: SentFriendRequestData[]
   receivedList: SentFriendRequestData[]
+  refreshData: () => void
   onEdit: () => void
 }) => {
   const { user } = useUserStore()
   const { userName } = useParams()
-  const isFriend = friendList.some((friend) => friend.id === user?.id)
-  const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
-  const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
-  const [isOpenDeleteFriend, setIsOpenDeleteFriend] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<TabType>('posts')
-  const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
-  const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
-  const [isFollowing, setIsFollowing] = useState<boolean>(false)
-
-  // const [form] = Form.useForm()
-  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || defaultAvatar)
-  const [cropModalOpen, setCropModalOpen] = useState(false)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
-
   const isMe = user?.userName === userName
   const navigate = useNavigate()
+
+  const isFriend = friendList.some((friend) => friend.id === user?.id)
+  const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
+  const [activeTab, setActiveTab] = useState<TabType>('posts')
+  const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
+  const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl || defaultAvatar)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+  const [currentAction, setCurrentAction] = useState<ActionType>('unfriend')
+  const [selectedFriend, setSelectedFriend] = useState<UserDto | null>(null)
+
+  const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
+  const [isOpenRelationModal, setIsOpenRelationModal] = useState<boolean>(false)
+  const [cropModalOpen, setCropModalOpen] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
+  const [isFollowing, setIsFollowing] = useState<boolean>(false)
 
   useEffect(() => {
     if (!user || !userInfo) return
     const isFriend = friendList.some((f) => f.id === user.id)
+    const isFollowing = followerList.some((f) => f.id === user.id)
+    setIsFollowing(isFollowing)
     if (isFriend) {
       setRelation('friend')
       return
@@ -106,7 +112,7 @@ const ProfileView = ({
       return
     }
     setRelation('default')
-  }, [user, userInfo, friendList, sentList, receivedList])
+  }, [user, userInfo, friendList, sentList, receivedList, followerList])
 
   const handleFriend = async () => {
     try {
@@ -126,7 +132,8 @@ const ProfileView = ({
           message.success('Friend request sent')
         }
       } else if (relation === 'friend') {
-        setIsOpenDeleteFriend(true)
+        setCurrentAction('unfriend')
+        setIsOpenRelationModal(true)
         setLoadingRequestFriend(false)
       } else {
         const res = await relationService.approveFriendRequest(userInfo.id)
@@ -142,14 +149,14 @@ const ProfileView = ({
     }
   }
 
-  const handleUnFriend = async () => {
+  const handleUnFriend = async (user: UserDto) => {
     try {
       setLoadingRequestFriend(true)
-      const res = await relationService.unFriend(userInfo.id)
+      const res = await relationService.unFriend(user.id)
       if (res.status === 200) {
         setRelation('default')
         setLoadingRequestFriend(false)
-        setIsOpenDeleteFriend(false)
+        setIsOpenRelationModal(false)
         message.success('Unfriended successfully')
       }
     } catch {
@@ -160,18 +167,22 @@ const ProfileView = ({
 
   const handleFollow = async () => {
     try {
-      if (isFollowing) {
-        const res = await relationService.unfollowUser(userInfo.id)
-        if (res.status == 200) {
-          setIsFollowing(false)
-          message.success('Unfollowed')
-        }
-      } else {
-        const res = await relationService.followUser(userInfo.id)
-        if (res.status === 200) {
-          setIsFollowing(true)
-          message.success('Following')
-        }
+      const res = await relationService.followUser(userInfo.id)
+      if (res.status === 200) {
+        setIsFollowing(true)
+        message.success('Following')
+      }
+    } catch {
+      message.error('Error. Try again!')
+    }
+  }
+
+  const handleUnFollow = async (user: UserDto) => {
+    try {
+      const res = await relationService.unfollowUser(user.id)
+      if (res.status == 200) {
+        setIsFollowing(false)
+        message.success('Unfollowed')
       }
     } catch {
       message.error('Error. Try again!')
@@ -259,11 +270,11 @@ const ProfileView = ({
                       <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
                     </div>
                   </div>
-                  {isMe && (
-                    <Button size='small' className='px-4'>
+                  {/* {isMe && (
+                    <Button size='middle' className='px-4'>
                       Follow
                     </Button>
-                  )}
+                  )} */}
                 </div>
               ))
             ) : (
@@ -295,7 +306,17 @@ const ProfileView = ({
                     </div>
                   </div>
                   {isMe && (
-                    <Button size='small' type='primary' className='px-4'>
+                    <Button
+                      ghost
+                      size='large'
+                      type='primary'
+                      className='px-4'
+                      onClick={() => {
+                        setCurrentAction('unfollow')
+                        setSelectedFriend(user)
+                        setIsOpenRelationModal(true)
+                      }}
+                    >
                       Following
                     </Button>
                   )}
@@ -330,7 +351,15 @@ const ProfileView = ({
                     </div>
                   </div>
                   {isMe && (
-                    <Button size='small' danger>
+                    <Button
+                      size='large'
+                      danger
+                      onClick={() => {
+                        setCurrentAction('unfriend')
+                        setSelectedFriend(user)
+                        setIsOpenRelationModal(true)
+                      }}
+                    >
                       Remove
                     </Button>
                   )}
@@ -431,12 +460,19 @@ const ProfileView = ({
         }}
       />
       <ActionConfirmModal
-        open={isOpenDeleteFriend}
-        friend={userInfo}
-        type={'unfriend'}
-        onCancel={() => setIsOpenDeleteFriend(false)}
+        open={isOpenRelationModal}
+        friend={selectedFriend || userInfo}
+        type={currentAction}
+        onCancel={() => setIsOpenRelationModal(false)}
         loading={loadingRequestFriend}
-        onConfirm={handleUnFriend}
+        onConfirm={async () => {
+          if (currentAction === 'unfriend') {
+            await handleUnFriend(selectedFriend ?? userInfo)
+          } else {
+            await handleUnFollow(selectedFriend ?? userInfo)
+          }
+          await refreshData()
+        }}
       />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
@@ -572,7 +608,7 @@ const ProfileView = ({
                         <HeartOutlined className='text-red-500 hover:text-red-600' />
                       )
                     }
-                    onClick={handleFollow}
+                    onClick={isFollowing ? () => handleUnFollow(selectedFriend || userInfo) : () => handleFollow()}
                   >
                     {isFollowing ? 'Unfollow' : 'Follow'}
                   </Button>

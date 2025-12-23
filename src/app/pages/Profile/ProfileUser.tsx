@@ -48,7 +48,6 @@ const ProfileUser = () => {
       if (res.status === 200) {
         const resData = res.data as ResponseHasData<SentFriendRequestData[]>
 
-        // đảm bảo luôn là array
         const list = Array.isArray(resData.data) ? (resData.data as SentFriendRequestData[]) : []
         setSentList(list)
       }
@@ -85,8 +84,8 @@ const ProfileUser = () => {
 
       const results = await Promise.allSettled([
         postService.getPostsByUser(userData.id),
-        relationService.getFollowersList(),
-        relationService.getFollowingList(),
+        relationService.getFollowersList(userData.id),
+        relationService.getFollowingList(userData.id),
         relationService.getFriendsList(userData.id)
       ])
 
@@ -98,11 +97,13 @@ const ProfileUser = () => {
       }
 
       if (results[1].status === 'fulfilled') {
-        setFolloweList(results[1].value.data.data.data)
+        const resData = results[1].value.data as ResponseHasData<UserDto[]>
+        setFolloweList(resData.data as UserDto[])
       }
 
       if (results[2].status === 'fulfilled') {
-        setFollowingList(results[2].value.data.data.data)
+        const resData = results[2].value.data as ResponseHasData<UserDto[]>
+        setFollowingList(resData.data as UserDto[])
       }
 
       if (results[3].status === 'fulfilled') {
@@ -151,6 +152,7 @@ const ProfileUser = () => {
               receivedList={receivedList}
               userInfo={userInfo}
               onEdit={() => setIsEditing(true)}
+              refreshData={fetchData}
             />
           ))}
       </main>
