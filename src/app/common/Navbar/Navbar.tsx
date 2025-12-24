@@ -1,89 +1,78 @@
 import { userService } from '@/app/services/user.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
-import { faBell, faComment, faHouse, faUsers, faBars, faUserFriends, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faComment, faHouse, faUsers, faUserFriends, faSearch, faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Avatar, Badge, ConfigProvider, Menu, MenuProps, message, Dropdown } from 'antd'
-import { SettingOutlined, LogoutOutlined } from '@ant-design/icons'
+import { LogoutOutlined, LockOutlined } from '@ant-design/icons'
 import Sider from 'antd/es/layout/Sider'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
 import { NavbarProps } from '../Interfaces/NavbarProps'
 import SearchComponent from '@/app/components/Search/SearchComponent'
+import { DEFAULT_AVATAR_URL } from '../Assests/CommonVariable'
 
 type MenuItem = Required<MenuProps>['items'][number]
+
+const IconCircle = ({
+  icon,
+  bgColor,
+  color = 'white',
+  badgeCount = 0,
+  customIcon
+}: {
+  icon?: any
+  bgColor: string
+  color?: string
+  badgeCount?: number
+  customIcon?: React.ReactNode
+}) => {
+  const innerIcon = (
+    <div
+      className='flex items-center justify-center rounded-full mx-auto'
+      style={{ backgroundColor: bgColor, width: 32, height: 32, minWidth: 32 }}
+    >
+      {customIcon ?? <FontAwesomeIcon icon={icon!} style={{ color, fontSize: 14 }} />}
+    </div>
+  )
+
+  return (
+    <div className='flex justify-center items-center h-full'>
+      {badgeCount > 0 ? <Badge count={badgeCount}>{innerIcon}</Badge> : innerIcon}
+    </div>
+  )
+}
 
 function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode, children?: MenuItem[]) {
   return {
     key,
     icon,
     children,
-    label
+    label: <span className='font-semibold text-[15px] ml-2'>{label}</span>
   } as MenuItem
 }
+
 const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
   const navigate = useNavigate()
   const { unreadMessages, unreadNotis } = useUnread()
   const [showSearch, setShowSearch] = useState(false)
-
   const [items, setItems] = useState<MenuItem[]>([])
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const location = useLocation()
 
   const baseItems = useMemo<MenuItem[]>(
     () => [
-      getItem(
-        'Home',
-        'Home',
-        <div className='flex items-center gap-6'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faHouse} />
-        </div>
-      ),
-      getItem(
-        'Search',
-        'Search',
-        <div className='flex items-center gap-6'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faSearch} /> {/* Cần import faSearch */}
-        </div>
-      ),
-      getItem(
-        'Friend',
-        'Friend',
-        <div className='flex items-center gap-6'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faUserFriends} />
-        </div>
-      ),
-      getItem(
-        'Groups',
-        'Groups',
-        <div className='flex items-center gap-6'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faUsers} />
-        </div>
-      ),
-      getItem(
-        'Inbox',
-        'Inbox',
-        <div className='flex items-center gap-6'>
-          <Badge count={unreadMessages} size='small'>
-            <FontAwesomeIcon className='text-lg text-white' icon={faComment} />
-          </Badge>
-        </div>
-      ),
-      getItem(
-        'Notification',
-        'Notification',
-        <div className='flex items-center gap-6'>
-          <Badge count={unreadNotis} size='small'>
-            <FontAwesomeIcon className='text-lg text-white' icon={faBell} />
-          </Badge>
-        </div>
-      )
+      getItem('Home', 'Home', <IconCircle icon={faHouse} bgColor='#1877F2' />),
+      getItem('Search', 'Search', <IconCircle icon={faSearch} bgColor='#E4E6EB' color='black' />),
+      getItem('Friends', 'Friend', <IconCircle icon={faUserFriends} bgColor='#45BD62' />),
+      getItem('Groups', 'Groups', <IconCircle icon={faUsers} bgColor='#EEA567' />),
+      getItem('Inbox', 'Inbox', <IconCircle icon={faComment} bgColor='#1877F2' badgeCount={unreadMessages} />),
+      getItem('Notification', 'Notification', <IconCircle icon={faBell} bgColor='#F02849' badgeCount={unreadNotis} />)
     ],
     [unreadMessages, unreadNotis]
   )
-
-  const [collapsed, setCollapsed] = useState(false)
-  const location = useLocation()
 
   const path = location.pathname.split('/')[1] || 'Home'
 
@@ -91,10 +80,8 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     if (e.key === 'Inbox') window.location.href = '/Inbox'
     else if (e.key === 'Notification') {
       setShowNoti((prev) => !prev)
-      setCollapsed(!collapsed)
     } else if (e.key === 'Search') {
       setShowSearch((prev) => !prev)
-      setCollapsed(!collapsed)
     } else if (e.key === 'profile') {
       navigate('/profile')
     } else if (e.key === 'more') {
@@ -102,9 +89,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     } else navigate(`/${e.key}`)
   }
 
-  const handleCollapseNavbar = () => {
-    setCollapsed(true)
-  }
+  const handleCollapseNavbar = () => setCollapsed(true)
 
   const handleLogout = async () => {
     try {
@@ -123,21 +108,11 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     }
   }
 
-  const handleSettings = () => {
-    navigate('/settings')
-  }
+  const handleChangePass = () => {}
 
-  // Dropdown menu items
   const moreMenuItems: MenuProps['items'] = [
-    {
-      key: 'settings',
-      label: 'Settings',
-      icon: <SettingOutlined />,
-      onClick: handleSettings
-    },
-    {
-      type: 'divider'
-    },
+    { key: 'changePass', label: 'Change Password', icon: <LockOutlined />, onClick: handleChangePass },
+    { type: 'divider' },
     {
       key: 'logout',
       label: isLoggingOut ? 'Logging out...' : 'Logout',
@@ -157,11 +132,21 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         const resData = response.data as UserDto
         setItems((prev) => {
           if (prev.some((i) => i?.key === 'profile')) return prev
-          return [...prev, getItem('Profile', 'profile', <Avatar src={resData.avatarUrl} size='small' />)]
+          return [
+            ...prev,
+            getItem(
+              'Profile',
+              'profile',
+              <IconCircle
+                bgColor='#E4E6EB'
+                customIcon={<Avatar src={resData.avatarUrl || DEFAULT_AVATAR_URL} size={28} />}
+              />
+            )
+          ]
         })
       }
-    } catch (err) {
-      message.error('Error while getting user infomation!')
+    } catch {
+      message.error('Error while getting user information!')
     }
   }
 
@@ -172,45 +157,60 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
     })
     fetchUserInfo()
   }, [baseItems])
+
   return (
     <ConfigProvider
       theme={{
         components: {
           Layout: {
-            siderBg: '#212123',
-            triggerBg: '#212123'
+            siderBg: '#F0F2F5',
+            triggerBg: '#F0F2F5',
+            triggerColor: '#65676B'
+          },
+          Menu: {
+            itemBg: 'transparent',
+            itemColor: '#050505',
+            itemSelectedBg: '#E4E6EB',
+            itemSelectedColor: '#050505',
+            itemHoverBg: '#E4E6EB',
+            itemHeight: 52
           }
         }
       }}
     >
       <Sider
-        className='h-screen top-[0] bottom-[0] pt-[12px]'
-        style={{ position: 'sticky' }}
+        className='h-screen top-0 bottom-0 pt-3'
+        style={{ position: 'sticky', borderRight: '1px solid #e5e5e5' }}
+        width={280}
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
       >
-        <ConfigProvider
-          theme={{
-            components: {
-              Menu: {
-                darkItemBg: '#212123',
-                darkItemSelectedBg: '#474747'
-              }
-            }
-          }}
-        >
-          <Menu theme='dark' selectedKeys={[path]} mode='inline' items={items} onClick={handleNavigate} />
-          <div className='absolute bottom-[60px] left-0 right-0 px-3'>
-            <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} overlayStyle={{ minWidth: '175px' }}>
-              <div className='flex items-center py-3 px-4 cursor-pointer text-[#FFFFFFA6] rounded-lg transition-colors hover:text-white'>
-                <FontAwesomeIcon className='text-lg text-white' icon={faBars} />
-                {!collapsed && <span className='ml-3'>View more</span>}
+        <Menu
+          theme='light'
+          selectedKeys={[path]}
+          mode='inline'
+          items={items}
+          onClick={handleNavigate}
+          className='border-none'
+        />
+
+        <div className='absolute bottom-10 left-0 right-0 px-2'>
+          <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
+            <div
+              className={`flex items-center py-2 px-3 cursor-pointer hover:bg-[#E4E6EB] rounded-lg transition-colors text-[#050505] ${
+                collapsed ? 'justify-center' : ''
+              }`}
+            >
+              <div className='w-8 h-8 rounded-full bg-[#E4E6EB] flex items-center justify-center min-w-[32px]'>
+                <FontAwesomeIcon icon={faBars} style={{ fontSize: '14px' }} />
               </div>
-            </Dropdown>
-          </div>
-        </ConfigProvider>
+              {!collapsed && <span className='ml-3 font-semibold text-[15px]'>See More</span>}
+            </div>
+          </Dropdown>
+        </div>
       </Sider>
+
       <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} />
     </ConfigProvider>
   )
