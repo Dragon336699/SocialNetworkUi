@@ -1,4 +1,4 @@
-import { Avatar, Button, Col, Row, Upload, Image, message } from 'antd'
+import { Avatar, Button, Col, Row, Upload, Image, message, Empty } from 'antd'
 import {
   HeartOutlined,
   EnvironmentOutlined,
@@ -200,25 +200,84 @@ const ProfileView = ({
   }
 
   const getTabButtonClass = (tabName: TabType) => {
-    const baseClass = 'px-6 py-2.5 font-medium text-sm transition-all duration-200 rounded-lg'
+    const baseClass =
+      'px-4 py-4 font-bold text-sm transition-all duration-200 relative border-none bg-transparent cursor-pointer flex items-center'
     return activeTab === tabName
-      ? `${baseClass} bg-blue-600 text-white shadow-md hover:bg-blue-700`
-      : `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`
+      ? `${baseClass} text-blue-600 after:content-[""] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:bg-blue-600`
+      : `${baseClass} text-gray-500 hover:bg-gray-100 hover:rounded-lg`
   }
 
   const renderTabContent = () => {
+    const renderUserGrid = (list: any[], emptyMessage: string, actionType?: 'following' | 'friends') => {
+      if (list.length === 0) return <Empty description={emptyMessage} className='py-10' />
+
+      return (
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          {list.map((u, i) => (
+            <div
+              key={u.id || i}
+              className='flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all'
+            >
+              <div className='flex items-center gap-3 overflow-hidden'>
+                <Avatar
+                  size={54}
+                  src={u.avatarUrl || DEFAULT_AVATAR_URL}
+                  className='flex-shrink-0 border border-gray-100'
+                />
+                <div className='overflow-hidden'>
+                  <p
+                    className='font-bold text-gray-900 hover:cursor-pointer hover:underline truncate m-0 text-[15px]'
+                    onClick={() => navigate(`/profile/${u.userName}`)}
+                  >
+                    {`${u.lastName} ${u.firstName}`}
+                  </p>
+                  <p className='text-sm text-gray-500 truncate m-0'>{`@${u.userName}`}</p>
+                </div>
+              </div>
+
+              {isMe && actionType === 'following' && (
+                <Button
+                  ghost
+                  type='primary'
+                  className='rounded-lg font-semibold ml-2'
+                  onClick={() => {
+                    setCurrentAction('unfollow')
+                    setSelectedFriend(u)
+                    setIsOpenRelationModal(true)
+                  }}
+                >
+                  Following
+                </Button>
+              )}
+
+              {isMe && actionType === 'friends' && (
+                <Button
+                  danger
+                  className='rounded-lg font-semibold ml-2'
+                  onClick={() => {
+                    setCurrentAction('unfriend')
+                    setSelectedFriend(u)
+                    setIsOpenRelationModal(true)
+                  }}
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'posts':
         return (
           <div className='space-y-4'>
             {isMe && (
-              <div className='bg-white rounded-lg p-4 shadow-sm border border-gray-200'>
-                <div
-                  onClick={() => setIsOpenCreatePost(true)}
-                  className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
-                >
-                  <Avatar size={48} src={user?.avatarUrl} />
-                  <div className='flex-1 bg-gray-100 rounded-full px-4 py-3 text-gray-600 hover:bg-gray-200 transition-colors'>
+              <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-200'>
+                <div onClick={() => setIsOpenCreatePost(true)} className='flex items-center gap-3 cursor-pointer'>
+                  <Avatar size={40} src={user?.avatarUrl || DEFAULT_AVATAR_URL} />
+                  <div className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] transition-colors'>
                     What's on your mind?
                   </div>
                 </div>
@@ -248,136 +307,19 @@ const ProfileView = ({
                 })}
               </div>
             ) : (
-              <div className='text-center py-12'>
-                <FileTextOutlined className='text-4xl text-gray-300 mb-3' />
-                <p className='text-gray-500'>No posts yet</p>
-              </div>
+              <Empty description='No posts yet' className='py-10' />
             )}
           </div>
         )
 
       case 'followers':
-        return (
-          <div className='space-y-3'>
-            {followerList.length > 0 ? (
-              followerList.map((user, i) => (
-                <div
-                  key={i}
-                  className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
-                >
-                  <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={user.avatarUrl} />
-                    <div>
-                      <p
-                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
-                        onClick={() => navigate(`/profile/${user.userName}`)}
-                      >{`${user.lastName} ${user.firstName}`}</p>
-                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
-                    </div>
-                  </div>
-                  {/* {isMe && (
-                    <Button size='middle' className='px-4'>
-                      Follow
-                    </Button>
-                  )} */}
-                </div>
-              ))
-            ) : (
-              <div className='text-center py-12'>
-                <UserOutlined className='text-4xl text-gray-300 mb-3' />
-                <p className='text-gray-500'>No followers yet</p>
-              </div>
-            )}
-          </div>
-        )
+        return renderUserGrid(followerList, 'No followers yet')
 
       case 'following':
-        return (
-          <div className='space-y-3'>
-            {followingList.length > 0 ? (
-              followingList.map((user, i) => (
-                <div
-                  key={i}
-                  className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
-                >
-                  <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={user.avatarUrl} />
-                    <div>
-                      <p
-                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
-                        onClick={() => navigate(`/profile/${user.userName}`)}
-                      >{`${user.lastName} ${user.firstName}`}</p>
-                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
-                    </div>
-                  </div>
-                  {isMe && (
-                    <Button
-                      ghost
-                      size='large'
-                      type='primary'
-                      className='px-4'
-                      onClick={() => {
-                        setCurrentAction('unfollow')
-                        setSelectedFriend(user)
-                        setIsOpenRelationModal(true)
-                      }}
-                    >
-                      Following
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className='text-center py-12'>
-                <UserOutlined className='text-4xl text-gray-300 mb-3' />
-                <p className='text-gray-500'>Not following anyone yet</p>
-              </div>
-            )}
-          </div>
-        )
+        return renderUserGrid(followingList, 'Not following anyone yet', 'following')
 
       case 'friends':
-        return (
-          <div className='space-y-3'>
-            {friendList.length > 0 ? (
-              friendList.map((user, i) => (
-                <div
-                  key={i}
-                  className='flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow'
-                >
-                  <div className='flex items-center gap-3'>
-                    <Avatar size={48} src={user.avatarUrl} />
-                    <div>
-                      <p
-                        className='font-semibold text-gray-900 hover:cursor-pointer hover:underline'
-                        onClick={() => navigate(`/profile/${user.userName}`)}
-                      >{`${user.lastName} ${user.firstName}`}</p>
-                      <p className='text-sm text-gray-500'>{`@${user.userName}`}</p>
-                    </div>
-                  </div>
-                  {isMe && (
-                    <Button
-                      size='large'
-                      danger
-                      onClick={() => {
-                        setCurrentAction('unfriend')
-                        setSelectedFriend(user)
-                        setIsOpenRelationModal(true)
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className='text-center py-12'>
-                <UserOutlined className='text-4xl text-gray-300 mb-3' />
-                <p className='text-gray-500'>No friends yet</p>
-              </div>
-            )}
-          </div>
-        )
+        return renderUserGrid(friendList, 'No friends yet', 'friends')
 
       default:
         return null
@@ -481,7 +423,7 @@ const ProfileView = ({
       />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
-        <div className='rounded-xl p-6 md:p-8 shadow-sm border border-blue-100 mb-8'>
+        <div className='rounded-xl p-6 md:p-8 shadow-sm border border-gray-200 mb-8 bg-white'>
           <Row gutter={[32, 24]} align='middle'>
             <Col>
               <Image

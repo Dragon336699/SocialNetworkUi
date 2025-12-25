@@ -137,7 +137,7 @@ const ProfileUser = () => {
 
   return (
     <Spin spinning={isLoading}>
-      <main className='min-h-screen bg-background'>
+      <main className='min-h-screen bg-[#F0F2F5]'>
         {!isLoading &&
           userInfo.id &&
           (isEditing ? (

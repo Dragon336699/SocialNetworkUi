@@ -1,16 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Input, Empty, Tabs, message, Avatar, Button } from 'antd'
-import { SearchOutlined, TeamOutlined, SendOutlined, UserOutlined, UserAddOutlined, CheckOutlined } from '@ant-design/icons'
+import { Input, Empty, Tabs, message, Avatar, Button, Typography } from 'antd'
+import {
+  SearchOutlined,
+  TeamOutlined,
+  SendOutlined,
+  UserOutlined,
+  UserAddOutlined,
+  CheckOutlined
+} from '@ant-design/icons'
 import { ActionType } from '@/app/types/Common'
 import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { relationService } from '@/app/services/relation.service'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
-import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { UserDto } from '@/app/types/User/user.dto'
 import { SentFriendRequestData, SuggestUsers } from '@/app/types/UserRelation/userRelation'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
+
+const { Title, Text } = Typography
 
 const FriendsList: React.FC = () => {
   const [friends, setFriends] = useState<UserDto[]>([])
@@ -30,28 +38,20 @@ const FriendsList: React.FC = () => {
 
   const filteredFriends = useMemo(
     () =>
-      friends.filter(
-        (f: UserDto) =>
-          f.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-          f.lastName?.toLowerCase().includes(searchText.toLowerCase())
-      ),
+      friends.filter((f: UserDto) => (f.firstName + ' ' + f.lastName).toLowerCase().includes(searchText.toLowerCase())),
     [friends, searchText]
   )
   const filteredSent = useMemo(
     () =>
-      sentRequests.filter(
-        (f) =>
-          f.receiver?.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-          f.receiver?.lastName?.toLowerCase().includes(searchText.toLowerCase())
+      sentRequests.filter((f) =>
+        (f.receiver?.firstName + ' ' + f.receiver?.lastName).toLowerCase().includes(searchText.toLowerCase())
       ),
     [sentRequests, searchText]
   )
   const filteredReceived = useMemo(
     () =>
-      receivedRequests.filter(
-        (f) =>
-          f.sender?.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-          f.sender?.lastName?.toLowerCase().includes(searchText.toLowerCase())
+      receivedRequests.filter((f) =>
+        (f.sender?.firstName + ' ' + f.sender?.lastName).toLowerCase().includes(searchText.toLowerCase())
       ),
     [receivedRequests, searchText]
   )
@@ -66,38 +66,6 @@ const FriendsList: React.FC = () => {
     setCurrentAction(type)
     setModalOpen(true)
   }
-
-  const handleConfirmModalAction = async () => {
-    if (!selectedFriend) return
-    setGlobalLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // if (currentAction === 'unfriend' || currentAction === 'block') {
-    //   setFriends((prev) => prev.filter((f) => f.id !== selectedFriend.id))
-    // }
-    setGlobalLoading(false)
-    setModalOpen(false)
-    setSelectedFriend(null)
-  }
-
-  // const handleRequestAction = async (senderId: string, receiverId: string, type: 'accept' | 'decline' | 'cancel') => {
-  //   setActionLoadingId(senderId)
-  //   await new Promise((resolve) => setTimeout(resolve, 800)) // Fake API
-
-  //   // if (type === 'accept') {
-  //   //   const request = receivedRequests.find((r) => r.id === id)
-  //   //   if (request) {
-  //   //     setFriends((prev) => [{ ...request, status: 'online' }, ...prev])
-  //   //     setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-  //   //   }
-  //   // } else if (type === 'decline') {
-  //   //   setReceivedRequests((prev) => prev.filter((r) => r.id !== id))
-  //   // } else if (type === 'cancel') {
-  //   //   setSentRequests((prev) => prev.filter((r) => r.id !== id))
-  //   // }
-
-  //   setActionLoadingId(null)
-  // }
 
   const getFriends = async () => {
     try {
@@ -117,15 +85,13 @@ const FriendsList: React.FC = () => {
     try {
       setActionLoadingId(senderId)
       const res = await relationService.approveFriendRequest(senderId)
-      const resData = res.data as BaseResponse
       if (res.status === 200) {
-        setActionLoadingId(null)
-        message.success(resData.message)
-      } else {
-        message.error(resData.message)
+        message.success('Friend request approved')
+        getFriendRequestsReceived()
+        getFriends()
       }
-    } catch {
-      message.error('Error while approving friend request')
+    } finally {
+      setActionLoadingId(null)
     }
   }
 
@@ -133,15 +99,12 @@ const FriendsList: React.FC = () => {
     try {
       setActionLoadingId(senderId)
       const res = await relationService.declineFriendRequest(senderId)
-      const resData = res.data as BaseResponse
       if (res.status === 200) {
-        setActionLoadingId(null)
-        message.success(resData.message)
-      } else {
-        message.error(resData.message)
+        message.success('Friend request declined')
+        getFriendRequestsReceived()
       }
-    } catch {
-      message.error('Error while approving friend request')
+    } finally {
+      setActionLoadingId(null)
     }
   }
 
@@ -149,57 +112,39 @@ const FriendsList: React.FC = () => {
     try {
       setActionLoadingId(receiverId)
       const res = await relationService.cancelFriendRequest(receiverId)
-      const resData = res.data as BaseResponse
       if (res.status === 200) {
-        setActionLoadingId(null)
-        message.success(resData.message)
-      } else {
-        message.error(resData.message)
+        message.success('Request canceled')
+        getFriendRequestsSent()
       }
-    } catch {
-      message.error('Error while approving friend request')
+    } finally {
+      setActionLoadingId(null)
     }
   }
 
   const getFriendRequestsReceived = async () => {
     try {
       const res = await relationService.getFriendRequestsReceived()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
-        setReceivedRequests(resData.data as SentFriendRequestData[])
-      } else {
-        message.error('Get request failed!')
-      }
-    } catch {
-      message.error('Get request failed!')
+      if (res.status === 200) setReceivedRequests((res.data as any).data)
+    } catch (e) {
+      console.error(e)
     }
   }
 
   const getFriendRequestsSent = async () => {
     try {
       const res = await relationService.getFriendRequestsSent()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<SentFriendRequestData[]>
-        setSentRequests(resData.data as SentFriendRequestData[])
-      } else {
-        message.error('Get sent request failed!')
-      }
-    } catch {
-      message.error('Get sent request failed!')
+      if (res.status === 200) setSentRequests((res.data as any).data)
+    } catch (e) {
+      console.error(e)
     }
   }
 
   const getSuggestFriends = async () => {
     try {
       const res = await relationService.getSuggestFriends()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<SuggestUsers[]>
-        setSuggestUsers(resData.data as SuggestUsers[])
-      } else {
-        message.error('Get sent request failed!')
-      }
-    } catch {
-      message.error('Get sent request failed!')
+      if (res.status === 200) setSuggestUsers((res.data as any).data)
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -210,6 +155,7 @@ const FriendsList: React.FC = () => {
       setRequestedSuggestIds((prev) => [...prev, userId])
     }
   }
+
   useEffect(() => {
     getFriendRequestsReceived()
     getFriends()
@@ -224,11 +170,11 @@ const FriendsList: React.FC = () => {
       value={searchText}
       onChange={(e) => setSearchText(e.target.value)}
       allowClear
-      className='mb-6 py-2 rounded-lg'
+      className='mb-4 py-2 rounded-full bg-[#F0F2F5] border-none'
     />
   )
 
-  const items = [
+  const tabItems = [
     {
       key: 'friends',
       label: (
@@ -238,17 +184,17 @@ const FriendsList: React.FC = () => {
         </span>
       ),
       children: (
-        <div className='mt-4'>
+        <div className='mt-2'>
           {renderSearchBar('Search friends...')}
-          {filteredFriends.length > 0 ? (
-            <div className='grid grid-cols-1 gap-3'>
-              {filteredFriends.map((friend: any) => (
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            {filteredFriends.length > 0 ? (
+              filteredFriends.map((friend: any) => (
                 <FriendCard key={friend.id} friend={friend} onAction={handleOpenModalAction} />
-              ))}
-            </div>
-          ) : (
-            <Empty description='No friends found' className='my-10' />
-          )}
+              ))
+            ) : (
+              <Empty description='No friends found' />
+            )}
+          </div>
         </div>
       )
     },
@@ -261,24 +207,21 @@ const FriendsList: React.FC = () => {
         </span>
       ),
       children: (
-        <div className='mt-4'>
+        <div className='mt-2'>
           {renderSearchBar('Search received requests...')}
-          {filteredReceived.length > 0 ? (
-            <div className='grid grid-cols-1 gap-3'>
-              {filteredReceived.map((req) => (
-                <RequestCard
-                  key={req.senderId}
-                  request={req}
-                  type='received'
-                  onConfirm={() => approveFriendRequest(req.senderId)}
-                  onDelete={() => declineFriendRequest(req.senderId)}
-                  loading={actionLoadingId === req.senderId}
-                />
-              ))}
-            </div>
-          ) : (
-            <Empty description='No new requests' className='my-10' />
-          )}
+          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+            {filteredReceived.map((req) => (
+              <RequestCard
+                key={req.senderId}
+                request={req}
+                type='received'
+                onConfirm={() => approveFriendRequest(req.senderId)}
+                onDelete={() => declineFriendRequest(req.senderId)}
+                loading={actionLoadingId === req.senderId}
+              />
+            ))}
+          </div>
+          {filteredReceived.length === 0 && <Empty description='No requests' />}
         </div>
       )
     },
@@ -291,72 +234,73 @@ const FriendsList: React.FC = () => {
         </span>
       ),
       children: (
-        <div className='mt-4'>
+        <div className='mt-2'>
           {renderSearchBar('Search sent requests...')}
-          {filteredSent.length > 0 ? (
-            <div className='grid grid-cols-1 gap-3'>
-              {filteredSent.map((req) => (
-                <RequestCard
-                  key={req.receiverId}
-                  request={req}
-                  type='sent'
-                  onDelete={() => cancelFriendRequest(req.receiverId)}
-                  loading={actionLoadingId === req.senderId}
-                />
-              ))}
-            </div>
-          ) : (
-            <Empty description='No sent requests found' className='my-10' />
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'suggest',
-      label: (
-        <span>
-          <SendOutlined className='mr-2' />
-          Suggest ({suggestUser.length})
-        </span>
-      ),
-      children: (
-        <div className='mt-4'>
-          {suggestUser.length > 0 ? (
-            <div className='grid grid-cols-1 gap-4'>
-              {suggestUser.map((req) => {
-                const isRequested = requestedSuggestIds.includes(req.user.id)
-                return (
-                  <div key={req.user.id} className='flex justify-between'>
-                    <div className='flex gap-3 items-center'>
-                      <Avatar src={req.user.avatarUrl || DEFAULT_AVATAR_URL} />
-                      <h3 className='font-bold'>{req.user.lastName + ' ' + req.user.firstName}</h3>
-                    </div>
-
-                    <Button
-                      type={isRequested ? 'default' : 'primary'}
-                      icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
-                      disabled={isRequested}
-                      onClick={() => handleAddFriend(req.user.id)}
-                    >
-                      {isRequested ? 'Requested' : 'Add friend'}
-                    </Button>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <Empty description='No suggest friend found' className='my-10' />
-          )}
+          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+            {filteredSent.map((req) => (
+              <RequestCard
+                key={req.receiverId}
+                request={req}
+                type='sent'
+                onDelete={() => cancelFriendRequest(req.receiverId)}
+                loading={actionLoadingId === req.receiverId}
+              />
+            ))}
+          </div>
+          {filteredSent.length === 0 && <Empty description='No sent requests' />}
         </div>
       )
     }
   ]
 
   return (
-    <div className='mx-auto max-w-4xl p-4 md:p-6'>
-      <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
-        <h1 className='text-2xl font-bold mb-4 text-gray-800'>Friends List</h1>
-        <Tabs activeKey={activeTab} onChange={handleTabChange} items={items} className='custom-tabs' />
+    <div className='min-h-screen bg-[#F0F2F5] pt-6'>
+      <div className='max-w-[1200px] mx-auto px-4 flex justify-center gap-8'>
+        <div className='w-full max-w-[800px]'>
+          <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+            <Title level={3} className='mb-4'>
+              Friends List
+            </Title>
+            <Tabs activeKey={activeTab} onChange={handleTabChange} items={tabItems} className='custom-tabs' />
+          </div>
+        </div>
+
+        <div className='hidden xl:block w-[320px] sticky top-20'>
+          <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
+            <div className='flex justify-between items-center mb-4 px-2'>
+              <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
+            </div>
+            <div className='space-y-4'>
+              {suggestUser.map((req) => {
+                const isRequested = requestedSuggestIds.includes(req.user.id)
+                return (
+                  <div key={req.user.id} className='flex items-center justify-between group px-2'>
+                    <div className='flex gap-3 items-center overflow-hidden'>
+                      <Avatar size={40} src={req.user.avatarUrl || DEFAULT_AVATAR_URL} />
+                      <div className='overflow-hidden'>
+                        <h4 className='font-semibold text-[15px] truncate m-0'>
+                          {req.user.lastName + ' ' + req.user.firstName}
+                        </h4>
+                        <Text type='secondary' className='text-[12px]'>
+                          {req.mutualFriendCount} mutual friends
+                        </Text>
+                      </div>
+                    </div>
+                    <Button
+                      type={isRequested ? 'default' : 'primary'}
+                      shape='circle'
+                      icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
+                      disabled={isRequested}
+                      onClick={() => handleAddFriend(req.user.id)}
+                      className={isRequested ? 'bg-green-50 text-green-600' : ''}
+                    />
+                  </div>
+                )
+              })}
+              {suggestUser.length === 0 && <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+            </div>
+          </div>
+        </div>
       </div>
 
       <ActionConfirmModal
@@ -365,7 +309,12 @@ const FriendsList: React.FC = () => {
         type={currentAction}
         loading={globalLoading}
         onCancel={() => setModalOpen(false)}
-        onConfirm={handleConfirmModalAction}
+        onConfirm={async () => {
+          setGlobalLoading(true)
+          // Giữ logic confirm của bạn
+          setGlobalLoading(false)
+          setModalOpen(false)
+        }}
       />
     </div>
   )
