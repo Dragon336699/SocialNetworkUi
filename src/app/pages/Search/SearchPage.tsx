@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Input, Tabs, Spin, Avatar, Empty, message, Button } from 'antd'
-import { SearchOutlined, UserOutlined, TeamOutlined, FileTextOutlined, UserAddOutlined, CheckOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import { Input, Spin, Empty, message, Avatar, Row, Col, Typography } from 'antd'
+import { SearchOutlined, UserOutlined, TeamOutlined, FileTextOutlined } from '@ant-design/icons'
 import { searchService } from '@/app/services/search.service'
 import { SearchType, SearchResultDto } from '@/app/types/Search/SearchType'
 import { userService } from '@/app/services/user.service'
@@ -12,8 +12,10 @@ import { relationService } from '@/app/services/relation.service'
 import Post from '@/app/pages/Post/Post'
 import PostDropdownMenu from '@/app/pages/Post/PostDropdownMenu'
 import { getTimeAgo } from '@/app/helper'
-import EditPostModal from '@/app/pages/Post/EditPostModal'
-import DeletePostModal from '@/app/pages/Post/DeletePostModal'
+import UserCard from '@/app/components/Search/UserCard'
+import GroupCard from '@/app/components/Group/GroupCard'
+
+const { Text, Title } = Typography
 
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -33,17 +35,13 @@ const SearchPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState(queryParam)
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<SearchResultDto | null>(null)
-  const [activeTab, setActiveTab] = useState('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'groups' | 'posts'>('users')
   const [currentUser, setCurrentUser] = useState<UserDto>(defaultUser)
   const [myGroupIds, setMyGroupIds] = useState<string[]>([])
   const [pendingGroupIds, setPendingGroupIds] = useState<string[]>([])
   const [friendIds, setFriendIds] = useState<string[]>([])
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([])
   const [dropdownStates, setDropdownStates] = useState<{[key: string]: boolean}>({})
-  const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
-
-  const [editingPostId, setEditingPostId] = useState<string | null>(null)
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -141,75 +139,6 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const handleAddFriend = async (userId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [userId]: true }))
-    try {
-      const response = await relationService.addFriend(userId)
-      if (response.status === 200) {
-        message.success('Friend request sent!')
-        setSentRequestIds(prev => [...prev, userId])
-      }
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to send friend request'
-      message.error(errorMessage)
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [userId]: false }))
-    }
-  }
-
-  const handleJoinGroup = async (groupId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [groupId]: true }))
-    try {
-      await groupService.joinGroup(groupId)
-      message.success('Join request sent!')
-      setPendingGroupIds(prev => [...prev, groupId])
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to send join request'
-      message.error(errorMessage)
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [groupId]: false }))
-    }
-  }
-
-  const handleCancelJoinRequest = async (groupId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [groupId]: true }))
-    try {
-      await groupService.cancelJoinRequest(groupId)
-      message.success('Join request cancelled')
-      setPendingGroupIds(prev => prev.filter(id => id !== groupId))
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to cancel request'
-      message.error(errorMessage)
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [groupId]: false }))
-    }
-  }
-
-  const handleEditPost = (postId: string) => {
-    setEditingPostId(postId)
-    closeDropdown(postId)
-  }
-
-  const handleDeletePost = (postId: string) => {
-    setDeletingPostId(postId)
-    closeDropdown(postId)
-  }
-
-  const handleSaveEditedPost = (updatedPost: any) => {
-    setEditingPostId(null)
-    handlePostUpdated()
-    message.success('Post updated successfully')
-  }
-
-  const handleDeleteSuccess = () => {
-    setDeletingPostId(null)
-    handlePostUpdated()
-    message.success('Post deleted successfully')
-  }
-
   const handleSearchSubmit = async () => {
     if (searchValue.trim()) {
       try {
@@ -220,19 +149,6 @@ const SearchPage: React.FC = () => {
 
       setSearchParams({ q: searchValue.trim() })
       handleSearch(searchValue.trim(), false)
-    }
-  }
-
-  const handleUserClick = async (user: UserDto) => {
-    navigate(`/profile/${user.userName}`)
-  }
-
-  const handleGroupClick = async (group: any) => {
-    const isJoined = myGroupIds.includes(group.id)
-    if (isJoined) {
-      navigate(`/groups/${group.id}`)
-    } else {
-      navigate(`/group/${group.id}`)
     }
   }
 
@@ -273,80 +189,41 @@ const SearchPage: React.FC = () => {
     }))
   }
 
-  const renderUserButton = (user: UserDto) => {
-    if (user.id === currentUser?.id) {
-      return null
+  const handleStatusChange = () => {
+    if (searchValue.trim()) {
+      handleSearch(searchValue.trim(), false)
     }
+  }
 
-    const isFriend = friendIds.includes(user.id)
-    const isPending = sentRequestIds.includes(user.id)
-    const isLoading = loadingStates[user.id]
+  const renderPrivacyIcon = (isPublic?: boolean) => {
+    if (isPublic === undefined) return null
 
-    if (isFriend) {
-      return (
-        <Button type='default' icon={<CheckOutlined />} disabled className='bg-gray-100 text-gray-600 border-gray-300'>
-          Friends
-        </Button>
-      )
-    }
-
-    if (isPending) {
-      return (
-        <Button
-          type='default'
-          icon={<ClockCircleOutlined />}
-          disabled
-          className='bg-blue-50 text-blue-600 border-blue-300'
-        >
-          Sent
-        </Button>
-      )
-    }
-
-    return (
-      <Button
-        type='primary'
-        icon={<UserAddOutlined />}
-        loading={isLoading}
-        onClick={(e) => handleAddFriend(user.id, e)}
-      >
-        Add Friend
-      </Button>
+    return isPublic ? (
+      <svg className='w-3.5 h-3.5 text-gray-500' fill='currentColor' viewBox='0 0 20 20'>
+        <path
+          fillRule='evenodd'
+          d='M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z'
+          clipRule='evenodd'
+        />
+      </svg>
+    ) : (
+      <svg className='w-3.5 h-3.5 text-gray-500' fill='currentColor' viewBox='0 0 20 20'>
+        <path d='M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707l-.707-.707V8a6 6 0 00-6-6z' />
+      </svg>
     )
   }
 
-  const renderGroupButton = (groupId: string) => {
-    const isJoined = myGroupIds.includes(groupId)
-    const isPending = pendingGroupIds.includes(groupId)
-    const isLoading = loadingStates[groupId]
-
-    if (isJoined) {
-      return (
-        <Button type='default' icon={<CheckOutlined />} className='bg-gray-100 text-gray-600 border-gray-300'>
-          Joined
-        </Button>
-      )
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'users':
+        return 'Users'
+      case 'groups':
+        return 'Groups'
+      case 'posts':
+        return 'Posts'
+      default:
+        return 'Users'
     }
-
-    if (isPending) {
-      return (
-        <Button
-          type='default'
-          icon={<ClockCircleOutlined />}
-          loading={isLoading}
-          onClick={(e) => handleCancelJoinRequest(groupId, e)}
-          className='bg-blue-50 text-blue-600 border-blue-300'
-        >
-          Pending
-        </Button>
-      )
-    }
-
-    return (
-      <Button type='primary' loading={isLoading} onClick={(e) => handleJoinGroup(groupId, e)}>
-        Join Group
-      </Button>
-    )
   }
 
   const renderUsers = () => {
@@ -361,22 +238,19 @@ const SearchPage: React.FC = () => {
     }
 
     return (
-      <div className='grid grid-cols-1 gap-3'>
+      <Row gutter={[16, 16]}>
         {users.map((user) => (
-          <div
-            key={user.id}
-            className='flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors'
-            onClick={() => handleUserClick(user)}
-          >
-            <Avatar src={user.avatarUrl} size={56} icon={<UserOutlined />} />
-            <div className='ml-4 flex-1 min-w-0'>
-              <div className='font-semibold text-gray-900 text-base'>{user.userName}</div>
-              <div className='text-sm text-gray-500'>{user.firstName}</div>
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>{renderUserButton(user)}</div>
-          </div>
+          <Col xs={24} sm={12} md={8} key={user.id}>
+            <UserCard
+              user={user}
+              currentUserId={currentUser.id}
+              isFriend={friendIds.includes(user.id)}
+              isPending={sentRequestIds.includes(user.id)}
+              onStatusChange={handleStatusChange}
+            />
+          </Col>
         ))}
-      </div>
+      </Row>
     )
   }
 
@@ -392,22 +266,26 @@ const SearchPage: React.FC = () => {
     }
 
     return (
-      <div className='grid grid-cols-1 gap-3'>
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className='flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors'
-            onClick={() => handleGroupClick(group)}
-          >
-            <Avatar src={group.imageUrl} size={56} icon={<TeamOutlined />} />
-            <div className='ml-4 flex-1 min-w-0'>
-              <div className='font-semibold text-gray-900 text-base'>{group.name}</div>
-              <div className='text-sm text-gray-500'>{group.isPublic ? 'Public' : 'Private'} Group</div>
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>{renderGroupButton(group.id)}</div>
-          </div>
-        ))}
-      </div>
+      <Row gutter={[16, 16]}>
+        {groups.map((group) => {
+          const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          const isJoined = userStatus && userStatus.roleName !== GroupRole.Pending
+          const isPending = userStatus?.roleName === GroupRole.Pending
+
+          return (
+            <Col xs={24} sm={12} lg={8} key={group.id}>
+              <GroupCard
+                group={group}
+                showActions={true}
+                isJoined={!!isJoined}
+                isPending={!!isPending}
+                currentUserId={currentUser?.id || ''}
+                onJoinSuccess={handleStatusChange}
+              />
+            </Col>
+          )
+        })}
+      </Row>
     )
   }
 
@@ -422,24 +300,6 @@ const SearchPage: React.FC = () => {
       )
     }
 
-    const renderPrivacyIcon = (isPublic?: boolean) => {
-      if (isPublic === undefined) return null
-
-      return isPublic ? (
-        <svg className='w-3.5 h-3.5 text-gray-500' fill='currentColor' viewBox='0 0 20 20'>
-          <path
-            fillRule='evenodd'
-            d='M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z'
-            clipRule='evenodd'
-          />
-        </svg>
-      ) : (
-        <svg className='w-3.5 h-3.5 text-gray-500' fill='currentColor' viewBox='0 0 20 20'>
-          <path d='M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707l-.707-.707V8a6 6 0 00-6-6z' />
-        </svg>
-      )
-    }
-
     return (
       <div className='space-y-4'>
         {posts.map((post) => {
@@ -449,11 +309,13 @@ const SearchPage: React.FC = () => {
           return (
             <div key={post.id}>
               {hasPublicGroup && post.group && (
-                <div className='bg-white rounded-t-lg border border-b-0 border-gray-200 p-4 pb-2'>
+                <div className='bg-white rounded-t-lg border-t-2 border-x-2 border-b-0 border-black p-4 pb-2'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3 flex-1'>
                       <div onClick={(e) => handlePostGroupClick(e, post.group!.id)} className='cursor-pointer'>
-                        <Avatar src={post.group.imageUrl} size={40} icon={<TeamOutlined />} />
+                        <div className='rounded-full border-2 border-black'>
+                          <Avatar src={post.group.imageUrl} size={40} icon={<TeamOutlined />} />
+                        </div>
                       </div>
                       <div className='flex-1'>
                         <div
@@ -464,14 +326,16 @@ const SearchPage: React.FC = () => {
                         </div>
                         <div className='flex items-center gap-2 mt-1'>
                           <div onClick={(e) => handlePostUserClick(e, user?.userName || '')} className='cursor-pointer'>
-                            <Avatar
-                              src={user?.avatarUrl}
-                              size={20}
-                              className='w-5 h-5 rounded-full object-cover '
-                              style={{ minWidth: 20, minHeight: 20 }}
-                            >
-                              {user?.firstName?.[0] || user?.lastName?.[0] || ''}
-                            </Avatar>
+                            <div className='rounded-full border-2 border-black'>
+                              <Avatar
+                                src={user?.avatarUrl}
+                                size={24}
+                                className='w-6 h-6 rounded-full object-cover'
+                                style={{ minWidth: 24, minHeight: 24 }}
+                              >
+                                {user?.firstName?.[0] || user?.lastName?.[0] || ''}
+                              </Avatar>
+                            </div>
                           </div>
                           <div className='flex items-center gap-1'>
                             <span
@@ -506,15 +370,15 @@ const SearchPage: React.FC = () => {
                         onClose={() => closeDropdown(post.id)}
                         postId={post.id}
                         isOwner={currentUser?.id === post.user?.id}
-                        onEdit={() => handleEditPost(post.id)}
-                        onDeleteClick={() => handleDeletePost(post.id)}
+                        onEdit={() => closeDropdown(post.id)}
+                        onDeleteClick={() => closeDropdown(post.id)}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className={hasPublicGroup ? 'rounded-t-none' : ''}>
+              <div className={hasPublicGroup ? '' : ''}>
                 <Post
                   {...post}
                   currentUserId={currentUser?.id || ''}
@@ -531,100 +395,198 @@ const SearchPage: React.FC = () => {
     )
   }
 
-  const items = [
-    {
-      key: 'users',
-      label: (
-        <span>
-          <UserOutlined className='mr-2' />
-          Users ({searchResults?.totalUsersCount || 0})
-        </span>
-      ),
-      children: renderUsers()
-    },
-    {
-      key: 'groups',
-      label: (
-        <span>
-          <TeamOutlined className='mr-2' />
-          Groups ({searchResults?.totalGroupsCount || 0})
-        </span>
-      ),
-      children: renderGroups()
-    },
-    {
-      key: 'posts',
-      label: (
-        <span>
-          <FileTextOutlined className='mr-2' />
-          Posts ({searchResults?.totalPostsCount || 0})
-        </span>
-      ),
-      children: renderPosts()
+  const renderMainContent = () => {
+    if (!searchResults && !isSearching) {
+      return (
+        <div className='flex items-center justify-center h-64'>
+          <Empty description='Start searching to see results' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      )
     }
-  ]
+
+    switch (activeTab) {
+      case 'users':
+        return renderUsers()
+      case 'groups':
+        return renderGroups()
+      case 'posts':
+        return renderPosts()
+      default:
+        return renderUsers()
+    }
+  }
 
   return (
-    <div className='mx-auto max-w-4xl p-4 md:p-6'>
-      <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6'>
-        <h1 className='text-2xl font-bold mb-6 text-gray-800'>Search Results</h1>
-        <div className='mb-6'>
-          <Input
-            placeholder='Search for users, groups, posts...'
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onPressEnter={handleSearchSubmit}
-            suffix={
-              isSearching ? (
-                <Spin size='small' />
-              ) : (
-                <SearchOutlined
-                  className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors' 
-                  onClick={handleSearchSubmit}
-                />
-              )
-            }
-            size='large'
-            className='rounded-lg'
-          />
+    <>
+      <style>
+        {`
+          .main-content-scroll::-webkit-scrollbar {
+            width: 8px;
+          }
+          .main-content-scroll::-webkit-scrollbar-track {
+            background: #f9fafb;
+          }
+          .main-content-scroll::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+          }
+          .main-content-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #9ca3af;
+          }
+
+          .sidebar-scroll::-webkit-scrollbar {
+            width: 6px;
+          }
+          .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .sidebar-scroll::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+          }
+          .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #9ca3af;
+          }
+        `}
+      </style>
+
+      <div className='flex min-h-screen bg-gray-50'>
+        {/* Main Content */}
+        <div 
+          className='flex-1 min-w-0 overflow-y-auto main-content-scroll' 
+          style={{ 
+            maxHeight: '100vh',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#d1d5db #f9fafb'
+          }}
+        >
+          <div className='max-w-6xl mx-auto py-6 px-4'>
+            {/* Page Title */}
+            <div className='mb-6'>
+              <Title level={2} className='mb-0' style={{ fontSize: '28px', fontWeight: 700 }}>
+                {getPageTitle()}
+              </Title>
+            </div>
+
+            {/* Results */}
+            {isSearching ? (
+              <div className='flex items-center justify-center h-64'>
+                <Spin size='large' />
+              </div>
+            ) : (
+              renderMainContent()
+            )}
+          </div>
         </div>
 
-        {searchResults && (
-          <Tabs 
-            activeKey={activeTab} 
-            onChange={setActiveTab} 
-            items={items}
-            className='custom-tabs'
-          />
-        )}
+        {/* Right Sidebar - Menu */}
+        <div 
+          className='w-80 bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0'
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#d1d5db transparent'
+          }}
+        >
+          <div className='p-4'>
+            {/* Title */}
+            <div className='mb-4'>
+              <Text strong className='text-xl'>Search</Text>
+            </div>
 
-        {!searchResults && !isSearching && searchValue && (
-          <div className='flex items-center justify-center h-64'>
-            <Empty description='Start searching to see results' />
+            {/* Divider */}
+            <div className='border-t-2 border-black mb-4'></div>
+
+            {/* Search Input */}
+            <div className='mb-6'>
+              <Input
+                placeholder='Search...'
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onPressEnter={handleSearchSubmit}
+                suffix={
+                  isSearching ? (
+                    <Spin size='small' />
+                  ) : (
+                    <SearchOutlined
+                      className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors' 
+                      onClick={handleSearchSubmit}
+                    />
+                  )
+                }
+                size='large'
+                className='bg-gray-50 border-2 border-gray-300'
+              />
+            </div>
+
+            {/* Menu Items */}
+            <div className='space-y-1'>
+              <div
+                onClick={() => setActiveTab('users')}
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeTab === 'users' 
+                    ? 'bg-blue-50' 
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  activeTab === 'users' ? 'bg-blue-500' : 'bg-gray-200'
+                }`}>
+                  <UserOutlined className={`text-lg ${activeTab === 'users' ? 'text-white' : 'text-gray-700'}`} />
+                </div>
+                <div className='flex-1'>
+                  <Text strong className='block'>Users</Text>
+                  <Text type='secondary' className='text-xs'>
+                    {searchResults?.totalUsersCount || 0} results
+                  </Text>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setActiveTab('groups')}
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeTab === 'groups' 
+                    ? 'bg-blue-50' 
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  activeTab === 'groups' ? 'bg-blue-500' : 'bg-gray-200'
+                }`}>
+                  <TeamOutlined className={`text-lg ${activeTab === 'groups' ? 'text-white' : 'text-gray-700'}`} />
+                </div>
+                <div className='flex-1'>
+                  <Text strong className='block'>Groups</Text>
+                  <Text type='secondary' className='text-xs'>
+                    {searchResults?.totalGroupsCount || 0} results
+                  </Text>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setActiveTab('posts')}
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeTab === 'posts' 
+                    ? 'bg-blue-50' 
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  activeTab === 'posts' ? 'bg-blue-500' : 'bg-gray-200'
+                }`}>
+                  <FileTextOutlined className={`text-lg ${activeTab === 'posts' ? 'text-white' : 'text-gray-700'}`} />
+                </div>
+                <div className='flex-1'>
+                  <Text strong className='block'>Posts</Text>
+                  <Text type='secondary' className='text-xs'>
+                    {searchResults?.totalPostsCount || 0} results
+                  </Text>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
-      {/* Edit Post Modal */}
-      {editingPostId && (
-        <EditPostModal
-          isOpen={true}
-          onClose={() => setEditingPostId(null)}
-          postId={editingPostId}
-          onSave={handleSaveEditedPost}
-          currentUser={currentUser}
-        />
-      )}
-
-      {/* Delete Post Modal */}
-      {deletingPostId && (
-        <DeletePostModal
-          isOpen={true}
-          onClose={() => setDeletingPostId(null)}
-          onDeleteSuccess={handleDeleteSuccess}
-          postId={deletingPostId}
-        />
-      )}
-    </div>
+    </>
   )
 }
 

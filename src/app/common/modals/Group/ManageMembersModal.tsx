@@ -1,10 +1,8 @@
-import { Modal, List, Avatar, Tag, Button, message, Space, Typography, Popconfirm, Tooltip } from 'antd'
-import { CrownOutlined, UserOutlined, StarOutlined, DeleteOutlined, UserDeleteOutlined } from '@ant-design/icons'
+import { Modal, List, Avatar, Tag, Button, message, Popconfirm, Tooltip } from 'antd'
+import { CrownOutlined, UserOutlined, StarOutlined, DeleteOutlined, UserDeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import { GroupDto, GroupUserDto } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState } from 'react'
-
-const { Text } = Typography
 
 interface ManageMembersModalProps {
   isModalOpen: boolean
@@ -23,12 +21,10 @@ const ManageMembersModal = ({
 }: ManageMembersModalProps) => {
   const [loading, setLoading] = useState<string>('')
 
-  // Lấy role của current user
   const currentUserRole = group.groupUsers?.find(gu => gu.userId === currentUserId)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
   const isAdmin = currentUserRole === 'Administrator'
 
-  // Đếm số admin hiện tại
   const adminCount =
     group.groupUsers?.filter(gu => gu.roleName === 'Administrator' || gu.roleName === 'SuperAdministrator').length || 0
 
@@ -46,7 +42,6 @@ const ManageMembersModal = ({
     }
   }
 
-  // Xử lý demote admin xuống user
   const handleDemote = async (targetUserId: string) => {
     try {
       setLoading(targetUserId)
@@ -61,7 +56,6 @@ const ManageMembersModal = ({
     }
   }
 
-  // Xử lý kick member
   const handleKick = async (targetUserId: string, memberName: string) => {
     try {
       setLoading(targetUserId)
@@ -76,7 +70,6 @@ const ManageMembersModal = ({
     }
   }
 
-  // Kiểm tra xem có thể kick member không
   const canKickMember = (member: GroupUserDto) => {
     const isSelf = member.userId === currentUserId
     const isMemberSuperAdmin = member.roleName === 'SuperAdministrator'
@@ -93,7 +86,6 @@ const ManageMembersModal = ({
     return false
   }
 
-  // Render action buttons cho mỗi member
   const renderActions = (member: GroupUserDto) => {
     const isSelf = member.userId === currentUserId
     const isMemberSuperAdmin = member.roleName === 'SuperAdministrator'
@@ -112,7 +104,7 @@ const ManageMembersModal = ({
     }
 
     if (isSelf) {
-      return <Text type='secondary'>You</Text>
+      return <span className='text-gray-500 text-sm'>You</span>
     }
     if (!isSuperAdmin && !isAdmin) {
       return null
@@ -133,9 +125,12 @@ const ManageMembersModal = ({
         if (adminCount >= 10) {
           actions.push(
             <Tooltip key='promote' title='Maximum 10 admins reached'>
-              <Button type='text' size='small' disabled>
+              <button 
+                className='px-3 h-8 text-sm rounded border border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                disabled
+              >
                 Make Admin
-              </Button>
+              </button>
             </Tooltip>
           )
         } else {
@@ -148,15 +143,21 @@ const ManageMembersModal = ({
               okText='Yes'
               cancelText='No'
             >
-              <Button type='primary' size='small' ghost loading={loading === member.userId}>
-                Make Admin
-              </Button>
+              <button 
+                className='px-3 h-8 text-sm font-semibold rounded border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50'
+                disabled={loading === member.userId}
+              >
+                {loading === member.userId ? (
+                  <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                ) : (
+                  'Make Admin'
+                )}
+              </button>
             </Popconfirm>
           )
         }
       }
 
-      // SuperAdmin có thể demote Admin xuống User
       if (isMemberAdmin) {
         actions.push(
           <Popconfirm
@@ -167,9 +168,19 @@ const ManageMembersModal = ({
             okText='Yes'
             cancelText='No'
           >
-            <Button danger size='small' type='text' loading={loading === member.userId} icon={<DeleteOutlined />}>
-              Remove Admin
-            </Button>
+            <button 
+              className='px-3 h-8 text-sm font-semibold rounded text-red-600 border-2 border-transparent hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center gap-1'
+              disabled={loading === member.userId}
+            >
+              {loading === member.userId ? (
+                <div className='w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin'></div>
+              ) : (
+                <>
+                  <DeleteOutlined />
+                  <span>Remove Admin</span>
+                </>
+              )}
+            </button>
           </Popconfirm>
         )
       }
@@ -182,29 +193,38 @@ const ManageMembersModal = ({
           key='kick'
           title='Kick Member'
           description={
-            <Space direction='vertical' size={4}>
-              <Text>{kickReason}</Text>
-              <Text type='secondary' style={{ fontSize: '12px' }}>
+            <div className='flex flex-col gap-1'>
+              <span>{kickReason}</span>
+              <span className='text-xs text-gray-500'>
                 {memberName} will be removed from the group.
-              </Text>
-            </Space>
+              </span>
+            </div>
           }
           onConfirm={() => handleKick(member.userId, memberName)}
           okText='Kick'
           cancelText='Cancel'
           okButtonProps={{ danger: true }}
         >
-          <Button danger size='small' loading={loading === member.userId} icon={<UserDeleteOutlined />}>
-            Kick
-          </Button>
+          <button 
+            className='px-3 h-8 text-sm font-semibold rounded border-2 border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 transition-colors disabled:opacity-50 flex items-center gap-1'
+            disabled={loading === member.userId}
+          >
+            {loading === member.userId ? (
+              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+            ) : (
+              <>
+                <UserDeleteOutlined />
+                <span>Kick</span>
+              </>
+            )}
+          </button>
         </Popconfirm>
       )
     }
 
-    return actions.length > 0 ? <Space size='small'>{actions}</Space> : null
+    return actions.length > 0 ? <div className='flex items-center gap-2'>{actions}</div> : null
   }
 
-  // Render role tag
   const renderRoleTag = (roleName: string) => {
     if (roleName === 'SuperAdministrator') {
       return (
@@ -227,7 +247,6 @@ const ManageMembersModal = ({
     )
   }
 
-  // Sắp xếp members: SuperAdmin > Admin > User
   const sortedMembers = [...(group.groupUsers || [])].sort((a, b) => {
     const roleOrder = { 'SuperAdministrator': 0, 'Administrator': 1, 'User': 2 }
     const roleA = roleOrder[a.roleName as keyof typeof roleOrder] ?? 3
@@ -238,76 +257,108 @@ const ManageMembersModal = ({
   return (
     <Modal
       title={
-        <Space direction='vertical' size={0}>
-          <span>Manage Members</span>
-          {!isSuperAdmin && !isAdmin && (
-            <Text type='secondary' style={{ fontSize: '14px', fontWeight: 'normal' }}>
-              Only admins can manage members
-            </Text>
-          )}
-        </Space>
+        <div className='flex justify-between items-center border-b-2 border-black pb-3 mb-4'>
+          <div className='flex flex-col gap-1'>
+            <span className='text-lg font-semibold'>Manage Members</span>
+            {!isSuperAdmin && !isAdmin && (
+              <span className='text-sm text-gray-500 font-normal'>
+                Only admins can manage members
+              </span>
+            )}
+          </div>
+          <Button
+            icon={<CloseOutlined />}
+            onClick={handleCancel}
+            className='border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded'
+          />
+        </div>
       }
       open={isModalOpen}
       onCancel={handleCancel}
       footer={null}
       width={650}
+      closable={false}
+      centered={false}
+      maskClosable={false}
+      style={{ 
+        borderRadius: '8px', 
+        overflow: 'visible',
+        padding: 0,
+        top: 50
+      }}
+      styles={{
+        content: { 
+          padding: 0,
+          border: '2px solid #000000',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+          overflow: 'visible'
+        },
+        body: { 
+          padding: '0 24px 24px 24px',
+          overflow: 'visible'
+        },
+        header: {
+          padding: '16px 24px 0 24px',
+          marginBottom: 0
+        }
+      }}
     >
-      <div className='mb-4'>
-        <Space split='|'>
-          <Text type='secondary'>
-            Total Members: <Text strong>{group.memberCount}</Text>
-          </Text>
-          <Text type='secondary'>
-            Admins: <Text strong style={{ color: adminCount >= 10 ? '#ff4d4f' : undefined }}>{adminCount}/10</Text>
-          </Text>
-        </Space>
+      <div className='mb-4 flex items-center gap-4'>
+        <span className='text-gray-600'>
+          Total Members: <span className='font-bold text-black'>{group.memberCount}</span>
+        </span>
+        <span className='text-gray-400'>|</span>
+        <span className='text-gray-600'>
+          Admins: <span className={`font-bold ${adminCount >= 10 ? 'text-red-500' : 'text-black'}`}>{adminCount}/10</span>
+        </span>
       </div>
 
       {!isSuperAdmin && isAdmin && (
-        <div className='mb-4 p-3 bg-blue-50 rounded border border-blue-200'>
-          <Text type='secondary' style={{ fontSize: '13px' }}>
+        <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+          <span className='text-sm text-blue-700'>
             💡 As an admin, you can kick regular members. Only the owner can manage admin roles.
-          </Text>
+          </span>
         </div>
       )}
 
       {!isSuperAdmin && !isAdmin && (
-        <div className='mb-4 p-3 bg-blue-50 rounded border border-blue-200'>
-          <Text type='secondary' style={{ fontSize: '13px' }}>
+        <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+          <span className='text-sm text-blue-700'>
             💡 Only the group owner and admins can manage members.
-          </Text>
+          </span>
         </div>
       )}
 
       <List
         dataSource={sortedMembers}
         renderItem={(member) => (
-          <List.Item actions={[renderActions(member)]}>
+          <List.Item actions={[renderActions(member)]} className='border-b border-black last:border-b-0'>
             <List.Item.Meta
               avatar={
-                <Avatar size={48} src={member.user?.avatarUrl}>
+                <Avatar size={48} src={member.user?.avatarUrl} className='border-2 border-black'>
                   {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
                 </Avatar>
               }
               title={
-                <Space>
-                  <span>
+                <div className='flex items-center gap-2'>
+                  <span className='font-semibold'>
                     {member.user
                       ? `${member.user.firstName || ''} ${member.user.lastName || ''}`.trim() || 'Unknown User'
                       : 'Unknown User'}
                   </span>
                   {renderRoleTag(member.roleName)}
-                </Space>
+                </div>
               }
               description={
-                <Space direction='vertical' size={0}>
-                  <Text type='secondary' style={{ fontSize: '12px' }}>
+                <div className='flex flex-col'>
+                  <span className='text-xs text-gray-600 font-medium'>
                     {member.user?.email || 'No email'}
-                  </Text>
-                  <Text type='secondary' style={{ fontSize: '12px' }}>
+                  </span>
+                  <span className='text-xs text-gray-600'>
                     Joined: {new Date(member.joinedAt).toLocaleDateString('en-US')}
-                  </Text>
-                </Space>
+                  </span>
+                </div>
               }
             />
           </List.Item>

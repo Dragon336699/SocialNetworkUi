@@ -1,9 +1,8 @@
-import { Button, Typography, Space, message, Avatar, Dropdown } from 'antd'
-import type { MenuProps } from 'antd'
+import { Button, Typography, Space, message, Avatar } from 'antd'
 import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const { Title, Text } = Typography
@@ -33,7 +32,26 @@ const GroupCard = ({
   const [joined, setJoined] = useState(isJoined)
   const [pending, setPending] = useState(isPending)
   const [currentGroup, setCurrentGroup] = useState(group)
+  const [showPendingDropdown, setShowPendingDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPendingDropdown(false)
+      }
+    }
+
+    if (showPendingDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPendingDropdown])
 
   const handleJoinGroup = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
@@ -59,6 +77,7 @@ const GroupCard = ({
       message.success('Join request cancelled!')
       setPending(false)
       setJoined(false)
+      setShowPendingDropdown(false)
       if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
@@ -68,37 +87,9 @@ const GroupCard = ({
     }
   }
 
-  const handleLeaveGroup = async () => {
-    try {
-      setLoading(true)
-      await groupService.leaveGroup(currentGroup.id)
-      message.success('Successfully left the group!')
-      setJoined(false)
-      if (onJoinSuccess) onJoinSuccess()
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to leave group'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDeleteGroup = async () => {
-    try {
-      setLoading(true)
-      await groupService.deleteGroup(currentGroup.id)
-      message.success('Successfully deleted the group!')
-      if (onGroupDeleted) onGroupDeleted(currentGroup.id)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to delete group'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handlePendingClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    setShowPendingDropdown(!showPendingDropdown)
   }
 
   const handleViewGroup = () => {
@@ -109,27 +100,14 @@ const GroupCard = ({
     }
   }
 
-  const pendingMenuItems: MenuProps['items'] = [
-    {
-      key: 'cancel',
-      label: 'Cancel Request',
-      icon: <CloseOutlined />,
-      danger: true,
-      onClick: (e) => {
-        e?.domEvent?.stopPropagation()
-        handleCancelJoinRequest()
-      }
-    }
-  ]
-
   return (
     <div 
-      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden h-48'
+      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
       onClick={handleViewGroup}
     >
       <div className='flex h-full'>
         {/* Image Section - Left */}
-        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200'>
+        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden'>
           {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
             <img 
               src={currentGroup.imageUrl} 
@@ -187,7 +165,7 @@ const GroupCard = ({
 
             {/* Actions */}
             {showActions && (
-              <div className='flex gap-2 mt-3'>
+              <div className='flex gap-2 mt-3 relative'>
                 {!joined && !pending ? (
                   <Button 
                     type='primary' 
@@ -199,7 +177,7 @@ const GroupCard = ({
                     Join
                   </Button>
                 ) : pending ? (
-                  <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']} placement='bottomRight'>
+                  <div ref={dropdownRef} className='w-full relative'>
                     <Button
                       icon={<ClockCircleOutlined />}
                       onClick={handlePendingClick}
@@ -210,7 +188,25 @@ const GroupCard = ({
                     >
                       Pending
                     </Button>
-                  </Dropdown>
+                    
+                    {/* Custom Dropdown Menu */}
+                    {showPendingDropdown && (
+                      <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCancelJoinRequest()
+                          }}
+                          className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
+                        >
+                          <CloseOutlined className='text-xs text-red-500' />
+                          <span className='text-xs font-medium text-red-500'>
+                            Cancel
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <Button
                     icon={<EyeOutlined />}

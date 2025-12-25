@@ -45,7 +45,7 @@ import ManageMembersModal from '@/app/common/Modals/Group/ManageMembersModal'
 import PendingJoinRequestsModal from '@/app/common/Modals/Group/PendingJoinRequestsModal'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
-
+import GroupDropdownMenu, { PendingDropdownMenu, JoinedDropdownMenu } from './GroupDropdownMenu'
 const { Title, Text, Paragraph } = Typography
 const { TabPane } = Tabs
 
@@ -77,6 +77,9 @@ const GroupDetail = () => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
   const [viewerImages, setViewerImages] = useState<string[]>([])
   const [currentViewerIndex, setCurrentViewerIndex] = useState(0)
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false)
+  const [showPendingDropdown, setShowPendingDropdown] = useState(false)
+  const [showJoinedDropdown, setShowJoinedDropdown] = useState(false)
   // Kiểm tra role của người dùng hiện tại
   const currentUserRole = group?.groupUsers?.find((gu) => gu.userId === currentUser?.id)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
@@ -495,7 +498,7 @@ const GroupDetail = () => {
       )}
 
       {/* Group Header with Image */}
-      <Card className='mb-6 overflow-hidden border-2 border-black font-semibold'>
+      <Card className='mb-6 border-2 border-black font-semibold'>
         <div className='relative -mt-6 -mx-6 mb-4'>
           {group.imageUrl && (
             <div
@@ -512,96 +515,135 @@ const GroupDetail = () => {
         </div>
 
         <Space direction='vertical' size='small' className='w-full'>
-          {/* Dòng 1: Tên group và button */}
           <div className='flex justify-between items-center'>
             <Title level={2} className='mb-0'>
               {group.name}
             </Title>
-            <Space>
-              {!isJoined && !isPending ? (
-                <Button type='primary' size='large' icon={<UserOutlined />} onClick={handleJoinGroup}>
-                  Join Group
-                </Button>
-              ) : isPending ? (
-                <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']}>
-                  <Button icon={<ClockCircleOutlined />} type='default'>
-                    Request Pending
-                  </Button>
-                </Dropdown>
-              ) : (
-                <>
-                  {isAdmin ? (
-                    <Dropdown menu={{ items: adminMenuItems }} trigger={['click']} placement='bottomRight'>
-                      <Button icon={<MoreOutlined />}>
-                        {pendingRequestCount > 0 && <Badge count={pendingRequestCount} offset={[10, 0]} />}
-                      </Button>
-                    </Dropdown>
-                  ) : (
-                    <Dropdown menu={{ items: joinedMenuItems }} trigger={['click']}>
-                      <Button icon={<CheckOutlined />} type='default'>
-                        Joined
-                      </Button>
-                    </Dropdown>
-                  )}
-                </>
-              )}
-            </Space>
-          </div>
+            <div className='flex items-center gap-4'>
 
-          {/* Dòng 2: Privacy tag, avatars và số thành viên */}
-          <div className='flex items-center gap-4'>
-            <Tag
-              icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
-              color={group.isPublic ? 'blue' : 'orange'}
-            >
-              {group.isPublic ? 'Public Group' : 'Private Group'}
-            </Tag>
-            <div className='flex items-center gap-2'>
-              <div className='flex -space-x-2'>
-                {group.groupUsers
-                  ?.filter(gu => gu.roleName !== GroupRole.Pending)
-                  .slice(0, 10)
-                  .map((member, index) => (
-                    <Avatar
-                      key={member.userId}
-                      size={28}
-                      src={member.user?.avatarUrl}
-                      className='border-2 border-white'
-                      style={{ zIndex: 10 - index }}
-                    >
-                      {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
-                    </Avatar>
-                  ))}
+              <Tag
+                icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
+                color={group.isPublic ? 'blue' : 'orange'}
+              >
+                {group.isPublic ? 'Public Group' : 'Private Group'}
+              </Tag>
+
+              <div className='flex items-center gap-2'>
+                <div className='flex -space-x-2'>
+                  {group.groupUsers
+                    ?.filter(gu => gu.roleName !== GroupRole.Pending)
+                    .slice(0, 10)
+                    .map((member, index) => (
+                      <Avatar
+                        key={member.userId}
+                        size={28}
+                        src={member.user?.avatarUrl}
+                        className='border-2 border-black'
+                        style={{ zIndex: 10 - index }}
+                      >
+                        {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
+                      </Avatar>
+                    ))}
+                </div>
+                <Text type='secondary' className='text-sm'>
+                  {group.memberCount} members
+                </Text>
               </div>
-              <Text type='secondary' className='text-sm'>
-                {group.memberCount} members
-              </Text>
-            </div>
-          </div>
 
-          {/* Dòng 3: Icon thành viên và bài viết */}
-          <div className='flex gap-6 mt-1'>
-            <Space size='small'>
-              <UserOutlined className='text-gray-500' />
-              <Text strong>{group.memberCount}</Text>
-              <Text type='secondary'>members</Text>
-            </Space>
-            <Space size='small'>
-              <FileTextOutlined className='text-gray-500' />
-              <Text strong>{group.postCount}</Text>
-              <Text type='secondary'>posts</Text>
-            </Space>
+              <div className='flex gap-4'>
+                <Space size='small'>
+                  <UserOutlined className='text-gray-500' />
+                  <Text strong>{group.memberCount}</Text>
+                  <Text type='secondary'>members</Text>
+                </Space>
+                <Space size='small'>
+                  <FileTextOutlined className='text-gray-500' />
+                  <Text strong>{group.postCount}</Text>
+                  <Text type='secondary'>posts</Text>
+                </Space>
+              </div>
+            </div>
           </div>
         </Space>
 
-        {/* Tabs - bắt đầu từ bên trái */}
         {(isJoined && !isPending) && (
-          <div className='-mx-6 -mb-6 mt-3 px-6'>
-            <Tabs activeKey={activeTab} onChange={setActiveTab} size='large' className='font-semibold'>
-              <TabPane tab='Discussion' key='posts' />
-              <TabPane tab='Members' key='members' />
-              <TabPane tab='Photos' key='photos' />
-            </Tabs>
+          <div className='-mx-6 -mb-6 mt-3'>
+            <div className='flex justify-between items-center px-6'>
+              <Tabs activeKey={activeTab} onChange={setActiveTab} size='large' className='font-semibold flex-1'>
+                <TabPane tab='Discussion' key='posts' />
+                <TabPane tab='Members' key='members' />
+                <TabPane tab='Photos' key='photos' />
+              </Tabs>
+
+              <div className='ml-4 relative'>
+                {isAdmin ? (
+                  <>
+                    <button
+                      onClick={() => setShowAdminDropdown(!showAdminDropdown)}
+                      className='flex items-center gap-2 px-3.5 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium relative'
+                    >
+                      <MoreOutlined />
+                      {pendingRequestCount > 0 && (
+                        <Badge count={pendingRequestCount} offset={[10, 0]} />
+                      )}
+                    </button>
+                    <GroupDropdownMenu
+                      isOpen={showAdminDropdown}
+                      onClose={() => setShowAdminDropdown(false)}
+                      isAdmin={isAdmin}
+                      isSuperAdmin={isSuperAdmin}
+                      pendingRequestCount={pendingRequestCount}
+                      onPendingRequests={() => setIsPendingRequestsOpen(true)}
+                      onManageMembers={() => setIsManageMembersOpen(true)}
+                      onEditGroup={() => setIsEditGroupOpen(true)}
+                      onLeaveGroup={handleLeaveGroup}
+                      onDeleteGroup={handleDeleteGroup}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowJoinedDropdown(!showJoinedDropdown)}
+                      className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
+                    >
+                      <CheckOutlined />
+                      <span>Joined</span>
+                    </button>
+                    <JoinedDropdownMenu
+                      isOpen={showJoinedDropdown}
+                      onClose={() => setShowJoinedDropdown(false)}
+                      onLeaveGroup={handleLeaveGroup}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Nếu chưa join hoặc đang pending */}
+        {!isJoined && !isPending && (
+          <div className='mt-4 flex justify-end'>
+            <Button type='primary' size='large' icon={<UserOutlined />} onClick={handleJoinGroup}>
+              Join Group
+            </Button>
+          </div>
+        )}
+
+        {isPending && (
+          <div className='mt-4 flex justify-end relative'>
+            <button
+              onClick={() => setShowPendingDropdown(!showPendingDropdown)}
+              className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
+            >
+              <ClockCircleOutlined />
+              <span>Request Pending</span>
+            </button>
+            <PendingDropdownMenu
+              isOpen={showPendingDropdown}
+              onClose={() => setShowPendingDropdown(false)}
+              onCancelRequest={handleCancelJoinRequest}
+            />
           </div>
         )}
       </Card>
