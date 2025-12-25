@@ -212,7 +212,7 @@ const ProfileView = ({
                   onClick={() => setIsOpenCreatePost(true)}
                   className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
                 >
-                  <Avatar size={48} src={user?.avatarUrl} />
+                  <Avatar size={48} src={user?.avatarUrl || DEFAULT_AVATAR_URL} />
                   <div className='flex-1 bg-gray-100 rounded-full px-4 py-3 text-gray-600 hover:bg-gray-200 transition-colors'>
                     What's on your mind?
                   </div>
