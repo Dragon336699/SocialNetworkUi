@@ -139,7 +139,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
               'profile',
               <IconCircle
                 bgColor='#E4E6EB'
-                customIcon={<Avatar src={resData.avatarUrl || DEFAULT_AVATAR_URL} size={28} />}
+                customIcon={<Avatar src={resData.avatarUrl || DEFAULT_AVATAR_URL} size={32} />}
               />
             )
           ]
@@ -179,8 +179,8 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
       }}
     >
       <Sider
-        className='h-screen top-0 bottom-0 pt-3'
-        style={{ position: 'sticky', borderRight: '1px solid #e5e5e5' }}
+        className='h-screen top-0 bottom-0 pt-3 !border-r-2'
+        style={{ position: 'sticky' }}
         width={280}
         collapsible
         collapsed={collapsed}
