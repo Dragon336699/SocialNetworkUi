@@ -62,15 +62,15 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
     <>
       <div
         ref={dropdownRef}
-        className='absolute right-0 top-8 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-2 overflow-hidden'
+        className='absolute right-0 top-8 w-52 bg-white rounded-lg shadow-lg border border-black z-50 overflow-hidden'
       >
         {/* Xem chi tiết bài viết */}
         <button
           onClick={handleViewDetails}
-          className='w-full flex items-center px-4 py-3 hover:bg-gray-50 text-left border-0 bg-transparent'
+          className='w-full flex items-center px-2 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
         >
           <svg
-            className='w-5 h-5 mr-3 text-gray-600 flex-shrink-0'
+            className='w-5 h-5 mr-1.5 text-gray-600 flex-shrink-0'
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -91,10 +91,10 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
             {/* Chỉnh sửa bài viết */}
             <button
               onClick={handleEditClick}
-              className='w-full flex items-center px-4 py-3 hover:bg-gray-50 text-left border-0 bg-transparent'
+              className='w-full flex items-center px-2 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
             >
               <svg
-                className='w-5 h-5 mr-3 text-gray-600 flex-shrink-0'
+                className='w-5 h-5 mr-1.5 text-gray-600 flex-shrink-0'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -109,35 +109,13 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
               <span className='text-sm font-medium text-gray-900'>Edit post</span>
             </button>
 
-            {/* Tắt thông báo */}
-            {/* <button
-              onClick={() => {
-                onTurnOffNotifications?.()
-                onClose()
-              }}
-              className='w-full flex items-start px-4 py-3 hover:bg-gray-50 text-left border-0 bg-transparent'
-            >
-              <svg className='w-5 h-5 mr-3 text-gray-600 flex-shrink-0 mt-0.5' fill='currentColor' viewBox='0 0 20 20'>
-                <path
-                  fillRule='evenodd'
-                  d='M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z'
-                  clipRule='evenodd'
-                />
-              </svg>
-              <span className='text-sm font-medium text-gray-900 flex-1 leading-5'>
-                Turn off notifications for this post
-              </span>
-            </button>
-
-            <hr className='my-2' /> */}
-
             {/* Xóa bài viết */}
             <button
               onClick={handleDeleteClick}
-              className='w-full flex items-start px-4 py-3 hover:bg-red-50 text-left border-0 bg-transparent group'
+              className='w-full flex items-center px-2 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
             >
               <svg
-                className='w-5 h-5 mr-3 text-red-500 flex-shrink-0 mt-0.5'
+                className='w-5 h-5 mr-1.5 text-red-500 flex-shrink-0'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -149,9 +127,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
                   d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
                 />
               </svg>
-              <div className='flex-1'>
-                <div className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete post</div>
-              </div>
+              <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete post</span>
             </button>
           </>
         )}

@@ -27,13 +27,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
   return (
     <div>
-      <div className='relative bg-gray-100 rounded-lg overflow-hidden'>
+      <div className='relative bg-gray-100 overflow-hidden'>
         {/* HIỂN THỊ ẢNH CHÍNH */}
-        <div className='relative h-64 md:h-80'>
+        <div className='relative w-full'>
           <img
             src={postImages[currentImageIndex].imageUrl}
             alt={`Post content ${currentImageIndex + 1}`}
-            className='w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity'
+            className='w-full h-auto object-contain cursor-pointer hover:opacity-95 transition-opacity'
             onClick={() => onImageClick(currentImageIndex)}
           />
 

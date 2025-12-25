@@ -1,9 +1,8 @@
-import { Card, Button, Typography, Space, message, Avatar, Dropdown } from 'antd'
-import type { MenuProps } from 'antd'
+import { Button, Typography, Space, message, Avatar } from 'antd'
 import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const { Title, Text } = Typography
@@ -33,7 +32,26 @@ const GroupCard = ({
   const [joined, setJoined] = useState(isJoined)
   const [pending, setPending] = useState(isPending)
   const [currentGroup, setCurrentGroup] = useState(group)
+  const [showPendingDropdown, setShowPendingDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPendingDropdown(false)
+      }
+    }
+
+    if (showPendingDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPendingDropdown])
 
   const handleJoinGroup = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
@@ -52,7 +70,6 @@ const GroupCard = ({
     }
   }
 
-  // Xử lý hủy yêu cầu tham gia
   const handleCancelJoinRequest = async () => {
     try {
       setLoading(true)
@@ -60,6 +77,7 @@ const GroupCard = ({
       message.success('Join request cancelled!')
       setPending(false)
       setJoined(false)
+      setShowPendingDropdown(false)
       if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
@@ -68,43 +86,12 @@ const GroupCard = ({
       setLoading(false)
     }
   }
-  // Xử lý rời khỏi nhóm
-  const handleLeaveGroup = async () => {
-    try {
-      setLoading(true)
-      await groupService.leaveGroup(currentGroup.id)
-      message.success('Successfully left the group!')
-      setJoined(false)
-      if (onJoinSuccess) onJoinSuccess()
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to leave group'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  // Xử lý xóa nhóm
-  const handleDeleteGroup = async () => {
-    try {
-      setLoading(true)
-      await groupService.deleteGroup(currentGroup.id)
-      message.success('Successfully deleted the group!')
-      if (onGroupDeleted) onGroupDeleted(currentGroup.id)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Unable to delete group'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Xử lý click button khi pending
   const handlePendingClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    setShowPendingDropdown(!showPendingDropdown)
   }
 
-  // Xử lý xem nhóm
   const handleViewGroup = () => {
     if (joined) {
       navigate(`/groups/${currentGroup.id}`)
@@ -113,108 +100,132 @@ const GroupCard = ({
     }
   }
 
-  // Menu cho pending request
-  const pendingMenuItems: MenuProps['items'] = [
-    {
-      key: 'cancel',
-      label: 'Cancel Request',
-      icon: <CloseOutlined />,
-      danger: true,
-      onClick: (e) => {
-        e?.domEvent?.stopPropagation()
-        handleCancelJoinRequest()
-      }
-    }
-  ]
-
   return (
-    <>
-      <Card
-        hoverable
-        className='group-card'
-        onClick={handleViewGroup}
-        style={{ height: '100%' }}
-        cover={
-          <div className='relative w-full h-48 bg-gray-200 overflow-hidden'>
-            {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
-              <img src={currentGroup.imageUrl} alt={currentGroup.name} className='w-full h-full object-cover' />
-            ) : (
-              <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
-                <Avatar
-                  size={80}
-                  style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-                  className='text-white text-4xl font-bold'
-                >
-                  {currentGroup.name[0]?.toUpperCase() || 'G'}
-                </Avatar>
-              </div>
-            )}
-          </div>
-        }
-      >
-        <div onClick={(e) => e.stopPropagation()}>
-          <Space direction='vertical' size='middle' style={{ width: '100%' }}>
-            {/* Header */}
-            <div className='flex justify-between items-start'>
-              <div className='flex-1'>
-                <Title level={4} className='mb-1'>
-                  {currentGroup.name}
-                </Title>
-              </div>
+    <div 
+      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
+      onClick={handleViewGroup}
+    >
+      <div className='flex h-full'>
+        {/* Image Section - Left */}
+        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden'>
+          {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
+            <img 
+              src={currentGroup.imageUrl} 
+              alt={currentGroup.name} 
+              className='w-full h-full object-cover' 
+            />
+          ) : (
+            <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
+              <Avatar
+                size={60}
+                style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
+                className='text-white text-2xl font-bold'
+              >
+                {currentGroup.name[0]?.toUpperCase() || 'G'}
+              </Avatar>
             </div>
+          )}
+        </div>
 
+        {/* Content Section - Right */}
+        <div className='flex-1 p-4 flex flex-col' onClick={(e) => e.stopPropagation()}>
+          {/* Header - Fixed height area */}
+          <div className='flex flex-col' style={{ minHeight: '60px', maxHeight: '60px' }}>
+            <Title 
+              level={5} 
+              className='mb-0 line-clamp-2 overflow-hidden' 
+              style={{ 
+                fontSize: '15px', 
+                fontWeight: 600,
+                lineHeight: '1.4'
+              }}
+            >
+              {currentGroup.name}
+            </Title>
+            <div className='border-b-2 border-black mt-auto'></div>
+          </div>
+          
+          {/* Stats & Actions - Remaining space */}
+          <div className='flex-1 flex flex-col justify-between pt-3'>
             {/* Stats */}
-            <div className='flex gap-4'>
-              <Space size='small'>
-                <UserOutlined className='text-gray-500' />
-                <Text type='secondary'>{currentGroup.memberCount} members</Text>
-              </Space>
-              <Space size='small'>
-                <FileTextOutlined className='text-gray-500' />
-                <Text type='secondary'>{currentGroup.postCount} posts</Text>
-              </Space>
+            <div className='flex flex-col gap-2'>
+              <div className='flex items-center gap-2'>
+                <UserOutlined className='text-black text-sm' />
+                <Text className='text-sm text-black font-medium'>
+                  {currentGroup.memberCount} {currentGroup.memberCount === 1 ? 'user' : 'users'}
+                </Text>
+              </div>
+              <div className='flex items-center gap-2'>
+                <FileTextOutlined className='text-black text-sm' />
+                <Text className='text-sm text-black font-medium'>
+                  {currentGroup.postCount} {currentGroup.postCount === 1 ? 'post' : 'posts'}
+                </Text>
+              </div>
             </div>
 
             {/* Actions */}
             {showActions && (
-              <div className='flex gap-2'>
+              <div className='flex gap-2 mt-3 relative'>
                 {!joined && !pending ? (
-                  <Button type='primary' onClick={handleJoinGroup} loading={loading} block>
-                    Join Group
+                  <Button 
+                    type='primary' 
+                    onClick={handleJoinGroup} 
+                    loading={loading} 
+                    block
+                    size='small'
+                  >
+                    Join
                   </Button>
                 ) : pending ? (
-
-                  <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']} placement='bottomRight'>
+                  <div ref={dropdownRef} className='w-full relative'>
                     <Button
                       icon={<ClockCircleOutlined />}
                       onClick={handlePendingClick}
                       type='default'
                       loading={loading}
                       block
+                      size='small'
                     >
-                      Request Pending
+                      Pending
                     </Button>
-                  </Dropdown>
+                    
+                    {/* Custom Dropdown Menu */}
+                    {showPendingDropdown && (
+                      <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCancelJoinRequest()
+                          }}
+                          className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
+                        >
+                          <CloseOutlined className='text-xs text-red-500' />
+                          <span className='text-xs font-medium text-red-500'>
+                            Cancel
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <>
-                    <Button
-                      icon={<EyeOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleViewGroup()
-                      }}
-                      style={{ flex: 1 }}
-                    >
-                      View Group
-                    </Button>
-                  </>
+                  <Button
+                    icon={<EyeOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleViewGroup()
+                    }}
+                    block
+                    size='small'
+                  >
+                    View
+                  </Button>
                 )}
               </div>
             )}
-          </Space>
+          </div>
         </div>
-      </Card>
-    </>
+      </div>
+    </div>
   )
 }
 

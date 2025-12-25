@@ -82,7 +82,7 @@ const GroupsDiscover = () => {
               const isPending = userStatus?.roleName === GroupRole.Pending
 
               return (
-                <Col xs={24} sm={12} lg={8} xl={6} key={group.id}>
+                <Col xs={24} sm={12} lg={8} key={group.id}>
                   <GroupCard
                     group={group}
                     showActions={true}

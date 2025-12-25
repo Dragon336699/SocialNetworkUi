@@ -124,6 +124,30 @@ const ProfileUser = () => {
     }
   }, [userName, navigate])
 
+  const handlePostCreated = useCallback(async () => {
+    try {
+      const res = await postService.getPostsByUser(userInfo.id)
+      const responseData = res.data as any
+      const postsData = responseData.posts || responseData.post
+      setPosts(Array.isArray(postsData) ? postsData : [])
+    } catch (error) {
+      console.error('Failed to refresh posts:', error)
+      fetchData()
+    }
+  }, [userInfo.id, fetchData])
+
+  const handlePostUpdated = useCallback((updatedPost: PostData) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === updatedPost.id ? updatedPost : post
+      )
+    )
+  }, [])
+
+  const handlePostDeleted = useCallback((postId: string) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId))
+  }, [])
+
   useEffect(() => {
     fetchData()
   }, [fetchData])
@@ -153,6 +177,9 @@ const ProfileUser = () => {
               userInfo={userInfo}
               onEdit={() => setIsEditing(true)}
               refreshData={fetchData}
+              onPostCreated={handlePostCreated}
+              onPostUpdated={handlePostUpdated}
+              onPostDeleted={handlePostDeleted}
             />
           ))}
       </main>

@@ -1,28 +1,22 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react'
 import { Modal, Button, Input, Avatar, Flex, Typography, Divider, message } from 'antd'
 import {
-  BoldOutlined,
-  ItalicOutlined,
-  OrderedListOutlined,
-  UnorderedListOutlined,
   PictureOutlined,
-  PaperClipOutlined,
-  PlusOutlined,
   CloseOutlined,
   SmileOutlined
 } from '@ant-design/icons'
-// import EmojiPicker, { EmojiClickData } from 'emoji-picker-react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
-import { DEFAULT_AVATAR_URL } from '../Assests/CommonVariable'
+import { useUserStore } from '@/app/stores/auth'
 
 const { TextArea } = Input
 const { Text } = Typography
 
 const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
+  const { user } = useUserStore()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -35,6 +29,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
+  
   const renderPrivacyIcon = () => {
     const iconClass = 'w-4 h-4 text-gray-500'
 
@@ -165,20 +160,49 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       footer={null}
       width={700}
       closable={false}
+      centered={false}
+      maskClosable={false}
+      className='create-post-modal'
+      style={{ 
+        borderRadius: '8px', 
+        overflow: 'visible',
+        padding: 0,
+        top: 50
+      }}
+      styles={{
+        content: { 
+          padding: 0,
+          border: '1px solid #000000',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+          overflow: 'visible'
+        },
+        body: { 
+          padding: '0 24px 24px 24px',
+          overflow: 'visible'
+        },
+        header: {
+          padding: '16px 24px 0 24px',
+          marginBottom: 0
+        }
+      }}
       title={
-        <Flex justify='space-between'>
+        <Flex justify='space-between' style={{ borderBottom: '1px solid #000000', paddingBottom: '12px', marginBottom: '16px' }}>
           <Flex align='center' gap='small'>
-            <Avatar
-              size={40}
-              src={currentUser?.avatarUrl || DEFAULT_AVATAR_URL}
-              style={{ minWidth: 40, minHeight: 40 }}
-            ></Avatar>
+            <div style={{ border: '2px solid #000000', borderRadius: '50%', padding: 0, display: 'inline-flex' }}>
+              <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
+                {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
+              </Avatar>
+            </div>
             <Flex vertical>
-              <Text strong>{fullName}</Text>
+              <Text strong style={{ fontSize: '15px', fontWeight: 600 }}>{fullName}</Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>
-            <Button className='flex items-center gap-1 text-s !px-2 hover:bg-neutral-200' onClick={handlePrivacyClick}>
+            <Button 
+              className='flex items-center gap-1 px-2 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded' 
+              onClick={handlePrivacyClick}
+            >
               {renderPrivacyIcon()}
             </Button>
             <Button
@@ -187,6 +211,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
                 handleCancel()
                 resetValue()
               }}
+              className='border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded'
             />
           </Flex>
         </Flex>
@@ -198,48 +223,41 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
         autoSize={{ minRows: 3, maxRows: 6 }}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        style={{ marginBottom: '8px' }}
+        className='font-medium text-base mb-4 border-none shadow-none'
+        style={{ fontWeight: 500 }}
       />
 
-      <Flex gap='small' style={{ marginBottom: '16px' }}>
-        <Button icon={<BoldOutlined />} />
-        <Button icon={<ItalicOutlined />} />
-        <div ref={emojiWrapperRef} className='relative inline-block'>
-          <Button icon={<SmileOutlined />} onClick={() => setShowEmojiPicker((prev) => !prev)} />
-          {showEmojiPicker && (
-            <div className='absolute top-full left-0 z-20 h-[400px] overflow-hidden shadow-md bg-white'>
-              <Picker
-                data={data}
-                onEmojiSelect={handleEmojiSelect}
-                previewPosition='none'
-                theme='light'
-                navPosition='top'
-                perLine={8}
-                emojiSize={22}
-              />
-            </div>
-          )}
-        </div>
+      <Divider className='my-3 border-black' />
 
-        <Button icon={<UnorderedListOutlined />} />
-        <Button icon={<OrderedListOutlined />} />
-      </Flex>
-
-      <Divider className='!my-0' />
-
-      <div className='grid gap-2 pb-5' style={{ gridTemplateColumns: images.length === 1 ? '1fr' : '1fr 1fr' }}>
-        {images.slice(0, 4).map((file, index) => (
-          <div key={index} className='relative rounded-lg overflow-hidden'>
-            <img src={URL.createObjectURL(file)} alt={`preview-${index}`} className='w-full h-auto object-contain' />
+      <div 
+        className='grid gap-2 pb-5' 
+        style={{ 
+          gridTemplateColumns: images.length === 1 ? '1fr' : images.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)'
+        }}
+      >
+        {images.slice(0, 6).map((file, index) => (
+          <div 
+            key={index} 
+            className='relative rounded-lg overflow-hidden' 
+            style={{ 
+              paddingBottom: images.length === 1 ? '0' : images.length === 2 ? '100%' : '75%'
+            }}
+          >
+            <img 
+              src={URL.createObjectURL(file)} 
+              alt={`preview-${index}`} 
+              className='w-full object-cover rounded-lg'
+              style={images.length === 1 ? { height: 'auto' } : { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+            />
             <button
               onClick={() => removeImage(index)}
-              className='absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold'
+              className='absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hover:bg-opacity-70 transition-all z-10'
             >
               ×
             </button>
-            {images.length > 4 && index === 3 && (
+            {images.length > 6 && index === 5 && (
               <div className='absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white text-xl font-bold rounded-lg cursor-pointer'>
-                +{images.length - 4}
+                +{images.length - 6}
               </div>
             )}
           </div>
@@ -247,10 +265,15 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       </div>
 
       <Flex justify='space-between' align='center'>
-        <Flex gap='small'>
-          <Button icon={<PictureOutlined />} onClick={() => fileInputRef.current?.click()}>
-            Picture/video
-          </Button>
+        <Flex gap='small' align='center'>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 flex items-center px-3 gap-2 font-semibold text-sm cursor-pointer'
+          >
+            <PictureOutlined />
+            <span>Picture</span>
+          </button>
+          
           <input
             type='file'
             accept='image/*'
@@ -260,12 +283,47 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
             onChange={handleImageChange}
           />
 
-          <Button icon={<PaperClipOutlined />}>Attachment</Button>
+          <div ref={emojiWrapperRef} className='relative inline-block'>
+            <button 
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 w-10 flex items-center justify-center cursor-pointer'
+            >
+              <SmileOutlined />
+            </button>
+            {showEmojiPicker && (
+              <div 
+                className='absolute bottom-full left-0 mb-2 z-[9999] h-96 overflow-hidden shadow-lg bg-white rounded-lg'
+              >
+                <Picker
+                  data={data}
+                  onEmojiSelect={handleEmojiSelect}
+                  previewPosition='none'
+                  theme='light'
+                  navPosition='top'
+                  perLine={8}
+                  emojiSize={22}
+                />
+              </div>
+            )}
+          </div>
         </Flex>
 
-        <Button loading={loading} type='primary' icon={<PlusOutlined />} onClick={handlePost}>
-          Post
-        </Button>
+        <button
+          onClick={handlePost}
+          disabled={loading || !text}
+          className={`
+            rounded-full w-10 h-10 flex items-center justify-center transition-colors
+            ${loading || !text ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'}
+          `}
+        >
+          {loading ? (
+            <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+          ) : (
+            <svg className='w-5 h-5 text-white' fill='currentColor' viewBox='0 0 24 24'>
+              <path d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z' />
+            </svg>
+          )}
+        </button>
       </Flex>
     </Modal>
   )
