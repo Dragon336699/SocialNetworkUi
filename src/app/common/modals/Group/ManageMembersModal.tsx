@@ -257,7 +257,7 @@ const ManageMembersModal = ({
   return (
     <Modal
       title={
-        <div className='flex justify-between items-center border-b-2 border-black pb-3 mb-4'>
+        <div className='flex justify-between items-center border-b-2 border-gray-200 pb-3 mb-4'>
           <div className='flex flex-col gap-1'>
             <span className='text-lg font-semibold'>Manage Members</span>
             {!isSuperAdmin && !isAdmin && (
@@ -289,7 +289,7 @@ const ManageMembersModal = ({
       styles={{
         content: { 
           padding: 0,
-          border: '2px solid #000000',
+          border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
@@ -333,10 +333,10 @@ const ManageMembersModal = ({
       <List
         dataSource={sortedMembers}
         renderItem={(member) => (
-          <List.Item actions={[renderActions(member)]} className='border-b border-black last:border-b-0'>
+          <List.Item actions={[renderActions(member)]} className='border-b border-gray-200 last:border-b-0'>
             <List.Item.Meta
               avatar={
-                <Avatar size={48} src={member.user?.avatarUrl} className='border-2 border-black'>
+                <Avatar size={48} src={member.user?.avatarUrl} className='border-2 border-gray-200'>
                   {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
                 </Avatar>
               }

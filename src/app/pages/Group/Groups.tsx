@@ -244,7 +244,7 @@ const Groups = () => {
             />
 
             {/* Divider 1 */}
-            <div className='border-t-2 border-black mb-3'></div>
+            <div className='border-t-2 border-gray-200 mb-3'></div>
 
             {/* Menu Items */}
             <div className='space-y-1 mb-3'>
@@ -310,7 +310,7 @@ const Groups = () => {
             </Button>
 
             {/* Divider 2 */}
-            <div className='border-t-2 border-black mb-3'></div>
+            <div className='border-t-2 border-gray-200 mb-3'></div>
 
             {/* My Groups List */}
             <div className='pt-3'>
@@ -343,7 +343,7 @@ const Groups = () => {
                             : 'hover:bg-gray-100'
                         }`}
                       >
-                        <div className='rounded-full border-2 border-black flex-shrink-0'>
+                        <div className='rounded-full border-2 border-gray-200 flex-shrink-0'>
                           <Avatar
                             size={32}
                             src={group.imageUrl}

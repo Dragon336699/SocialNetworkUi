@@ -502,7 +502,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   return (
     <>
       <div className='fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-0 md:p-4'>
-        <div className='bg-white w-full h-full md:h-[90vh] md:max-w-[1000px] md:rounded-xl md:border md:border-black flex flex-col overflow-hidden shadow-2xl'>
+        <div className='bg-white w-full h-full md:h-[90vh] md:max-w-[1000px] md:rounded-xl md:border md:border-gray-200 flex flex-col overflow-hidden shadow-2xl'>
           <div className='relative px-4 py-3 border-b border-gray-200 bg-white flex justify-center items-center'>
             <h3 className='font-bold text-xl text-center'>{fullName}'s post</h3>
 
@@ -518,7 +518,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             <div className='px-4 pt-3 pb-2'>
               <div className='flex items-start justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-full border-2 border-black'>
+                  <div className='rounded-full border-2 border-gray-200'>
                     <Avatar src={postUser.avatarUrl} size={40}>
                       {postUser.firstName?.[0] || postUser.lastName?.[0] || ''}
                     </Avatar>
@@ -619,7 +619,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                         {showPostReactionPicker && (
                           <div
                             ref={reactionBarRef}
-                            className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full mb-2 animate-fadeInUp'
+                            className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full mb-0.5 animate-fadeInUp'
                             style={{
                               minWidth: '200px',
                               background: '#F3F4F6',
@@ -669,7 +669,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             </div>
 
             <div className='px-4 py-3'>
-              <div className='border-t-2 border-black mb-3'></div>
+              <div className='border-t-2 border-gray-200 mb-3'></div>
               {loading ? (
                 <div className='text-center py-8 text-gray-500'>Loading...</div>
               ) : comments.length === 0 ? (

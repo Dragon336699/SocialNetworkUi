@@ -406,14 +406,14 @@ const Post: React.FC<PostProps> = ({
     <>
       <div
         ref={postRef}
-        className={`bg-white shadow-sm border-2 border-black mb-4 ${hideHeader ? 'border-t-0 rounded-b-lg' : 'rounded-lg'}`}
+        className={`bg-white shadow-sm border border-gray-200 mb-4 ${hideHeader ? 'border-t-0 rounded-b-lg' : 'rounded-lg'}`}
       >
         {/* Header */}
         {!hideHeader && (
           <div className='flex items-center justify-between p-4 pb-2'>
             <div className='flex items-center space-x-3'>
               <div onClick={handleUserClick} className='cursor-pointer relative'>
-                <div className='rounded-full flex items-center justify-center border-2 border-black'>
+                <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
                   <Avatar
                     src={user.avatarUrl}
                     size={40}
@@ -460,7 +460,6 @@ const Post: React.FC<PostProps> = ({
 
         {/* Content */}
         <div className='px-4 pb-2'>
-          {/* <div className='border-t-2 border-black mb-3'></div> */}
           <p className='text-gray-900 leading-relaxed font-medium text-[15px]'>{content}</p>
         </div>
 
@@ -478,9 +477,6 @@ const Post: React.FC<PostProps> = ({
 
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
-          {/* Divider */}
-          {/* <div className='border-t-2 border-black mb-3'></div> */}
-
           <div className='space-y-3'>
             {/* Row 1: Like, Comment buttons và Reactions Info */}
             <div className='flex items-center justify-between'>
@@ -552,7 +548,7 @@ const Post: React.FC<PostProps> = ({
             <div className='flex items-center space-x-3'>
               {/* Avatar người dùng */}
               <div className='flex-shrink-0'>
-                <div className='rounded-full flex items-center justify-center border-2 border-black'>
+                <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
                   <Avatar
                     src={currentUser.avatarUrl}
                     size={40}

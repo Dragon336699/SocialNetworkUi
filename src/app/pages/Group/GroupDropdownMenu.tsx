@@ -61,7 +61,7 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-black z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
       {/* Join Requests */}
       {isAdmin && (
@@ -166,7 +166,7 @@ export const PendingDropdownMenu: React.FC<PendingDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-auto bg-white rounded-lg shadow-lg border border-black z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-2 w-auto bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
       <button
         onClick={() => handleClick(onCancelRequest)}
@@ -219,7 +219,7 @@ export const JoinedDropdownMenu: React.FC<JoinedDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-black z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
       <button
         onClick={() => handleClick(onLeaveGroup)}

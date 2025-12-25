@@ -129,7 +129,7 @@ const PendingJoinRequestsModal = ({
   return (
     <Modal
       title={
-        <div className='flex justify-between items-center border-b-2 border-black pb-3 mb-4'>
+        <div className='flex justify-between items-center border-b-2 border-gray-200 pb-3 mb-4'>
           <div className='flex flex-col gap-1'>
             <span className='text-lg font-semibold'>Join Requests</span>
             <span className='text-sm text-gray-500 font-normal'>
@@ -159,7 +159,7 @@ const PendingJoinRequestsModal = ({
       styles={{
         content: { 
           padding: 0,
-          border: '2px solid #000000',
+          border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
@@ -189,10 +189,10 @@ const PendingJoinRequestsModal = ({
           <List
             dataSource={pendingRequests}
             renderItem={(request) => (
-              <List.Item actions={[renderActions(request)]} className='border-b border-black last:border-b-0'>
+              <List.Item actions={[renderActions(request)]} className='border-b border-gray-200 last:border-b-0'>
                 <List.Item.Meta
                   avatar={
-                    <Avatar size={48} src={request.user?.avatarUrl} className='border-2 border-black'>
+                    <Avatar size={48} src={request.user?.avatarUrl} className='border-2 border-gray-200'>
                       {request.user?.firstName?.[0]?.toUpperCase() || 'U'}
                     </Avatar>
                   }

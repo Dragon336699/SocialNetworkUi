@@ -36,7 +36,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ isOpen, onClose, onDe
   return (
     <Modal
       title={
-        <div className='flex items-center' style={{ borderBottom: '1px solid #000000', paddingBottom: '12px' }}>
+        <div className='flex items-center' style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '12px' }}>
           <ExclamationCircleOutlined className='text-red-500 mr-2' />
           <span className='font-semibold'>Delete post</span>
         </div>
@@ -44,7 +44,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ isOpen, onClose, onDe
       open={isOpen}
       onCancel={onClose}
       footer={
-        <div style={{ borderTop: '1px solid #000000', paddingTop: '12px' }}>
+        <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '12px' }}>
           <button
             onClick={onClose}
             className='px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-200 transition-colors mr-2'
@@ -70,7 +70,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ isOpen, onClose, onDe
       styles={{
         content: { 
           padding: 0,
-          border: '1px solid #000000',
+          border: '1px solid #E5E7EB',
           borderRadius: '8px',
           overflow: 'hidden'
         },

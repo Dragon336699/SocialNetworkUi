@@ -102,7 +102,7 @@ const GroupCard = ({
 
   return (
     <div 
-      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
+      className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
       onClick={handleViewGroup}
     >
       <div className='flex h-full'>
@@ -142,7 +142,7 @@ const GroupCard = ({
             >
               {currentGroup.name}
             </Title>
-            <div className='border-b-2 border-black mt-auto'></div>
+            <div className='border-b-2 border-gray-200 mt-auto'></div>
           </div>
           
           {/* Stats & Actions - Remaining space */}

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 interface PostDropdownMenuProps {
   isOpen: boolean
   onClose: () => void
@@ -22,7 +23,6 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -62,7 +62,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
     <>
       <div
         ref={dropdownRef}
-        className='absolute right-0 top-8 w-52 bg-white rounded-lg shadow-lg border border-black z-50 overflow-hidden'
+        className='absolute right-0 top-8 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
       >
         {/* Xem chi tiết bài viết */}
         <button

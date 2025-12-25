@@ -304,10 +304,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
     <div className={`flex gap-2 ${level > 0 ? 'ml-10' : ''} mb-3 relative`}>
       {/* Đường thẳng đen dọc cho reply */}
       {level > 0 && (
-        <div className="absolute left-[-20px] top-0 bottom-0 w-[2px] bg-black h-full" />
+        <div className="absolute left-[-20px] top-0 bottom-0 w-[2px] bg-gray-200 h-full" />
       )}
       
-      <div className="border-2 border-black rounded-full flex-shrink-0 self-start">
+      <div className="border-2 border-gray-200 rounded-full flex-shrink-0 self-start">
         <Avatar 
           src={comment.user?.avatarUrl} 
           size={level > 0 ? 32 : 40}
@@ -325,7 +325,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         >
           {/* Khung bình luận với viền đen */}
           <div className='relative inline-block max-w-md'>
-            <div className='bg-gray-100 rounded-2xl px-3 py-2 relative border-2 border-black shadow-sm'>
+            <div className='bg-gray-100 rounded-2xl px-3 py-2 relative border-2 border-gray-200 shadow-sm'>
               <div className='text-sm'>
                 <div>
                   <span className='font-semibold'>{fullName}</span>
@@ -357,7 +357,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                       key={img.id}
                       src={img.imageUrl}
                       alt='Comment image'
-                      className='rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90 border border-black'
+                      className='rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90 border border-gray-200'
                       onClick={() => window.open(img.imageUrl, '_blank')}
                     />
                   ))}
@@ -397,7 +397,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
             </button>
 
             {isOwner && showMenu && (
-              <div className='absolute left-0 top-8 bg-white rounded-lg shadow-lg border border-black z-10 min-w-[120px] overflow-hidden'>
+              <div className='absolute left-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 z-10 min-w-[120px] overflow-hidden'>
                 <button
                   onClick={() => {
                     handleEdit(comment)
@@ -445,7 +445,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
               {showReactionPicker && (
                 <div
                   ref={reactionBarRef}
-                  className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full left-0 mb-1 min-w-[200px]'
+                  className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full left-0 mb-0.2 min-w-[180px]'
                   style={{ 
                     background: '#F3F4F6',
                     border: '1px solid #D1D5DB'

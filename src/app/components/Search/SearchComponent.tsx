@@ -24,6 +24,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
   const [currentUserId, setCurrentUserId] = useState<string>('')
 
   const debounceRef = useRef<NodeJS.Timeout>()
+  const inputRef = useRef<any>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -31,6 +32,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
       const timer = setTimeout(() => {
         setIsVisible(true)
         loadSearchHistory()
+        // Auto focus vào input khi mở search panel
+        setTimeout(() => {
+          inputRef.current?.focus()
+        }, 200)
       }, 150)
       return () => clearTimeout(timer)
     } else {
@@ -96,30 +101,39 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
       setSearchResults(response.results || null)
     } catch (error) {
       console.error('Error searching:', error)
-      message.error('Search failed. Please try again.')
     } finally {
       setIsSearching(false)
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchValue(value)
-
+  // Debounce search - chỉ áp dụng cho API call
+  useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
 
-    debounceRef.current = setTimeout(() => {
-      handleSearchPreview(value)
-    }, 500)
+    if (searchValue.trim()) {
+      debounceRef.current = setTimeout(() => {
+        handleSearchPreview(searchValue)
+      }, 500)
+    } else {
+      setSearchResults(null)
+    }
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [searchValue])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value)
   }
 
-  // Save search when user submits without selecting a suggestion
   const handleSearchSubmit = async () => {
     if (searchValue.trim()) {
       try {
-        // Save only content when not selecting from suggestions
         await searchService.saveSearchHistory(searchValue.trim(), undefined, undefined)
         await loadSearchHistory()
       } catch (error) {
@@ -201,6 +215,15 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     onCollapseNavbar?.()
     setSearchValue('')
     setSearchResults(null)
+  }
+
+  const handleClearInput = () => {
+    setSearchValue('')
+    setSearchResults(null)
+    // Focus lại vào input sau khi clear
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
   }
 
   const renderContent = () => {
@@ -330,6 +353,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
 
           <div className='px-4 py-3 border-b border-gray-200'>
             <Input
+              ref={inputRef}
               placeholder='Search'
               value={searchValue}
               onChange={handleInputChange}
@@ -340,12 +364,11 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
                 ) : searchValue ? (
                   <CloseOutlined
                     className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
-                    onClick={() => {
-                      setSearchValue('')
-                      setSearchResults(null)
-                    }}
+                    onClick={handleClearInput}
                   />
-                ) : null
+                ) : (
+                  <SearchOutlined className='text-gray-400' />
+                )
               }
               className='rounded-lg'
               style={{

@@ -121,7 +121,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
   return (
     <Modal
       title={
-        <div className='flex justify-between items-center border-b-2 border-black pb-3 mb-4'>
+        <div className='flex justify-between items-center border-b-2 border-gray-200 pb-3 mb-4'>
           <span className='text-lg font-semibold'>Edit Group</span>
           <Button
             icon={<CloseOutlined />}
@@ -146,7 +146,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
       styles={{
         content: { 
           padding: 0,
-          border: '2px solid #000000',
+          border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
@@ -211,7 +211,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
               <img
                 src={previewImage}
                 alt='Preview'
-                className='w-full h-auto object-cover rounded-lg border-2 border-black'
+                className='w-full h-auto object-cover rounded-lg border-2 border-gray-200'
               />
               <button
                 onClick={handleRemoveImage}
@@ -231,7 +231,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
         )}
       </Form>
 
-      <div className='border-t-2 border-black pt-4 mt-4'>
+      <div className='border-t-2 border-gray-200 pt-4 mt-4'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center gap-3'>
             <button

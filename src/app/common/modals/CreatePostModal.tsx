@@ -172,7 +172,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       styles={{
         content: { 
           padding: 0,
-          border: '1px solid #000000',
+          border: '1px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
@@ -187,9 +187,9 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
         }
       }}
       title={
-        <Flex justify='space-between' style={{ borderBottom: '1px solid #000000', paddingBottom: '12px', marginBottom: '16px' }}>
+        <Flex justify='space-between' style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '12px', marginBottom: '16px' }}>
           <Flex align='center' gap='small'>
-            <div style={{ border: '2px solid #000000', borderRadius: '50%', padding: 0, display: 'inline-flex' }}>
+            <div style={{ border: '2px solid #E5E7EB', borderRadius: '50%', padding: 0, display: 'inline-flex' }}>
               <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
                 {currentUser?.firstName?.[0] || currentUser?.lastName?.[0] || ''}
               </Avatar>
@@ -227,7 +227,7 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
         style={{ fontWeight: 500 }}
       />
 
-      <Divider className='my-3 border-black' />
+      <Divider className='my-3 border-gray-200' />
 
       <div 
         className='grid gap-2 pb-5' 

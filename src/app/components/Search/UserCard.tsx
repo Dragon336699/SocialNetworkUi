@@ -98,7 +98,7 @@ const UserCard = ({
 
   return (
     <div 
-      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden'
+      className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden'
       onClick={handleViewProfile}
       style={{ height: '320px' }}
     >
@@ -139,7 +139,7 @@ const UserCard = ({
             >
               {user.userName}
             </Title>
-            <div className='border-b-2 border-black'></div>
+            <div className='border-b-2 border-gray-200'></div>
           </div>
           
           {/* Info & Actions */}
