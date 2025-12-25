@@ -3,7 +3,6 @@ import styles from './Login.module.css'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { CredentialResponse, GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
-import ChangePasswordPopup from '../ChangePassword/ChangePassword'
 import { useState } from 'react'
 import { LoginRequest } from '@/app/types/User/Requests/loginReq'
 import { userService } from '@/app/services/user.service'
@@ -18,7 +17,6 @@ const Login: React.FC = () => {
     formState: { errors }
   } = useForm<LoginRequest>()
 
-  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const navigate = useNavigate()
   const { setIsLoggedIn, fetchUser } = useUserStore()
@@ -51,14 +49,6 @@ const Login: React.FC = () => {
       console.error('Lỗi login:', err)
       message.error('Đăng nhập thất bại!')
     }
-  }
-
-  const handleOpenChangePassword = () => {
-    setIsChangePasswordVisible(true)
-  }
-
-  const handleCloseChangePassword = () => {
-    setIsChangePasswordVisible(false)
   }
 
   return (
@@ -158,18 +148,6 @@ const Login: React.FC = () => {
             </a>
           </span>
         </div>
-
-        {/* Test Change Password */}
-        <div className='text-center change-password'>
-          <span>
-            Want to change password?{' '}
-            <a className='font-medium hover:underline' onClick={handleOpenChangePassword}>
-              Change Password
-            </a>
-          </span>
-        </div>
-
-        <ChangePasswordPopup visible={isChangePasswordVisible} onClose={handleCloseChangePassword} />
       </div>
     </div>
   )
