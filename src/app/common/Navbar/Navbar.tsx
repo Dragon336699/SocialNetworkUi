@@ -43,7 +43,7 @@ const Navbar: React.FC<NavbarProps> = ({ setShowNoti }) => {
         'Search',
         'Search',
         <div className='flex items-center gap-6'>
-          <FontAwesomeIcon className='text-lg text-white' icon={faSearch} /> {/* Cần import faSearch */}
+          <FontAwesomeIcon className='text-lg text-white' icon={faSearch} />
         </div>
       ),
       getItem(

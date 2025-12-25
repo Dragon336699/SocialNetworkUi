@@ -13,6 +13,7 @@ import PostCommentModal from '../Comment/PostCommentModal'
 import { UserDto } from '@/app/types/User/user.dto'
 import { getTimeAgo } from '@/app/helper'
 import { useNavigate } from 'react-router-dom'
+import { interactionService } from '@/app/services/interaction.service'
 
 interface PostProps extends PostData {
   feedId?: string
@@ -157,6 +158,9 @@ const Post: React.FC<PostProps> = ({
           newTotalLiked = localTotalLiked + 1
           setReactions(newReactions)
           setLocalTotalLiked(newTotalLiked)
+
+          const postData = response.data
+          interactionService.likePostOfUser(postData.userId)
         }
 
         if (onPostUpdated) {

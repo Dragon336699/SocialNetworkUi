@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Input, Tabs, Spin, Avatar, Empty, message, Button } from 'antd'
-import { SearchOutlined, UserOutlined, TeamOutlined, FileTextOutlined, UserAddOutlined, CheckOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import {
+  SearchOutlined,
+  UserOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  UserAddOutlined,
+  CheckOutlined,
+  ClockCircleOutlined
+} from '@ant-design/icons'
 import { searchService } from '@/app/services/search.service'
 import { SearchType, SearchResultDto } from '@/app/types/Search/SearchType'
 import { userService } from '@/app/services/user.service'
@@ -14,6 +22,7 @@ import PostDropdownMenu from '@/app/pages/Post/PostDropdownMenu'
 import { getTimeAgo } from '@/app/helper'
 import EditPostModal from '@/app/pages/Post/EditPostModal'
 import DeletePostModal from '@/app/pages/Post/DeletePostModal'
+import { interactionService } from '@/app/services/interaction.service'
 
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -39,8 +48,8 @@ const SearchPage: React.FC = () => {
   const [pendingGroupIds, setPendingGroupIds] = useState<string[]>([])
   const [friendIds, setFriendIds] = useState<string[]>([])
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([])
-  const [dropdownStates, setDropdownStates] = useState<{[key: string]: boolean}>({})
-  const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
+  const [dropdownStates, setDropdownStates] = useState<{ [key: string]: boolean }>({})
+  const [loadingStates, setLoadingStates] = useState<{ [key: string]: boolean }>({})
 
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
@@ -64,18 +73,18 @@ const SearchPage: React.FC = () => {
       try {
         const response = await groupService.getMyGroups(0, 100)
         const approvedGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
             return userStatus && userStatus.roleName !== GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
 
         const pendingGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
             return userStatus && userStatus.roleName === GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
 
         setMyGroupIds(approvedGroupIds)
         setPendingGroupIds(pendingGroupIds)
@@ -143,48 +152,48 @@ const SearchPage: React.FC = () => {
 
   const handleAddFriend = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [userId]: true }))
+    setLoadingStates((prev) => ({ ...prev, [userId]: true }))
     try {
       const response = await relationService.addFriend(userId)
       if (response.status === 200) {
         message.success('Friend request sent!')
-        setSentRequestIds(prev => [...prev, userId])
+        setSentRequestIds((prev) => [...prev, userId])
       }
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to send friend request'
       message.error(errorMessage)
     } finally {
-      setLoadingStates(prev => ({ ...prev, [userId]: false }))
+      setLoadingStates((prev) => ({ ...prev, [userId]: false }))
     }
   }
 
   const handleJoinGroup = async (groupId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [groupId]: true }))
+    setLoadingStates((prev) => ({ ...prev, [groupId]: true }))
     try {
       await groupService.joinGroup(groupId)
       message.success('Join request sent!')
-      setPendingGroupIds(prev => [...prev, groupId])
+      setPendingGroupIds((prev) => [...prev, groupId])
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to send join request'
       message.error(errorMessage)
     } finally {
-      setLoadingStates(prev => ({ ...prev, [groupId]: false }))
+      setLoadingStates((prev) => ({ ...prev, [groupId]: false }))
     }
   }
 
   const handleCancelJoinRequest = async (groupId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setLoadingStates(prev => ({ ...prev, [groupId]: true }))
+    setLoadingStates((prev) => ({ ...prev, [groupId]: true }))
     try {
       await groupService.cancelJoinRequest(groupId)
       message.success('Join request cancelled')
-      setPendingGroupIds(prev => prev.filter(id => id !== groupId))
+      setPendingGroupIds((prev) => prev.filter((id) => id !== groupId))
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to cancel request'
       message.error(errorMessage)
     } finally {
-      setLoadingStates(prev => ({ ...prev, [groupId]: false }))
+      setLoadingStates((prev) => ({ ...prev, [groupId]: false }))
     }
   }
 
@@ -224,6 +233,7 @@ const SearchPage: React.FC = () => {
   }
 
   const handleUserClick = async (user: UserDto) => {
+    interactionService.searchUser(user.id)
     navigate(`/profile/${user.userName}`)
   }
 
@@ -260,14 +270,14 @@ const SearchPage: React.FC = () => {
   }
 
   const toggleDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: !prev[postId]
     }))
   }
 
   const closeDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: false
     }))
@@ -579,7 +589,7 @@ const SearchPage: React.FC = () => {
                 <Spin size='small' />
               ) : (
                 <SearchOutlined
-                  className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors' 
+                  className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
                   onClick={handleSearchSubmit}
                 />
               )
@@ -589,14 +599,7 @@ const SearchPage: React.FC = () => {
           />
         </div>
 
-        {searchResults && (
-          <Tabs 
-            activeKey={activeTab} 
-            onChange={setActiveTab} 
-            items={items}
-            className='custom-tabs'
-          />
-        )}
+        {searchResults && <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} className='custom-tabs' />}
 
         {!searchResults && !isSearching && searchValue && (
           <div className='flex items-center justify-center h-64'>

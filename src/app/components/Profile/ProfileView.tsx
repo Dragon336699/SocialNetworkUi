@@ -32,6 +32,7 @@ import { SentFriendRequestData } from '@/app/types/UserRelation/userRelation'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { ActionType } from '@/app/types/Common'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
+import { interactionService } from '@/app/services/interaction.service'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -113,6 +114,10 @@ const ProfileView = ({
     }
     setRelation('default')
   }, [user, userInfo, friendList, sentList, receivedList, followerList])
+
+  useEffect(() => {
+    if (!isMe) interactionService.viewUser(userInfo.id)
+  }, [])
 
   const handleFriend = async () => {
     try {

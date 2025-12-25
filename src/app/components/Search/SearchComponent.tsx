@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { groupService } from '@/app/services/group.service'
 import { GroupRole } from '@/app/types/Group/group.dto'
 import { userService } from '@/app/services/user.service'
+import { interactionService } from '@/app/services/interaction.service'
 
 interface SearchComponentProps {
   show: boolean
@@ -183,6 +184,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     }
 
     if (type === 'user') {
+      interactionService.searchUser(item.id)
       navigate(`/profile/${item.userName}`)
     } else if (type === 'group') {
       const isJoined = myGroupIds.includes(item.id)
