@@ -155,7 +155,7 @@ const GroupsFeed = () => {
   }
 
   return (
-    <div className='max-w-2xl mx-auto py-6 px-4'>
+    <div className='max-w-4xl mx-auto py-6 px-4'>
       {/* Header */}
       <div className='mb-6'>
         <Text type='secondary'>View the latest posts from groups you've joined</Text>
@@ -171,11 +171,13 @@ const GroupsFeed = () => {
             return (
               <div key={post.id}>
                 {hasGroup && post.group && (
-                  <div className='bg-white rounded-t-lg border border-b-0 border-gray-200 p-4 pb-2'>
+                  <div className='bg-white border-t-2 border-x-2 border-b-0 border-black p-4 pb-2 rounded-t-lg'>
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-3 flex-1'>
                         <div onClick={(e) => handlePostGroupClick(e, post.group!.id)} className='cursor-pointer'>
-                          <Avatar src={post.group.imageUrl} size={40} icon={<TeamOutlined />} />
+                          <div className='rounded-full border-2 border-black'>
+                            <Avatar src={post.group.imageUrl} size={40} icon={<TeamOutlined />} />
+                          </div>
                         </div>
                         <div className='flex-1'>
                           <div
@@ -189,14 +191,16 @@ const GroupsFeed = () => {
                               onClick={(e) => handlePostUserClick(e, user?.userName || '')}
                               className='cursor-pointer'
                             >
-                              <Avatar
-                                src={user?.avatarUrl}
-                                size={20}
-                                className='w-5 h-5 rounded-full object-cover'
-                                style={{ minWidth: 20, minHeight: 20 }}
-                              >
-                                {user?.firstName?.[0] || user?.lastName?.[0] || ''}
-                              </Avatar>
+                              <div className='rounded-full border-2 border-black'>
+                                <Avatar
+                                  src={user?.avatarUrl}
+                                  size={24}
+                                  className='w-6 h-6 rounded-full object-cover'
+                                  style={{ minWidth: 24, minHeight: 24 }}
+                                >
+                                  {user?.firstName?.[0] || user?.lastName?.[0] || ''}
+                                </Avatar>
+                              </div>
                             </div>
                             <div className='flex items-center gap-1'>
                               <span
@@ -239,7 +243,7 @@ const GroupsFeed = () => {
                   </div>
                 )}
 
-                <div className={hasGroup ? 'rounded-t-none' : ''}>
+                <div className={hasGroup ? '' : ''}>
                   <Post
                     {...post}
                     currentUserId={currentUser?.id || ''}

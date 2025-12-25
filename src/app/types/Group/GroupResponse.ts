@@ -48,6 +48,12 @@ export interface GetPendingJoinRequestsResponse {
   totalCount: number
 }
 
+export interface SearchMyGroupsResponse {
+  message: string
+  groups: GroupDto[]
+  totalCount: number
+}
+
 export interface LeaveGroupResponse {
   message: string
 }

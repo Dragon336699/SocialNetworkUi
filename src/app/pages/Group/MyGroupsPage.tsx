@@ -89,7 +89,7 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
       ) : groups.length > 0 ? (
         <Row gutter={[16, 16]}>
           {groups.map((group) => (
-            <Col xs={24} sm={12} lg={8} xl={6} key={group.id}>
+            <Col xs={24} sm={12} lg={8} key={group.id}>
               <GroupCard
                 group={group}
                 showActions={true}

@@ -22,10 +22,8 @@ const Home = () => {
     status: ''
   }
   const [isOpenCreatePost, setIsOpenCreatePost] = useState<boolean>(false)
-
   const [userInfo, setUserInfo] = useState<UserDto>(defaultUser)
 
-  // Lấy user info khi component mount
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -57,12 +55,10 @@ const Home = () => {
     handleSeenPost
   } = usePosts()
 
-  // Đóng modal tạo bài đăng
   const handleCloseCreatePost = () => {
     setIsOpenCreatePost(false)
   }
 
-  // Xử lý tạo bài đăng mới
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
     handlePostCreated()
@@ -78,13 +74,10 @@ const Home = () => {
     }
   }, [flushNow])
 
-  // Cuộn vô hạn được cải thiện với giới hạn tần suất
   const handleScroll = useCallback(() => {
     const scrollTop = document.documentElement.scrollTop
     const scrollHeight = document.documentElement.scrollHeight
     const clientHeight = window.innerHeight
-
-    // Tải thêm khi người dùng cuộn đến 80% trang
     const scrollPercentage = (scrollTop + clientHeight) / scrollHeight
 
     if (scrollPercentage > 0.8 && !loading && hasMore) {
@@ -92,13 +85,12 @@ const Home = () => {
     }
   }, [loading, hasMore, loadMore])
 
-  // Thêm sự kiện cuộn với giới hạn tần suất
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
 
     const throttledScroll = () => {
       clearTimeout(timeoutId)
-      timeoutId = setTimeout(handleScroll, 100) // Giới hạn để tránh gọi quá nhiều
+      timeoutId = setTimeout(handleScroll, 100)
     }
 
     window.addEventListener('scroll', throttledScroll)
@@ -108,7 +100,6 @@ const Home = () => {
     }
   }, [handleScroll])
 
-  // Hiển thị cảnh báo lỗi
   if (error) {
     return (
       <div className='min-h-screen bg-gray-50 py-6'>
@@ -137,7 +128,6 @@ const Home = () => {
     )
   }
 
-  // Hiển thị trạng thái tải ban đầu
   if (loading && posts.length === 0) {
     return (
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
@@ -162,13 +152,15 @@ const Home = () => {
 
       <div className='max-w-2xl mx-auto px-4'>
         {/* Create Post Section */}
-        <div className='bg-white rounded-lg p-4 mb-6 shadow-sm border border-gray-200'>
+        <div className='bg-white rounded-lg p-4 mb-6 shadow-sm border-2 border-black'>
           <div
             onClick={() => setIsOpenCreatePost(true)}
             className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
           >
-            <Avatar size={48} src={userInfo?.avatarUrl} />
-            <div className='flex-1 bg-neutral-100 rounded-full px-4 py-3 text-neutral-600 hover:bg-neutral-200 transition-colors'>
+            <div className='rounded-full border-2 border-black'>
+              <Avatar size={48} src={userInfo?.avatarUrl} className='w-12 h-12 min-w-12 min-h-12' />
+            </div>
+            <div className='flex-1 bg-gray-50 rounded-full px-4 py-3 text-gray-500 hover:bg-gray-100 transition-colors border border-gray-300 font-medium'>
               What's on your mind?
             </div>
           </div>
@@ -195,7 +187,6 @@ const Home = () => {
                 ))}
               </div>
 
-              {/* Chỉ báo tải cho cuộn vô hạn */}
               {loading && (
                 <div className='text-center py-6'>
                   <Spin />
@@ -205,7 +196,6 @@ const Home = () => {
                 </div>
               )}
 
-              {/* Nút tải thêm */}
               {!loading && hasMore && (
                 <div className='text-center py-6'>
                   <Button onClick={loadMore} type='default' size='large'>
@@ -214,16 +204,14 @@ const Home = () => {
                 </div>
               )}
 
-              {/* Thông báo hết bài đăng */}
               {!hasMore && posts.length > 0 && (
                 <div className='text-center py-6'>
-                  <Text type='secondary'>🎉 You’ve reached the end of all posts!</Text>
+                  <Text type='secondary'>🎉 You've reached the end of all posts!</Text>
                 </div>
               )}
             </>
           ) : (
-            /* Trạng thái trống */
-            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
+            <div className='bg-white rounded-xl shadow-sm border-2 border-black p-8'>
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
@@ -246,4 +234,5 @@ const Home = () => {
     </div>
   )
 }
+
 export default Home

@@ -54,6 +54,14 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
+// Hàm helper để lấy màu chữ theo reaction
+const getReactionColor = (reaction: string): string => {
+  if (reaction === '❤️' || reaction === '😡') {
+    return '#EF4444' // red-500
+  }
+  return '#F59E0B' // amber-500 (màu vàng)
+}
+
 const PostCommentModal: React.FC<PostCommentModalProps> = ({
   isOpen,
   onClose,
@@ -419,6 +427,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
         return null
     }
   }
+
   // Hàm hiển thị thông tin về các reaction và bình luận
   const renderReactionsInfo = () => {
     const hasReactions = postReactionUsers && postReactionUsers.length > 0
@@ -430,13 +439,13 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
     const uniqueReactions = hasReactions ? Array.from(new Set(postReactionUsers.map((r) => r.reaction))) : []
     const currentUserReaction = hasReactions ? postReactionUsers.find((r) => r.userId === currentUserId) : null
-    // Hàm lấy tên đầy đủ của người dùng
+
     const getFullName = (user: any) => {
       if (!user) return 'User'
       return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     }
-    // Hàm tạo văn bản hiển thị cho reaction
-    const getReactionText = () => {
+
+    const getReactionDisplayText = () => {
       if (!hasReactions) return ''
 
       if (postReactionUsers.length === 1) {
@@ -456,34 +465,31 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
 
     return (
-      <div className='px-4 py-2.5 border-b border-gray-200'>
-        <div className='flex items-center justify-between text-sm'>
-          {hasReactions ? (
-            <div className='flex items-center gap-2'>
-              <div className='flex items-center -space-x-1'>
-                {uniqueReactions.slice(0, 3).map((reaction, index) => (
-                  <div
-                    key={index}
-                    className='w-[18px] h-[18px] bg-white rounded-full flex items-center justify-center text-xs shadow-sm border border-white'
-                    style={{ zIndex: 3 - index }}
-                  >
-                    {reaction}
-                  </div>
-                ))}
-              </div>
-              <span className='hover:underline cursor-pointer text-gray-700'>{getReactionText()}</span>
+      <>
+        {hasReactions && (
+          <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10'>
+            <div className='flex items-center -space-x-1'>
+              {uniqueReactions.slice(0, 3).map((reactionEmoji, index) => (
+                <div
+                  key={index}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                    index === 0 ? 'z-30' : index === 1 ? 'z-20' : 'z-10'
+                  }`}
+                >
+                  {reactionEmoji}
+                </div>
+              ))}
             </div>
-          ) : (
-            <div></div>
-          )}
+            <span className='whitespace-nowrap'>{getReactionDisplayText()}</span>
+          </div>
+        )}
 
-          {hasComments && (
-            <span className='text-gray-600 hover:underline cursor-pointer'>
-              {totalComment} {totalComment === 1 ? 'comment' : 'comments'}
-            </span>
-          )}
-        </div>
-      </div>
+        {hasComments && (
+          <button className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap'>
+            {totalComment} Comment{totalComment > 1 ? 's' : ''}
+          </button>
+        )}
+      </>
     )
   }
 
@@ -496,7 +502,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   return (
     <>
       <div className='fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-0 md:p-4'>
-        <div className='bg-white w-full h-full md:h-[90vh] md:max-w-[1000px] md:rounded-xl flex flex-col overflow-hidden shadow-2xl'>
+        <div className='bg-white w-full h-full md:h-[90vh] md:max-w-[1000px] md:rounded-xl md:border md:border-black flex flex-col overflow-hidden shadow-2xl'>
           <div className='relative px-4 py-3 border-b border-gray-200 bg-white flex justify-center items-center'>
             <h3 className='font-bold text-xl text-center'>{fullName}'s post</h3>
 
@@ -512,9 +518,11 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             <div className='px-4 pt-3 pb-2'>
               <div className='flex items-start justify-between'>
                 <div className='flex items-center gap-3'>
-                  <Avatar src={postUser.avatarUrl} size={40}>
-                    {postUser.firstName?.[0] || postUser.lastName?.[0] || ''}
-                  </Avatar>
+                  <div className='rounded-full border-2 border-black'>
+                    <Avatar src={postUser.avatarUrl} size={40}>
+                      {postUser.firstName?.[0] || postUser.lastName?.[0] || ''}
+                    </Avatar>
+                  </div>
                   <div>
                     <h4 className='font-semibold text-sm hover:underline cursor-pointer'>{fullName}</h4>
                     <div className='flex items-center gap-1'>
@@ -527,7 +535,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                 <div className='relative'>
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className='text-gray-500 hover:bg-gray-100 p-2 rounded-full transition'
+                    className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 hover:border hover:border-gray-300 border border-transparent'
                   >
                     <MoreOutlined style={{ fontSize: '20px' }} />
                   </button>
@@ -545,7 +553,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             </div>
 
             <div className='px-4 pb-3'>
-              <p className='text-sm text-gray-900 whitespace-pre-wrap'>{currentPostContent}</p>
+              <p className='text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium'>{currentPostContent}</p>
             </div>
 
             {currentPostImages && currentPostImages.length > 0 && (
@@ -561,95 +569,107 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
               </div>
             )}
 
-            {renderReactionsInfo()}
-
-            <div className='px-4 py-2 border-b border-gray-200'>
-              <div className='flex items-center justify-around'>
-                <div className='relative'>
-                  <div
-                    className='relative'
-                    onMouseEnter={handleMouseEnterReaction}
-                    onMouseLeave={handleMouseLeaveReaction}
-                  >
-                    <button
-                      onClick={handleLikeClick}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm transition-colors ${
-                        userReaction ? 'text-blue-500 hover:bg-blue-50' : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {userReaction ? (
-                        <>
-                          <span className='text-lg'>{userReaction.reaction}</span>
-                          <span className='font-medium'>{getReactionText(userReaction.reaction)}</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className='w-5 h-5'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                            strokeWidth='2'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              d='M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'
-                            />
-                          </svg>
-                          <span className='font-medium'>Like</span>
-                        </>
-                      )}
-                    </button>
-
-                    {showPostReactionPicker && (
+            <div className='px-4 py-3 border-t border-gray-100'>
+              <div className='space-y-3'>
+                {/* Row 1: Like, Comment buttons và Reactions Info */}
+                <div className='flex items-center justify-between'>
+                  {/* Like and Comment buttons - Bên trái */}
+                  <div className='flex items-center space-x-4'>
+                    <div className='relative'>
                       <div
-                        ref={reactionBarRef}
-                        className='absolute z-50 flex gap-1 bg-white border border-gray-200 shadow-lg rounded-full py-1 px-2 bottom-full left-0 mb-1 animate-fadeInUp'
-                        style={{ minWidth: '200px' }}
-                        onMouseEnter={() => {
-                          if (hoverTimeout) {
-                            clearTimeout(hoverTimeout)
-                            setHoverTimeout(null)
-                          }
-                        }}
+                        className={`rounded-full transition-colors h-10 flex items-center border ${
+                          userReaction 
+                            ? 'bg-gray-100 border-gray-300' 
+                            : 'border-transparent hover:bg-gray-100 hover:border-gray-300'
+                        }`}
+                        onMouseEnter={handleMouseEnterReaction}
                         onMouseLeave={handleMouseLeaveReaction}
                       >
-                        {availableReactions.map((reaction, index) => (
+                        <button
+                          onClick={handleLikeClick}
+                          className='flex items-center space-x-2 px-3 py-1 rounded-full text-sm transition-colors font-semibold'
+                        >
+                          {userReaction ? (
+                            <>
+                              <span className='text-lg'>{userReaction.reaction}</span>
+                              <span style={{ color: getReactionColor(userReaction.reaction) }}>
+                                {getReactionText(userReaction.reaction)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className='w-5 h-5'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                                strokeWidth='2'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  d='M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'
+                                />
+                              </svg>
+                              <span>Like</span>
+                            </>
+                          )}
+                        </button>
+
+                        {showPostReactionPicker && (
                           <div
-                            key={reaction}
-                            onClick={() => handleReaction(reaction)}
-                            className='text-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-110 p-0.5 rounded-full relative hover:bg-gray-100'
+                            ref={reactionBarRef}
+                            className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full mb-2 animate-fadeInUp'
                             style={{
-                              animationDelay: `${index * 50}ms`
+                              minWidth: '200px',
+                              background: '#F3F4F6',
+                              border: '1px solid #D1D5DB',
+                              left: '0'
                             }}
-                            title={getReactionText(reaction)}
+                            onMouseEnter={() => {
+                              if (hoverTimeout) {
+                                clearTimeout(hoverTimeout)
+                                setHoverTimeout(null)
+                              }
+                            }}
+                            onMouseLeave={handleMouseLeaveReaction}
                           >
-                            {reaction}
+                            {availableReactions.map((reaction, index) => (
+                              <div
+                                key={reaction}
+                                onClick={() => handleReaction(reaction)}
+                                className='text-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-110 p-0.5 rounded-full relative'
+                                style={{
+                                  animationDelay: `${index * 50}ms`
+                                }}
+                                title={getReactionText(reaction)}
+                              >
+                                {reaction}
 
-                            <div className='absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1 py-0.5 rounded opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap'>
-                              {getReactionText(reaction)}
-                            </div>
+                                <div className='absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1 py-0.5 rounded opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap'>
+                                  {getReactionText(reaction)}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+                    </div>
+
+                    <button className='flex items-center space-x-2 px-3 rounded-full text-sm transition-colors h-10 font-semibold border border-transparent text-gray-900 hover:bg-gray-100 hover:border-gray-300'>
+                      <MessageOutlined style={{ fontSize: '18px' }} />
+                      <span>Comment</span>
+                    </button>
                   </div>
+
+                  {/* Reactions Info - Bên phải */}
+                  <div className='flex items-center gap-2'>{renderReactionsInfo()}</div>
                 </div>
-
-                <button className='flex items-center gap-2 px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100 transition font-semibold text-sm'>
-                  <MessageOutlined style={{ fontSize: '18px' }} />
-                  <span>Comment</span>
-                </button>
-
-                <button className='flex items-center gap-2 px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100 transition font-semibold text-sm'>
-                  <ShareAltOutlined style={{ fontSize: '18px' }} />
-                  <span>Share</span>
-                </button>
               </div>
             </div>
 
             <div className='px-4 py-3'>
+              <div className='border-t-2 border-black mb-3'></div>
               {loading ? (
                 <div className='text-center py-8 text-gray-500'>Loading...</div>
               ) : comments.length === 0 ? (
@@ -678,7 +698,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
           <div className='border-t border-gray-200 bg-white px-4 py-3'>
             {(replyTo || editingComment) && (
-              <div className='flex items-center justify-between mb-2 px-3 py-2 bg-blue-50 rounded-lg text-sm'>
+              <div className='flex items-center justify-between mb-2 px-3 py-2 bg-blue-50 rounded-lg border-2 border-blue-300 text-sm'>
                 <span className='text-gray-600 font-medium'>
                   {editingComment ? '✏️ Editing comment' : `💬 Replying to ${replyTo?.name}`}
                 </span>
@@ -688,40 +708,49 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
               </div>
             )}
 
+            {/* Preview existing images */}
             {existingImages.length > 0 && (
               <div className='mb-2'>
                 <div className='relative inline-block'>
-                  <img src={existingImages[0].imageUrl} alt='Existing' className='w-16 h-16 object-cover rounded-lg' />
+                  <img src={existingImages[0].imageUrl} alt='Existing' className='w-20 h-20 object-cover rounded-lg' />
                   <button
                     onClick={() => removeExistingImage(existingImages[0].id)}
-                    className='absolute -top-1 -right-1 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-900'
+                    className='absolute -top-1.5 -right-1.5 bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-gray-900 transition-colors'
                   >
-                    <CloseOutlined style={{ fontSize: '12px' }} />
+                    <CloseOutlined className='text-[10px]' />
                   </button>
                 </div>
               </div>
             )}
 
+            {/* Preview new images */}
             {previewUrls.length > 0 && (
               <div className='mb-2'>
                 <div className='relative inline-block'>
-                  <img src={previewUrls[0]} alt='Preview' className='w-16 h-16 object-cover rounded-lg' />
+                  <img src={previewUrls[0]} alt='Preview' className='w-20 h-20 object-cover rounded-lg' />
                   <button
                     onClick={() => removeImage(0)}
-                    className='absolute -top-1 -right-1 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-900'
+                    className='absolute -top-1.5 -right-1.5 bg-gray-800 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-gray-900 transition-colors'
                   >
-                    <CloseOutlined style={{ fontSize: '12px' }} />
+                    <CloseOutlined className='text-[10px]' />
                   </button>
                 </div>
               </div>
             )}
 
             <div className='flex gap-2 items-center'>
-              <Avatar src={currentUser.avatarUrl} size={32} className='flex-shrink-0'>
-                {currentUser.firstName?.[0] || ''}
-              </Avatar>
+              <div className='flex-shrink-0 rounded-full border-2 border-black'>
+                <Avatar 
+                  src={currentUser.avatarUrl} 
+                  size={32} 
+                  className='rounded-full object-cover w-8 h-8 min-w-8 min-h-8'
+                >
+                  {currentUser.firstName?.[0] || ''}
+                </Avatar>
+              </div>
 
-              <div className='flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center gap-2'>
+              {/* Input container với styling giống Post */}
+              <div className='flex-1 flex items-start bg-gray-50 rounded-3xl px-4 py-2.5 border border-gray-300'>
                 <textarea
                   ref={textareaRef}
                   value={content}
@@ -733,25 +762,31 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                     }
                   }}
                   placeholder='Write a comment...'
-                  className='flex-1 bg-transparent outline-none resize-none text-sm max-h-20'
+                  className='flex-1 bg-transparent outline-none resize-none overflow-hidden text-sm max-h-20 placeholder-gray-500 font-medium pl-2'
                   rows={1}
                 />
 
-                <div className='flex items-center gap-1'>
-                  <input
-                    ref={fileInputRef}
-                    type='file'
-                    accept='image/*'
-                    onChange={handleImageSelect}
-                    className='hidden'
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className='text-gray-500 hover:text-gray-700 p-1'
-                  >
-                    <PictureOutlined style={{ fontSize: '16px' }} />
-                  </button>
+                <div className='flex items-center gap-1 ml-2 flex-shrink-0'>
+                  {/* Image picker - chỉ hiện khi chưa có preview */}
+                  {previewUrls.length === 0 && existingImages.length === 0 && (
+                    <>
+                      <input
+                        ref={fileInputRef}
+                        type='file'
+                        accept='image/*'
+                        onChange={handleImageSelect}
+                        className='hidden'
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className='text-gray-500 hover:text-gray-700 p-1'
+                      >
+                        <PictureOutlined className='text-base' />
+                      </button>
+                    </>
+                  )}
 
+                  {/* Emoji picker */}
                   <div ref={emojiWrapperRef} className='relative'>
                     <button
                       onClick={() => setShowEmojiPicker((prev) => !prev)}
@@ -781,16 +816,20 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                 </div>
               </div>
 
+              {/* Send button - giống như trong Post */}
               {(content.trim() || selectedImages.length > 0 || existingImages.length > 0) && (
                 <button
                   onClick={handleSubmit}
-                  className='text-blue-500 hover:text-blue-600 font-semibold text-sm px-3 items-center'
+                  className='rounded-full transition-colors flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600'
                 >
-                  <SendOutlined/>
+                  <svg className='w-5 h-5 text-white' fill='currentColor' viewBox='0 0 24 24'>
+                    <path d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z' />
+                  </svg>
                 </button>
               )}
             </div>
           </div>
+
         </div>
       </div>
 

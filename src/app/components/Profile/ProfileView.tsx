@@ -58,7 +58,10 @@ const ProfileView = ({
   sentList,
   receivedList,
   refreshData,
-  onEdit
+  onEdit,
+  onPostCreated,
+  onPostUpdated,
+  onPostDeleted
 }: {
   posts: PostData[]
   followerList: UserDto[]
@@ -69,6 +72,9 @@ const ProfileView = ({
   receivedList: SentFriendRequestData[]
   refreshData: () => void
   onEdit: () => void
+  onPostCreated?: () => void
+  onPostUpdated?: (updatedPost: PostData) => void
+  onPostDeleted?: (postId: string) => void
 }) => {
   const { user } = useUserStore()
   const { userName } = useParams()
@@ -76,7 +82,6 @@ const ProfileView = ({
   const navigate = useNavigate()
 
   const isFriend = friendList.some((friend) => friend.id === user?.id)
-  const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [activeTab, setActiveTab] = useState<TabType>('posts')
   const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
   const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl)
@@ -191,7 +196,9 @@ const ProfileView = ({
 
   const handleCreatePostSuccess = async () => {
     setIsOpenCreatePost(false)
-    handlePostCreated()
+    if (onPostCreated) {
+      await onPostCreated()
+    }
   }
 
   const getTabButtonClass = (tabName: TabType) => {
@@ -207,13 +214,19 @@ const ProfileView = ({
         return (
           <div className='space-y-4'>
             {isMe && (
-              <div className='bg-white rounded-lg p-4 shadow-sm border border-gray-200'>
+              <div className='bg-white rounded-lg p-4 shadow-sm border-2 border-black'>
                 <div
                   onClick={() => setIsOpenCreatePost(true)}
                   className='flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'
                 >
-                  <Avatar size={48} src={user?.avatarUrl} />
-                  <div className='flex-1 bg-gray-100 rounded-full px-4 py-3 text-gray-600 hover:bg-gray-200 transition-colors'>
+                  <div className='rounded-full border-2 border-black'>
+                    <Avatar 
+                      size={48} 
+                      src={user?.avatarUrl}
+                      className='w-12 h-12 min-w-12 min-h-12'
+                    />
+                  </div>
+                  <div className='flex-1 bg-gray-50 rounded-full px-4 py-3 text-gray-500 hover:bg-gray-100 transition-colors border border-gray-300 font-medium'>
                     What's on your mind?
                   </div>
                 </div>
@@ -232,10 +245,10 @@ const ProfileView = ({
                       <Post
                         {...post}
                         postReactionUsers={post.postReactionUsers || []}
-                        currentUser={userInfo}
-                        currentUserId={userInfo.id || ''}
-                        onPostUpdated={handlePostUpdated}
-                        onPostDeleted={handlePostDeleted}
+                        currentUser={user!}
+                        currentUserId={user?.id || ''}
+                        onPostUpdated={onPostUpdated}
+                        onPostDeleted={onPostDeleted}
                         onSeen={() => {}}
                       />
                     </div>
@@ -479,16 +492,18 @@ const ProfileView = ({
         <div className='rounded-xl p-6 md:p-8 shadow-sm border border-blue-100 mb-8'>
           <Row gutter={[32, 24]} align='middle'>
             <Col>
-              <Image
-                src={previewImage || DEFAULT_AVATAR_URL}
-                className='rounded-full object-cover border'
-                style={{ width: 140, height: 140 }}
-                preview={{
-                  mask: false,
-                  toolbarRender: () => null,
-                  movable: false
-                }}
-              />
+              <div className='rounded-full border-2 border-black'>
+                <Image
+                  src={previewImage || DEFAULT_AVATAR_URL}
+                  className='rounded-full object-cover'
+                  style={{ width: 140, height: 140 }}
+                  preview={{
+                    mask: false,
+                    toolbarRender: () => null,
+                    movable: false
+                  }}
+                />
+              </div>
               {/* <Avatar size={140} src={previewImage} className='border-4 border-white shadow-lg' /> */}
               {isMe && (
                 <Upload

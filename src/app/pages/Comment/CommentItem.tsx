@@ -18,6 +18,14 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
+// Hàm helper để lấy màu chữ theo reaction
+const getReactionColor = (reaction: string): string => {
+  if (reaction === '❤️' || reaction === '😡') {
+    return '#EF4444' // red-500
+  }
+  return '#F59E0B' // amber-500 (màu vàng)
+}
+
 interface CommentItemProps {
   comment: CommentDto
   currentUserId: string
@@ -31,6 +39,7 @@ interface CommentItemProps {
   totalComment: number
   level?: number
   parentUserName?: string
+  onNewReply?: (parentCommentId: string, newComment: CommentDto) => void
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({
@@ -45,7 +54,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
   setImagesToDelete,
   totalComment,
   level = 0,
-  parentUserName
+  parentUserName,
+  onNewReply
 }) => {
   const availableReactions = ['👍', '❤️', '😂', '😮', '😢', '😡']
   const [showMenu, setShowMenu] = useState(false)
@@ -56,6 +66,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [isHovering, setIsHovering] = useState(false)
 
   const [localReactions, setLocalReactions] = useState(comment.commentReactionUsers || [])
+  const [localReplies, setLocalReplies] = useState<CommentDto[]>(comment.replies || [])
 
   const CHARACTER_LIMIT = 300
   const menuRef = useRef<HTMLDivElement>(null)
@@ -74,6 +85,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
   useEffect(() => {
     setLocalReactions(comment.commentReactionUsers || [])
   }, [comment.commentReactionUsers])
+
+  // Cập nhật localReplies khi comment.replies thay đổi
+  useEffect(() => {
+    setLocalReplies(comment.replies || [])
+  }, [comment.replies])
 
   // Hàm tính thống kê reaction
   const getReactionStats = () => {
@@ -99,18 +115,18 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const { uniqueReactions, total: totalReactions } = getReactionStats()
 
   // Hàm tính tổng số phản hồi của bình luận
-  const getTotalReplyCount = (comment: CommentDto): number => {
-    if (!comment.replies || comment.replies.length === 0) return 0
+  const getTotalReplyCount = (commentData: CommentDto): number => {
+    if (!commentData.replies || commentData.replies.length === 0) return 0
 
-    let total = comment.replies.length
-    comment.replies.forEach(reply => {
+    let total = commentData.replies.length
+    commentData.replies.forEach(reply => {
       total += getTotalReplyCount(reply)
     })
 
     return total
   }
 
-  const totalReplyCount = getTotalReplyCount(comment)
+  const totalReplyCount = getTotalReplyCount({ ...comment, replies: localReplies })
 
   // Hàm xử lý sự kiện click bên ngoài để đóng menu
   useEffect(() => {
@@ -266,13 +282,39 @@ const CommentItem: React.FC<CommentItemProps> = ({
     setContent('')
     setExistingImages([])
     setImagesToDelete([])
+    
+    // Tự động hiển thị replies khi click reply
+    setShowReplies(true)
+  }
+
+  // Hàm xử lý khi có reply mới
+  const handleNewReply = (parentCommentId: string, newComment: CommentDto) => {
+    if (comment.id === parentCommentId) {
+      // Thêm reply mới vào danh sách local
+      setLocalReplies(prev => [...prev, newComment])
+      // Tự động mở replies để hiển thị comment mới
+      setShowReplies(true)
+    } else {
+      // Propagate lên parent nếu không phải comment này
+      onNewReply?.(parentCommentId, newComment)
+    }
   }
 
   return (
-    <div className={`flex gap-2 ${level > 0 ? 'ml-10' : ''} mb-3`}>
-      <Avatar src={comment.user?.avatarUrl} size={level > 0 ? 32 : 40} className='flex-shrink-0'>
-        {comment.user?.firstName?.[0] || 'U'}
-      </Avatar>
+    <div className={`flex gap-2 ${level > 0 ? 'ml-10' : ''} mb-3 relative`}>
+      {/* Đường thẳng đen dọc cho reply */}
+      {level > 0 && (
+        <div className="absolute left-[-20px] top-0 bottom-0 w-[2px] bg-black h-full" />
+      )}
+      
+      <div className="border-2 border-black rounded-full flex-shrink-0 self-start">
+        <Avatar 
+          src={comment.user?.avatarUrl} 
+          size={level > 0 ? 32 : 40}
+        >
+          {comment.user?.firstName?.[0] || 'U'}
+        </Avatar>
+      </div>
 
       <div className='flex-1'>
         {/* Container với MoreOutlined bên ngoài */}
@@ -281,25 +323,23 @@ const CommentItem: React.FC<CommentItemProps> = ({
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          {/* Khung bình luận */}
-          <div className='relative inline-block' style={{ maxWidth: '400px' }}>
-            <div className='bg-gray-100 rounded-2xl px-3 py-2 relative'>
-              <div className='flex items-center gap-2'>
-                <p className='font-semibold text-sm'>{fullName}</p>
+          {/* Khung bình luận với viền đen */}
+          <div className='relative inline-block max-w-md'>
+            <div className='bg-gray-100 rounded-2xl px-3 py-2 relative border-2 border-black shadow-sm'>
+              <div className='text-sm'>
+                <div>
+                  <span className='font-semibold'>{fullName}</span>
+                  {level > 0 && parentUserName && (
+                    <>
+                      <span className='text-xs font-normal text-gray-500'> replied to </span>
+                      <span className='font-semibold text-yellow-600'>{parentUserName}</span>
+                    </>
+                  )}
+                </div>
+                <div className='text-gray-800 break-words whitespace-pre-wrap mt-0.5'>
+                  {displayContent}
+                </div>
               </div>
-
-              <p
-                className='text-sm text-gray-800 break-words'
-                style={{
-                  paddingRight: totalReactions > 0 ? '50px' : '0',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word',
-                  whiteSpace: 'pre-wrap'
-                }}
-              >
-                {level > 0 && parentUserName && ( <span className='font-bold text-black mr-1'>{parentUserName}</span>)}
-                {displayContent}
-              </p>
 
               {isLongContent && (
                 <button
@@ -311,38 +351,33 @@ const CommentItem: React.FC<CommentItemProps> = ({
               )}
 
               {comment.commentImages && comment.commentImages.length > 0 && (
-                <div
-                  className='mt-2 grid gap-2'
-                  style={{
-                    gridTemplateColumns: `repeat(auto-fit, minmax(100px, 1fr))`
-                  }}
-                >
+                <div className='mt-2 grid gap-2 grid-cols-[repeat(auto-fit,minmax(100px,1fr))]'>
                   {comment.commentImages.map((img) => (
                     <img
                       key={img.id}
                       src={img.imageUrl}
                       alt='Comment image'
-                      className='rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90'
+                      className='rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90 border border-black'
                       onClick={() => window.open(img.imageUrl, '_blank')}
                     />
                   ))}
                 </div>
               )}
 
+              {/* Reaction icons nằm trong khung comment, căn trái */}
               {totalReactions > 0 && (
-                <div className='absolute bottom-[0px] right-[-16px] bg-gray-200 rounded-full px-1.5 py-0.5 shadow-sm flex items-center gap-0.5 cursor-pointer hover:border-gray-300 transition-colors'>
-                  <div className='flex items-center -space-x-0.5'>
-                    {uniqueReactions.map((reaction, idx) => (
-                      <div
-                        key={idx}
-                        className='w-[16px] h-[16px] bg-gray-200 rounded-full flex items-center justify-center text-[10px]'
-                        style={{ zIndex: 3 - idx }}
-                      >
-                        {reaction}
-                      </div>
-                    ))}
-                  </div>
-                  <span className='text-[11px] text-gray-600 font-medium ml-0.5'>{totalReactions}</span>
+                <div className='mt-1 flex items-center gap-1'>
+                  {uniqueReactions.map((reaction, idx) => (
+                    <div
+                      key={idx}
+                      className='w-6 h-6 bg-white rounded-full flex items-center justify-center text-sm border border-gray-400 shadow-sm'
+                    >
+                      {reaction}
+                    </div>
+                  ))}
+                  {totalReactions > 1 && (
+                    <span className='text-xs text-gray-600 font-medium ml-1'>{totalReactions}</span>
+                  )}
                 </div>
               )}
             </div>
@@ -358,44 +393,50 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 pointerEvents: (isHovering || showMenu) ? 'auto' : 'none'
               }}
             >
-              <MoreOutlined style={{ fontSize: '16px', transform: 'rotate(90deg)' }} />
+              <MoreOutlined className="text-base rotate-90" />
             </button>
 
             {isOwner && showMenu && (
-              <div className='absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px] overflow-hidden'>
+              <div className='absolute left-0 top-8 bg-white rounded-lg shadow-lg border border-black z-10 min-w-[120px] overflow-hidden'>
                 <button
                   onClick={() => {
                     handleEdit(comment)
                     setShowMenu(false)
                   }}
-                  className='w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 whitespace-nowrap'
+                  className='w-full px-4 py-2 text-left text-sm hover:bg-gray-200 flex items-center gap-2 whitespace-nowrap border-0 bg-transparent'
                 >
-                  <EditOutlined style={{ fontSize: '14px' }} />
-                  Edit
+                  <EditOutlined className="text-sm text-gray-600 flex-shrink-0" />
+                  <span className='font-medium text-gray-900'>Edit</span>
                 </button>
                 <button
                   onClick={() => {
                     handleDelete(comment.id)
                     setShowMenu(false)
                   }}
-                  className='w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600 whitespace-nowrap'
+                  className='w-full px-4 py-2 text-left text-sm hover:bg-red-100 flex items-center gap-2 whitespace-nowrap group border-0 bg-transparent'
                 >
-                  <DeleteOutlined style={{ fontSize: '14px' }} />
-                  Delete
+                  <DeleteOutlined className="text-sm text-red-500 flex-shrink-0" />
+                  <span className='font-medium text-red-500 group-hover:text-red-700'>Delete</span>
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <div className='flex items-center gap-3 ml-3 mt-1 text-xs font-semibold text-gray-600'>
-          <span className='text-gray-500'>{getTimeAgo(comment.createdAt)}</span>
+        <div className='flex items-center gap-3 ml-3 mt-1 text-xs font-semibold text-gray-700'>
+          <span>{getTimeAgo(comment.createdAt)}</span>
 
           <div className='relative'>
             <div className='relative' onMouseEnter={handleMouseEnterReaction} onMouseLeave={handleMouseLeaveReaction}>
               <button
                 onClick={handleLikeClick}
-                className={`hover:underline transition-colors ${userReaction ? 'text-blue-500 font-semibold' : ''}`}
+                className={`hover:underline transition-colors ${
+                  userReaction 
+                    ? (userReaction.reaction === '❤️' || userReaction.reaction === '😡')
+                      ? 'text-red-500'
+                      : 'text-amber-500'
+                    : ''
+                }`}
               >
                 {userReaction ? getReactionText(userReaction.reaction) : 'Like'}
               </button>
@@ -404,8 +445,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
               {showReactionPicker && (
                 <div
                   ref={reactionBarRef}
-                  className='absolute z-50 flex gap-1 bg-white border border-gray-200 shadow-lg rounded-full py-1 px-2 bottom-full left-0 mb-1 animate-fadeInUp'
-                  style={{ minWidth: '180px' }}
+                  className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full left-0 mb-1 min-w-[200px]'
+                  style={{ 
+                    background: '#F3F4F6',
+                    border: '1px solid #D1D5DB'
+                  }}
                   onMouseEnter={() => {
                     if (hoverTimeout) {
                       clearTimeout(hoverTimeout)
@@ -426,7 +470,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                     >
                       {reaction}
 
-                      <div className='absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1 py-0.5 rounded opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none'>
+                      <div className='absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1 py-0.5 rounded opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none'>
                         {getReactionText(reaction)}
                       </div>
                     </div>
@@ -444,7 +488,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         {totalReplyCount > 0 && (
           <button
             onClick={() => setShowReplies(!showReplies)}
-            className='ml-3 mt-2 text-xs font-semibold text-gray-600 hover:underline flex items-center gap-1'
+            className='ml-3 mt-2 text-xs font-semibold text-gray-700 hover:underline flex items-center gap-1'
           >
             <svg
               className={`w-3 h-3 transition-transform ${showReplies ? 'rotate-90' : ''}`}
@@ -461,9 +505,9 @@ const CommentItem: React.FC<CommentItemProps> = ({
           </button>
         )}
 
-        {showReplies && comment.replies && comment.replies.length > 0 && (
+        {showReplies && localReplies && localReplies.length > 0 && (
           <div className='mt-2'>
-            {comment.replies.map((reply) => (
+            {localReplies.map((reply) => (
               <CommentItem
                 key={reply.id}
                 comment={reply}
@@ -478,6 +522,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 totalComment={totalComment}
                 level={level + 1}
                 parentUserName={fullName}
+                onNewReply={handleNewReply}
               />
             ))}
           </div>

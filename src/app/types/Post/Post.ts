@@ -12,6 +12,7 @@ export interface User {
 export interface PostImage {
   id: string
   imageUrl: string
+  isVideo?: boolean
 }
 
 export interface PostGroup {

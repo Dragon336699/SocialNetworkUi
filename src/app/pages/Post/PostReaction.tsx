@@ -22,6 +22,14 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
+// Hàm helper để lấy màu chữ theo reaction
+const getReactionColor = (reaction: string): string => {
+  if (reaction === '❤️' || reaction === '😡') {
+    return '#EF4444' // red-500
+  }
+  return '#F59E0B' // amber-500 (màu vàng)
+}
+
 const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendReaction, currentUserId }) => {
   const availableReactions = ['👍', '❤️', '😂', '😮', '😢', '😡']
   const reactionBarRef = useRef<HTMLDivElement>(null)
@@ -102,14 +110,14 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
       <div className='relative' onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <button
           onClick={handleLikeClick}
-          className={`flex items-center space-x-2 px-2 py-1 rounded-md text-sm transition-colors ${
-            userReaction ? 'text-blue-500 hover:bg-blue-50' : 'text-gray-600 hover:bg-gray-100'
-          }`}
+          className='flex items-center space-x-2 px-2 py-1 rounded-full text-sm transition-colors font-medium'
         >
           {userReaction ? (
             <>
               <span className='text-lg'>{userReaction.reaction}</span>
-              <span className='font-medium'>{getReactionText(userReaction.reaction)}</span>
+              <span style={{ color: getReactionColor(userReaction.reaction) }}>
+                {getReactionText(userReaction.reaction)}
+              </span>
             </>
           ) : (
             <>
@@ -120,7 +128,7 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
                   d='M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'
                 />
               </svg>
-              <span className='font-medium'>Like</span>
+              <span>Like</span>
             </>
           )}
         </button>
@@ -129,8 +137,13 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
         {showReactionBar && (
           <div
             ref={reactionBarRef}
-            className='absolute z-50 flex gap-1 bg-white border border-gray-200 shadow-lg rounded-full py-1 px-2 bottom-full left-0 mb-1 animate-fadeInUp'
-            style={{ minWidth: '200px' }}
+            className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full mb-2 animate-fadeInUp'
+            style={{ 
+              minWidth: '200px',
+              background: '#F3F4F6',
+              border: '1px solid #D1D5DB',
+              left: '0'
+            }}
             onMouseEnter={() => {
               if (hoverTimeout) {
                 clearTimeout(hoverTimeout)
@@ -140,15 +153,11 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
             onMouseLeave={handleMouseLeave}
           >
             {availableReactions.map((reaction, index) => {
-              // const isCurrentReaction = userReaction?.reaction === reaction
               return (
                 <div
                   key={reaction}
                   onClick={() => handleReaction(reaction)}
-                  // className={`text-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-110 p-0.5 rounded-full relative ${
-                  //   isCurrentReaction ? 'bg-blue-100 ring-2 ring-blue-300' : 'hover:bg-gray-100'
-                  // }`}
-                  className='text-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-110 p-0.5 rounded-full relative hover:bg-gray-100'
+                  className='text-lg cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-110 p-0.5 rounded-full relative'
                   style={{
                     animationDelay: `${index * 50}ms`
                   }}

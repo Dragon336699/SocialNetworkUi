@@ -1,4 +1,4 @@
-import { Card, Button, Typography, Space, message, Avatar, Dropdown } from 'antd'
+import { Button, Typography, Space, message, Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
@@ -52,7 +52,6 @@ const GroupCard = ({
     }
   }
 
-  // Xử lý hủy yêu cầu tham gia
   const handleCancelJoinRequest = async () => {
     try {
       setLoading(true)
@@ -68,7 +67,7 @@ const GroupCard = ({
       setLoading(false)
     }
   }
-  // Xử lý rời khỏi nhóm
+
   const handleLeaveGroup = async () => {
     try {
       setLoading(true)
@@ -84,7 +83,6 @@ const GroupCard = ({
     }
   }
 
-  // Xử lý xóa nhóm
   const handleDeleteGroup = async () => {
     try {
       setLoading(true)
@@ -99,12 +97,10 @@ const GroupCard = ({
     }
   }
 
-  // Xử lý click button khi pending
   const handlePendingClick = (e: React.MouseEvent) => {
     e.stopPropagation()
   }
 
-  // Xử lý xem nhóm
   const handleViewGroup = () => {
     if (joined) {
       navigate(`/groups/${currentGroup.id}`)
@@ -113,7 +109,6 @@ const GroupCard = ({
     }
   }
 
-  // Menu cho pending request
   const pendingMenuItems: MenuProps['items'] = [
     {
       key: 'cancel',
@@ -128,62 +123,82 @@ const GroupCard = ({
   ]
 
   return (
-    <>
-      <Card
-        hoverable
-        className='group-card'
-        onClick={handleViewGroup}
-        style={{ height: '100%' }}
-        cover={
-          <div className='relative w-full h-48 bg-gray-200 overflow-hidden'>
-            {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
-              <img src={currentGroup.imageUrl} alt={currentGroup.name} className='w-full h-full object-cover' />
-            ) : (
-              <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
-                <Avatar
-                  size={80}
-                  style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-                  className='text-white text-4xl font-bold'
-                >
-                  {currentGroup.name[0]?.toUpperCase() || 'G'}
-                </Avatar>
-              </div>
-            )}
-          </div>
-        }
-      >
-        <div onClick={(e) => e.stopPropagation()}>
-          <Space direction='vertical' size='middle' style={{ width: '100%' }}>
-            {/* Header */}
-            <div className='flex justify-between items-start'>
-              <div className='flex-1'>
-                <Title level={4} className='mb-1'>
-                  {currentGroup.name}
-                </Title>
-              </div>
+    <div 
+      className='bg-white rounded-lg border-2 border-black shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden h-48'
+      onClick={handleViewGroup}
+    >
+      <div className='flex h-full'>
+        {/* Image Section - Left */}
+        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200'>
+          {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
+            <img 
+              src={currentGroup.imageUrl} 
+              alt={currentGroup.name} 
+              className='w-full h-full object-cover' 
+            />
+          ) : (
+            <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
+              <Avatar
+                size={60}
+                style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
+                className='text-white text-2xl font-bold'
+              >
+                {currentGroup.name[0]?.toUpperCase() || 'G'}
+              </Avatar>
             </div>
+          )}
+        </div>
 
+        {/* Content Section - Right */}
+        <div className='flex-1 p-4 flex flex-col' onClick={(e) => e.stopPropagation()}>
+          {/* Header - Fixed height area */}
+          <div className='flex flex-col' style={{ minHeight: '60px', maxHeight: '60px' }}>
+            <Title 
+              level={5} 
+              className='mb-0 line-clamp-2 overflow-hidden' 
+              style={{ 
+                fontSize: '15px', 
+                fontWeight: 600,
+                lineHeight: '1.4'
+              }}
+            >
+              {currentGroup.name}
+            </Title>
+            <div className='border-b-2 border-black mt-auto'></div>
+          </div>
+          
+          {/* Stats & Actions - Remaining space */}
+          <div className='flex-1 flex flex-col justify-between pt-3'>
             {/* Stats */}
-            <div className='flex gap-4'>
-              <Space size='small'>
-                <UserOutlined className='text-gray-500' />
-                <Text type='secondary'>{currentGroup.memberCount} members</Text>
-              </Space>
-              <Space size='small'>
-                <FileTextOutlined className='text-gray-500' />
-                <Text type='secondary'>{currentGroup.postCount} posts</Text>
-              </Space>
+            <div className='flex flex-col gap-2'>
+              <div className='flex items-center gap-2'>
+                <UserOutlined className='text-black text-sm' />
+                <Text className='text-sm text-black font-medium'>
+                  {currentGroup.memberCount} {currentGroup.memberCount === 1 ? 'user' : 'users'}
+                </Text>
+              </div>
+              <div className='flex items-center gap-2'>
+                <FileTextOutlined className='text-black text-sm' />
+                <Text className='text-sm text-black font-medium'>
+                  {currentGroup.postCount} {currentGroup.postCount === 1 ? 'post' : 'posts'}
+                </Text>
+              </div>
             </div>
 
             {/* Actions */}
             {showActions && (
-              <div className='flex gap-2'>
+              <div className='flex gap-2 mt-3'>
                 {!joined && !pending ? (
-                  <Button type='primary' onClick={handleJoinGroup} loading={loading} block>
-                    Join Group
+                  <Button 
+                    type='primary' 
+                    onClick={handleJoinGroup} 
+                    loading={loading} 
+                    block
+                    size='small'
+                  >
+                    Join
                   </Button>
                 ) : pending ? (
-
                   <Dropdown menu={{ items: pendingMenuItems }} trigger={['click']} placement='bottomRight'>
                     <Button
                       icon={<ClockCircleOutlined />}
@@ -191,30 +206,30 @@ const GroupCard = ({
                       type='default'
                       loading={loading}
                       block
+                      size='small'
                     >
-                      Request Pending
+                      Pending
                     </Button>
                   </Dropdown>
                 ) : (
-                  <>
-                    <Button
-                      icon={<EyeOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleViewGroup()
-                      }}
-                      style={{ flex: 1 }}
-                    >
-                      View Group
-                    </Button>
-                  </>
+                  <Button
+                    icon={<EyeOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleViewGroup()
+                    }}
+                    block
+                    size='small'
+                  >
+                    View
+                  </Button>
                 )}
               </div>
             )}
-          </Space>
+          </div>
         </div>
-      </Card>
-    </>
+      </div>
+    </div>
   )
 }
 

@@ -13,7 +13,8 @@ import {
   ApproveJoinRequestResponse,
   RejectJoinRequestResponse,
   CancelJoinRequestResponse,
-  GetPendingJoinRequestsResponse
+  GetPendingJoinRequestsResponse,
+  SearchMyGroupsResponse
 } from '../types/Group/GroupResponse'
 import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
 
@@ -111,6 +112,14 @@ export const groupService = {
   async getMyGroups(skip: number = 0, take: number = 10): Promise<GetAllGroupsResponse> {
     const { data } = await apiClient.get<GetAllGroupsResponse>('group/my-groups', {
       params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async searchMyGroups(searchTerm: string, skip: number = 0, take: number = 10): Promise<SearchMyGroupsResponse> {
+    const { data } = await apiClient.get<SearchMyGroupsResponse>('group/my-groups/search', {
+      params: { searchTerm, skip, take },
       withCredentials: true
     })
     return data
