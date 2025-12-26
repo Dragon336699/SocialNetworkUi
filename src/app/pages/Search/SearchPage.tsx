@@ -71,18 +71,18 @@ const SearchPage: React.FC = () => {
       try {
         const response = await groupService.getMyGroups(0, 100)
         const approvedGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
             return userStatus && userStatus.roleName !== GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
 
         const pendingGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
             return userStatus && userStatus.roleName === GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
 
         setMyGroupIds(approvedGroupIds)
         setPendingGroupIds(pendingGroupIds)
@@ -203,14 +203,14 @@ const SearchPage: React.FC = () => {
   }
 
   const toggleDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: !prev[postId]
     }))
   }
 
   const closeDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: false
     }))

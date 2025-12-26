@@ -67,6 +67,21 @@ const FriendsList: React.FC = () => {
     setModalOpen(true)
   }
 
+  const handleConfirmModalAction = async () => {
+    if (!selectedFriend) return
+    setGlobalLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    if (currentAction === 'unfriend') {
+      await relationService.unFriend(selectedFriend.id)
+      message.success('Unfriended successfully')
+      getFriends()
+    }
+    setGlobalLoading(false)
+    setModalOpen(false)
+    setSelectedFriend(null)
+  }
+
   const getFriends = async () => {
     try {
       const res = await relationService.getFriendsList()
@@ -309,12 +324,7 @@ const FriendsList: React.FC = () => {
         type={currentAction}
         loading={globalLoading}
         onCancel={() => setModalOpen(false)}
-        onConfirm={async () => {
-          setGlobalLoading(true)
-          // Giữ logic confirm của bạn
-          setGlobalLoading(false)
-          setModalOpen(false)
-        }}
+        onConfirm={handleConfirmModalAction}
       />
     </div>
   )

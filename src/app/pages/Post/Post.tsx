@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom'
 import { PictureOutlined, CloseOutlined } from '@ant-design/icons'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import { interactionService } from '@/app/services/interaction.service'
 
 interface PostProps extends PostData {
   feedId?: string
@@ -241,6 +242,12 @@ const Post: React.FC<PostProps> = ({
         const updatedPost = response.data
         setReactions(updatedPost.postReactionUsers)
         setLocalTotalLiked(updatedPost.totalLiked)
+
+        // Gửi interaction nếu user reaction lần đầu
+        const currentUserReaction = reactions.find((r) => r.userId === currentUserId)
+        if (!currentUserReaction && updatedPost.userId) {
+          interactionService.likePostOfUser(updatedPost.userId)
+        }
 
         if (onPostUpdated) {
           onPostUpdated(updatedPost)
