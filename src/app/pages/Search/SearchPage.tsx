@@ -9,8 +9,11 @@ import { UserDto } from '@/app/types/User/user.dto'
 import { groupService } from '@/app/services/group.service'
 import { GroupRole } from '@/app/types/Group/group.dto'
 import { relationService } from '@/app/services/relation.service'
+import { PostData } from '@/app/types/Post/Post'
 import Post from '@/app/pages/Post/Post'
 import PostDropdownMenu from '@/app/pages/Post/PostDropdownMenu'
+import EditPostModal from '@/app/pages/Post/EditPostModal'
+import DeletePostModal from '@/app/pages/Post/DeletePostModal'
 import { getTimeAgo } from '@/app/helper'
 import UserCard from '@/app/components/Search/UserCard'
 import GroupCard from '@/app/components/Group/GroupCard'
@@ -42,6 +45,12 @@ const SearchPage: React.FC = () => {
   const [friendIds, setFriendIds] = useState<string[]>([])
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([])
   const [dropdownStates, setDropdownStates] = useState<{[key: string]: boolean}>({})
+  
+  // States cho Edit và Delete Post
+  const [editingPost, setEditingPost] = useState<PostData | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -187,6 +196,48 @@ const SearchPage: React.FC = () => {
       ...prev,
       [postId]: false
     }))
+  }
+
+  // Handler cho Edit Post
+  const handleEditPost = (post: PostData) => {
+    setEditingPost(post)
+    setIsEditModalOpen(true)
+    closeDropdown(post.id)
+  }
+
+  // Handler khi edit thành công
+  const handleEditSuccess = (updatedPost: PostData) => {
+    setIsEditModalOpen(false)
+    setEditingPost(null)
+    message.success('Post updated successfully!')
+    handlePostUpdated()
+  }
+
+  // Handler khi đóng edit modal
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditingPost(null)
+  }
+
+  // Handler cho Delete Post
+  const handleDeletePost = (postId: string) => {
+    setDeletingPostId(postId)
+    setIsDeleteModalOpen(true)
+    closeDropdown(postId)
+  }
+
+  // Handler khi delete thành công
+  const handleDeleteSuccess = () => {
+    setIsDeleteModalOpen(false)
+    setDeletingPostId(null)
+    message.success('Post deleted successfully!')
+    handlePostUpdated()
+  }
+
+  // Handler khi đóng delete modal
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false)
+    setDeletingPostId(null)
   }
 
   const handleStatusChange = () => {
@@ -370,8 +421,8 @@ const SearchPage: React.FC = () => {
                         onClose={() => closeDropdown(post.id)}
                         postId={post.id}
                         isOwner={currentUser?.id === post.user?.id}
-                        onEdit={() => closeDropdown(post.id)}
-                        onDeleteClick={() => closeDropdown(post.id)}
+                        onEdit={() => handleEditPost(post)}
+                        onDeleteClick={() => handleDeletePost(post.id)}
                       />
                     </div>
                   </div>
@@ -449,6 +500,27 @@ const SearchPage: React.FC = () => {
           }
         `}
       </style>
+
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <EditPostModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          postId={editingPost.id}
+          onSave={handleEditSuccess}
+          currentUser={currentUser}
+        />
+      )}
+
+      {/* Delete Post Modal */}
+      {deletingPostId && (
+        <DeletePostModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          onDeleteSuccess={handleDeleteSuccess}
+          postId={deletingPostId}
+        />
+      )}
 
       <div className='flex min-h-screen bg-gray-50'>
         {/* Main Content */}

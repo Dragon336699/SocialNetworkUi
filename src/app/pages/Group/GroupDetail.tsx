@@ -42,7 +42,6 @@ import PendingJoinRequestsModal from '@/app/common/Modals/Group/PendingJoinReque
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
 import GroupDropdownMenu, { PendingDropdownMenu, JoinedDropdownMenu } from './GroupDropdownMenu'
-import InviteFriendsModal from '@/app/common/Modals/Group/InviteFriendsModal'
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -363,12 +362,6 @@ const GroupDetail = () => {
             handleCancel={() => setIsPendingRequestsOpen(false)}
             groupId={groupId || ''}
             onRequestsUpdated={handleMembersUpdated}
-          />
-          <InviteFriendsModal
-            isModalOpen={isInviteFriendsOpen}
-            handleCancel={() => setIsInviteFriendsOpen(false)}
-            groupId={groupId || ''}
-            onInviteSuccess={refreshGroupData}
           />
           <Modal
             open={isImageViewerOpen}
