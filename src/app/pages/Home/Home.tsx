@@ -90,9 +90,9 @@ const Home = () => {
     setIsOpenCreatePost(false)
   }
 
-  const handleCreatePostSuccess = async () => {
+  const handleCreatePostSuccess = async (newPost?: any) => {
     setIsOpenCreatePost(false)
-    handlePostCreated()
+    handlePostCreated(newPost)
   }
 
   const { addSeen, flushNow } = useSeenPost(async (postsInfo: SeenPost[]) => {

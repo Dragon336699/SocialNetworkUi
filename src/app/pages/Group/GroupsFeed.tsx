@@ -115,8 +115,18 @@ const GroupsFeed = () => {
     }
   }
 
-  const handlePostUpdated = () => {
-    fetchMyGroupsAndPosts()
+  const handlePostUpdated = (updatedPost: PostData) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === updatedPost.id 
+          ? { ...post, ...updatedPost, group: post.group } 
+          : post
+      )
+    )
+  }
+
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId))
   }
 
   const toggleDropdown = (postId: string) => {
@@ -145,7 +155,7 @@ const GroupsFeed = () => {
     setIsEditModalOpen(false)
     setEditingPost(null)
     message.success('Post updated successfully!')
-    handlePostUpdated()
+    handlePostUpdated(updatedPost)
   }
 
   // Handler khi đóng edit modal
@@ -163,10 +173,12 @@ const GroupsFeed = () => {
 
   // Handler khi delete thành công
   const handleDeleteSuccess = () => {
+    if (deletingPostId) {
+      handlePostDeleted(deletingPostId)
+    }
     setIsDeleteModalOpen(false)
     setDeletingPostId(null)
     message.success('Post deleted successfully!')
-    handlePostUpdated()
   }
 
   // Handler khi đóng delete modal
@@ -321,7 +333,7 @@ const GroupsFeed = () => {
                     currentUserId={currentUser?.id || ''}
                     currentUser={currentUser}
                     onPostUpdated={handlePostUpdated}
-                    onPostDeleted={handlePostUpdated}
+                    onPostDeleted={handlePostDeleted}
                     hideHeader={hasGroup}
                   />
                 </div>

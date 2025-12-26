@@ -23,7 +23,6 @@ import { userService } from '@/app/services/user.service'
 import { base64ToFile } from '@/app/helper'
 import { PostData } from '@/app/types/Post/Post'
 import Post from '@/app/pages/Post/Post'
-import { usePosts } from '@/app/hook/usePosts'
 import { useUserStore } from '@/app/stores/auth'
 import { relationService } from '@/app/services/relation.service'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -58,7 +57,10 @@ const ProfileView = ({
   sentList,
   receivedList,
   refreshData,
-  onEdit
+  onEdit,
+  onPostCreated,
+  onPostUpdated,
+  onPostDeleted
 }: {
   posts: PostData[]
   followerList: UserDto[]
@@ -69,6 +71,9 @@ const ProfileView = ({
   receivedList: SentFriendRequestData[]
   refreshData: () => void
   onEdit: () => void
+  onPostCreated: (newPost?: PostData) => void
+  onPostUpdated: (updatedPost: PostData) => void
+  onPostDeleted: (postId: string) => void
 }) => {
   const { user } = useUserStore()
   const { userName } = useParams()
@@ -76,7 +81,6 @@ const ProfileView = ({
   const navigate = useNavigate()
 
   const isFriend = friendList.some((friend) => friend.id === user?.id)
-  const { handlePostCreated, handlePostUpdated, handlePostDeleted } = usePosts()
   const [activeTab, setActiveTab] = useState<TabType>('posts')
   const [relation, setRelation] = useState<statusRelation>(isFriend ? 'friend' : 'default')
   const [previewImage, setPreviewImage] = useState(userInfo.avatarUrl)
@@ -189,9 +193,9 @@ const ProfileView = ({
     }
   }
 
-  const handleCreatePostSuccess = async () => {
+  const handleCreatePostSuccess = async (newPost?: PostData) => {
     setIsOpenCreatePost(false)
-    handlePostCreated()
+    onPostCreated(newPost)
   }
 
   const getTabButtonClass = (tabName: TabType) => {
@@ -291,10 +295,10 @@ const ProfileView = ({
                       <Post
                         {...post}
                         postReactionUsers={post.postReactionUsers || []}
-                        currentUser={userInfo}
-                        currentUserId={userInfo.id || ''}
-                        onPostUpdated={handlePostUpdated}
-                        onPostDeleted={handlePostDeleted}
+                        currentUser={user as UserDto}
+                        currentUserId={user?.id || ''}
+                        onPostUpdated={onPostUpdated}
+                        onPostDeleted={onPostDeleted}
                         onSeen={() => {}}
                       />
                     </div>

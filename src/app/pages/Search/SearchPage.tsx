@@ -178,10 +178,28 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const handlePostUpdated = () => {
-    if (searchValue.trim()) {
-      handleSearch(searchValue.trim(), false)
-    }
+  const handlePostUpdated = (updatedPost: PostData) => {
+    setSearchResults((prevResults) => {
+      if (!prevResults || !prevResults.posts) return prevResults
+      return {
+        ...prevResults,
+        posts: prevResults.posts.map((post) =>
+          post.id === updatedPost.id 
+            ? { ...post, ...updatedPost, group: post.group } 
+            : post
+        )
+      }
+    })
+  }
+
+  const handlePostDeleted = (postId: string) => {
+    setSearchResults((prevResults) => {
+      if (!prevResults || !prevResults.posts) return prevResults
+      return {
+        ...prevResults,
+        posts: prevResults.posts.filter((post) => post.id !== postId)
+      }
+    })
   }
 
   const toggleDropdown = (postId: string) => {
@@ -210,7 +228,7 @@ const SearchPage: React.FC = () => {
     setIsEditModalOpen(false)
     setEditingPost(null)
     message.success('Post updated successfully!')
-    handlePostUpdated()
+    handlePostUpdated(updatedPost)
   }
 
   // Handler khi đóng edit modal
@@ -228,10 +246,12 @@ const SearchPage: React.FC = () => {
 
   // Handler khi delete thành công
   const handleDeleteSuccess = () => {
+    if (deletingPostId) {
+      handlePostDeleted(deletingPostId)
+    }
     setIsDeleteModalOpen(false)
     setDeletingPostId(null)
     message.success('Post deleted successfully!')
-    handlePostUpdated()
   }
 
   // Handler khi đóng delete modal
@@ -435,7 +455,7 @@ const SearchPage: React.FC = () => {
                   currentUserId={currentUser?.id || ''}
                   currentUser={currentUser}
                   onPostUpdated={handlePostUpdated}
-                  onPostDeleted={handlePostUpdated}
+                  onPostDeleted={handlePostDeleted}
                   hideHeader={hasPublicGroup}
                 />
               </div>

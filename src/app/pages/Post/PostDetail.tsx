@@ -63,11 +63,9 @@ const PostDetail: React.FC = () => {
 
   const handlePostReaction = async (postId: string, reaction: string) => {
     try {
-      await postService.reactionPost(postId, reaction)
-      // Reload lại post để cập nhật reactions
-      const postResponse = await postService.getPostById(postId)
-      if (postResponse && postResponse.post) {
-        setPost(postResponse.post)
+      const response = await postService.reactionPost(postId, reaction)
+      if (response.data) {
+        setPost(response.data)
       }
     } catch (error) {
       message.error('Failed to react to post')

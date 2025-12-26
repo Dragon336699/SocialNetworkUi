@@ -128,10 +128,10 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
     try {
       const res = await postService.createPost(formData)
 
-      if (res?.message) {
+      if (res?.message && res?.data) {
         message.success('Post created successfully!')
         handleCancel()
-        onCreatePostSuccess?.()
+        onCreatePostSuccess?.(res.data)
         resetValue()
       } else {
         message.error('Failed to create post, please try again!')

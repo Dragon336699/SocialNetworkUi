@@ -77,7 +77,7 @@ export interface PostReactionDto {
 }
 
 export interface PostReactionResponse extends BaseResponse {
-  data: PostReactionDto
+  data?: PostData
 }
 
 export type SeenPost = {

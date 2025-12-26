@@ -237,52 +237,13 @@ const Post: React.FC<PostProps> = ({
   const handleSendReaction = async (postId: string, reaction: string) => {
     try {
       const response = await postService.reactionPost(postId, reaction)
-      if (response.message && response.message.includes('successfully')) {
-        const currentUserReaction = reactions.find((r) => r.userId === currentUserId)
-        let newReactions: PostReactionDto[] = []
-        let newTotalLiked = localTotalLiked
-
-        if (currentUserReaction) {
-          if (currentUserReaction.reaction === reaction) {
-            newReactions = reactions.filter((r) => r.userId !== currentUserId)
-            newTotalLiked = Math.max(0, localTotalLiked - 1)
-            setReactions(newReactions)
-            setLocalTotalLiked(newTotalLiked)
-          } else {
-            newReactions = reactions.map((r) => (r.userId === currentUserId ? { ...r, reaction: reaction } : r))
-            newTotalLiked = localTotalLiked
-            setReactions(newReactions)
-          }
-        } else {
-          const newReaction: PostReactionDto = {
-            id: Date.now().toString(),
-            userId: currentUserId,
-            reaction: reaction,
-            user: {
-              id: currentUserId,
-              firstName: currentUser.firstName || '',
-              lastName: currentUser.lastName || '',
-              avatarUrl: currentUser.avatarUrl || ''
-            }
-          }
-          newReactions = [...reactions, newReaction]
-          newTotalLiked = localTotalLiked + 1
-          setReactions(newReactions)
-          setLocalTotalLiked(newTotalLiked)
-        }
+      if (response.message && response.message.includes('successfully') && response.data) {
+        const updatedPost = response.data
+        setReactions(updatedPost.postReactionUsers)
+        setLocalTotalLiked(updatedPost.totalLiked)
 
         if (onPostUpdated) {
-          onPostUpdated({
-            id,
-            content,
-            totalLiked: newTotalLiked,
-            totalComment,
-            createdAt,
-            user,
-            postImages,
-            postPrivacy,
-            postReactionUsers: newReactions
-          } as PostData)
+          onPostUpdated(updatedPost)
         }
       } else {
         message.error(response.message || 'Reaction failed')
