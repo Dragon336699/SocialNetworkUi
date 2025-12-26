@@ -60,7 +60,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   const baseItems = useMemo<MenuItem[]>(
     () => [
       getItem('Home', 'Home', <IconCircle icon={faHouse} bgColor='#1877F2' />),
-      getItem('Search', 'Search', <IconCircle icon={faSearch} bgColor='#E4E6EB' color='black' />),
+      // getItem('Search', 'Search', <IconCircle icon={faSearch} bgColor='#E4E6EB' color='black' />),
       getItem('Friends', 'Friend', <IconCircle icon={faUserFriends} bgColor='#45BD62' />),
       getItem('Groups', 'Groups', <IconCircle icon={faUsers} bgColor='#EEA567' />),
       getItem('Inbox', 'Inbox', <IconCircle icon={faComment} bgColor='#1877F2' badgeCount={unreadMessages} />)
@@ -140,7 +140,7 @@ const Navbar: React.FC<NavbarProps> = () => {
         </div>
       </Sider>
 
-      <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} />
+      {/* <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} /> */}
     </ConfigProvider>
   )
 }

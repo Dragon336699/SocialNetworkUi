@@ -280,7 +280,7 @@ const ProfileView = ({
             {isMe && (
               <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-200'>
                 <div onClick={() => setIsOpenCreatePost(true)} className='flex items-center gap-3 cursor-pointer'>
-                  <Avatar size={40} src={user?.avatarUrl || DEFAULT_AVATAR_URL} />
+                  <Avatar size={40} src={user?.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
                   <div className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] transition-colors'>
                     What's on your mind?
                   </div>

@@ -588,28 +588,6 @@ const SearchPage: React.FC = () => {
             {/* Divider */}
             <div className='border-t-2 border-gray-200 mb-4'></div>
 
-            {/* Search Input */}
-            <div className='mb-6'>
-              <Input
-                placeholder='Search...'
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onPressEnter={handleSearchSubmit}
-                suffix={
-                  isSearching ? (
-                    <Spin size='small' />
-                  ) : (
-                    <SearchOutlined
-                      className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors' 
-                      onClick={handleSearchSubmit}
-                    />
-                  )
-                }
-                size='large'
-                className='bg-gray-50 border-2 border-gray-300'
-              />
-            </div>
-
             {/* Menu Items */}
             <div className='space-y-1'>
               <div

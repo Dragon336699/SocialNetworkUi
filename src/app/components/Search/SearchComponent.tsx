@@ -12,39 +12,49 @@ import { interactionService } from '@/app/services/interaction.service'
 interface SearchComponentProps {
   show: boolean
   onClose: () => void
-  onCollapseNavbar?: () => void
 }
 
-const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onCollapseNavbar }) => {
+const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
   const [searchValue, setSearchValue] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<SearchResultDto | null>(null)
   const [searchHistory, setSearchHistory] = useState<SearchHistoryDto[]>([])
-  const [isVisible, setIsVisible] = useState(false)
   const [myGroupIds, setMyGroupIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string>('')
 
   const debounceRef = useRef<NodeJS.Timeout>()
   const inputRef = useRef<any>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     if (show) {
-      const timer = setTimeout(() => {
-        setIsVisible(true)
-        loadSearchHistory()
-        // Auto focus vào input khi mở search panel
-        setTimeout(() => {
-          inputRef.current?.focus()
-        }, 200)
-      }, 150)
-      return () => clearTimeout(timer)
+      loadSearchHistory()
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
     } else {
-      setIsVisible(false)
       setSearchValue('')
       setSearchResults(null)
     }
   }, [show])
+
+  // Click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose()
+      }
+    }
+
+    if (show) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [show, onClose])
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -107,7 +117,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     }
   }
 
-  // Debounce search - chỉ áp dụng cho API call
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
@@ -212,17 +221,9 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     setSearchValue('')
   }
 
-  const handleClose = () => {
-    onClose()
-    onCollapseNavbar?.()
-    setSearchValue('')
-    setSearchResults(null)
-  }
-
   const handleClearInput = () => {
     setSearchValue('')
     setSearchResults(null)
-    // Focus lại vào input sau khi clear
     setTimeout(() => {
       inputRef.current?.focus()
     }, 0)
@@ -235,25 +236,25 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
 
       if (!hasResults) {
         return (
-          <div className='flex items-center justify-center h-64'>
+          <div className='flex items-center justify-center py-8'>
             <Empty description='No search results found.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         )
       }
 
       return (
-        <div className='overflow-y-auto'>
+        <div className='overflow-y-auto max-h-[400px]'>
           {/* Users */}
           {users && users.map(user => (
             <div
               key={user.id}
-              className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
+              className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
               onClick={() => handleResultClick('user', user)}
             >
-              <Avatar src={user.avatarUrl} size={44} icon={<UserOutlined />} />
+              <Avatar src={user.avatarUrl} size={36} icon={<UserOutlined />} className='border-2 border-gray-200' />
               <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm'>{user.userName}</div>
-                <div className='text-xs text-gray-500'>{user.firstName}</div>
+                <div className='font-semibold text-gray-900 text-sm truncate'>{user.userName}</div>
+                <div className='text-xs text-gray-500 truncate'>{user.firstName}</div>
               </div>
             </div>
           ))}
@@ -262,13 +263,13 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
           {groups && groups.map(group => (
             <div
               key={group.id}
-              className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
+              className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
               onClick={() => handleResultClick('group', group)}
             >
-              <Avatar src={group.imageUrl} size={44} icon={<TeamOutlined />} />
+              <Avatar src={group.imageUrl} size={36} icon={<TeamOutlined />} className='border-2 border-gray-200' />
               <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm'>{group.name}</div>
-                <div className='text-xs text-gray-500'>{group.isPublic ? 'Public' : 'Private'} Group</div>
+                <div className='font-semibold text-gray-900 text-sm truncate'>{group.name}</div>
+                <div className='text-xs text-gray-500 truncate'>{group.isPublic ? 'Public' : 'Private'} Group</div>
               </div>
             </div>
           ))}
@@ -278,12 +279,12 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
 
     return (
       <div>
-        <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200'>
-          <h3 className='text-base font-bold text-gray-900'>Recent</h3>
+        <div className='flex items-center justify-between px-3 py-2.5 border-b border-gray-100'>
+          <h3 className='text-sm font-bold text-gray-900'>Recent</h3>
           {searchHistory.length > 0 && (
             <button
               onClick={handleClearAllHistory}
-              className='text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors'
+              className='text-xs text-blue-600 hover:text-blue-700 font-semibold transition-colors'
             >
               Clear all
             </button>
@@ -291,27 +292,28 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
         </div>
 
         {searchHistory.length === 0 ? (
-          <div className='flex items-center justify-center h-64'>
+          <div className='flex items-center justify-center py-8'>
             <Empty description='No recent searches.' image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         ) : (
-          <div className='overflow-y-auto'>
+          <div className='overflow-y-auto max-h-[400px]'>
             {searchHistory.map(history => (
               <div
                 key={history.id}
-                className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors group'
+                className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors group'
                 onClick={() => handleHistoryClick(history)}
               >
                 <div className='flex items-center flex-1 min-w-0'>
                   {history.imageUrl ? (
                     <Avatar
                       src={history.imageUrl}
-                      size={44} 
+                      size={36}
                       icon={history.navigateUrl?.includes('/profile') ? <UserOutlined /> : <TeamOutlined />}
+                      className='border-2 border-gray-200'
                     />
                   ) : (
-                    <div className='w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center'>
-                      <SearchOutlined className='text-gray-500 text-lg' />
+                    <div className='w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center'>
+                      <SearchOutlined className='text-gray-500 text-base' />
                     </div>
                   )}
                   <div className='ml-3 flex-1 min-w-0'>
@@ -320,9 +322,9 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
                 </div>
                 <button
                   onClick={(e) => handleDeleteHistory(history.id, e)}
-                  className='ml-2 p-2 rounded-full text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100'
+                  className='ml-2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100'
                 >
-                  <CloseOutlined className='text-base' />
+                  <CloseOutlined className='text-sm' />
                 </button>
               </div>
             ))}
@@ -332,59 +334,42 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose, onColl
     )
   }
 
+  if (!show) return null
+
   return (
-    <>
-      {show && (
-        <div
-          className='fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300'
-          onClick={handleClose}
+    <div
+      ref={dropdownRef}
+      className='absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2 duration-200'
+      style={{
+        maxWidth: '600px',
+        margin: '0 auto'
+      }}
+    >
+      <div className='p-3 border-b border-gray-100'>
+        <Input
+          ref={inputRef}
+          placeholder='Search on Fricon'
+          value={searchValue}
+          onChange={handleInputChange}
+          onPressEnter={handleSearchSubmit}
+          prefix={<SearchOutlined className='text-gray-400' />}
+          suffix={
+            isSearching ? (
+              <Spin size='small' />
+            ) : searchValue ? (
+              <CloseOutlined
+                className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
+                onClick={handleClearInput}
+              />
+            ) : null
+          }
+          className='rounded-lg border-gray-200'
+          size='large'
         />
-      )}
-
-      <div
-        className={`fixed top-0 bottom-0 left-0 bg-white shadow-2xl z-50 transition-all duration-300 ease-in-out ${
-          show ? 'w-[400px]' : 'w-0'
-        } overflow-hidden`}
-      >
-        <div
-          className={`flex flex-col h-full transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-        >
-          <div className='flex items-center justify-between px-4 py-4 border-b border-gray-200'>
-            <h2 className='text-2xl font-bold text-gray-900'>Search</h2>
-          </div>
-
-          <div className='px-4 py-3 border-b border-gray-200'>
-            <Input
-              ref={inputRef}
-              placeholder='Search'
-              value={searchValue}
-              onChange={handleInputChange}
-              onPressEnter={handleSearchSubmit}
-              suffix={
-                isSearching ? (
-                  <Spin size='small' />
-                ) : searchValue ? (
-                  <CloseOutlined
-                    className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
-                    onClick={handleClearInput}
-                  />
-                ) : (
-                  <SearchOutlined className='text-gray-400' />
-                )
-              }
-              className='rounded-lg'
-              style={{
-                backgroundColor: '#efefef',
-                border: 'none'
-              }}
-              size='large'
-            />
-          </div>
-
-          <div className='flex-1 overflow-hidden'>{renderContent()}</div>
-        </div>
       </div>
-    </>
+
+      <div>{renderContent()}</div>
+    </div>
   )
 }
 

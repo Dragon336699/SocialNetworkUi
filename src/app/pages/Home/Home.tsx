@@ -12,10 +12,14 @@ import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 import { relationService } from '@/app/services/relation.service'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { SuggestUsers } from '@/app/types/UserRelation/userRelation'
+import { conversationService } from '@/app/services/conversation.service'
+import { useNavigate } from 'react-router-dom'
+import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 
 const { Title, Text } = Typography
 
 const Home = () => {
+  const navigate = useNavigate()
   const defaultUser: UserDto = {
     id: '',
     avatarUrl: '',
@@ -107,6 +111,21 @@ const Home = () => {
     }
   }
 
+  const handleContactClick = async (friendId: string) => {
+    try {
+      const response = await conversationService.createConversation([friendId], 'Personal')
+      if (response.status === 400) {
+        const res = response.data as BaseResponse
+        message.error(res.message)
+      } else if (response.status === 200) {
+        const res = response.data as ResponseHasData<string>
+        navigate(`/Inbox/${res.data}`)
+      }
+    } catch (err) {
+      message.error('Cannot open conversation')
+    }
+  }
+
   useEffect(() => {
     return () => {
       flushNow()
@@ -193,7 +212,7 @@ const Home = () => {
             <div className='w-full max-w-[680px]'>
               <div className='bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
                 <div className='flex items-center gap-3 mb-3'>
-                  <Avatar size={40} src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL} />
+                  <Avatar size={40} src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
                   <div
                     onClick={() => setIsOpenCreatePost(true)}
                     className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] text-[17px] cursor-pointer transition-colors'
@@ -277,9 +296,10 @@ const Home = () => {
                   <div
                     key={friend.id}
                     className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
+                    onClick={() => handleContactClick(friend.id)}
                   >
                     <Badge dot status={friend.status === 'online' ? 'success' : 'default'} offset={[-4, 28]}>
-                      <Avatar size={36} src={friend.avatarUrl || DEFAULT_AVATAR_URL} />
+                      <Avatar size={36} src={friend.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
                     </Badge>
 
                     <span className='font-semibold text-[15px] text-[#050505]'>
@@ -302,7 +322,7 @@ const Home = () => {
                     return (
                       <div key={req.user.id} className='flex items-center justify-between group px-2'>
                         <div className='flex gap-3 items-center overflow-hidden'>
-                          <Avatar size={40} src={req.user.avatarUrl || DEFAULT_AVATAR_URL} />
+                          <Avatar size={40} src={req.user.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
                           <div className='overflow-hidden'>
                             <h4 className='font-semibold text-[15px] truncate m-0'>
                               {req.user.lastName + ' ' + req.user.firstName}

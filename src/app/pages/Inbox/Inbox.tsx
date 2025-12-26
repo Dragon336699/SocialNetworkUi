@@ -543,8 +543,8 @@ const Inbox: React.FC = () => {
     else document.title = baseTitle
   }, [messageUnseen])
   return (
-    <div className='h-screen bg-[#F0F2F5] overflow-hidden'>
-      <div className='flex h-[98%] bg-white rounded-[32px] m-[8px]'>
+    <div className='h-[calc(100vh-64px)] bg-[#F0F2F5] overflow-hidden'>
+      <div className='flex h-full bg-white rounded-[32px] m-[8px]'>
         <div className='w-[25%] m-[20px]'>
           <FontAwesomeIcon
             onClick={() => setIsModalNewMessageOpen(true)}
@@ -583,6 +583,7 @@ const Inbox: React.FC = () => {
                     conversation.newestMessage?.status !== 'Seen'
                       ? false
                       : true
+                  
                   return (
                     <div
                       onClick={() => navigateToInbox(conversation.id)}
@@ -665,6 +666,18 @@ const Inbox: React.FC = () => {
                   </span>
                   <p>{receivers.find((u) => u.id !== userInfo?.id)?.status}</p>
                 </div>
+              ) : conversationUsers.length !== 0 && conversation?.type === 'Group' ? (
+                (() => {
+                  const onlineCount = conversationUsers.filter(cu => cu.user.status === 'Online').length
+                  return onlineCount > 0 ? (
+                    <div className='text-xs opacity-50 flex gap-1 items-center'>
+                      <span className='select-none mb-1 cursor-default text-lg text-green-500'>
+                        ●
+                      </span>
+                      <p>{onlineCount} online</p>
+                    </div>
+                  ) : null
+                })()
               ) : (
                 <Skeleton active paragraph={{ rows: 0 }} />
               )}
