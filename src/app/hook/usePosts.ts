@@ -12,7 +12,7 @@ interface UsePostsReturn {
   loadMore: () => Promise<void>
   refetch: () => Promise<void>
   clearError: () => void
-  handlePostCreated: (newPost?: PostData) => void
+  handlePostCreated: () => void
   handlePostUpdated: (updatedPost: PostData) => void
   handlePostDeleted: (postId: string) => void
   handleSeenPost: (post: SeenPost[]) => void
@@ -72,20 +72,8 @@ export const usePosts = (): UsePostsReturn => {
   }, [fetchPosts])
 
   // Các function để reload sau khi có thay đổi
-  const handlePostCreated = useCallback(async (newPost?: PostData) => {
-    if (newPost) {
-      // Thêm post mới vào đầu danh sách
-      const newFeed: FeedDto = {
-        feedId: '', // Tạm thời để empty, sẽ được update khi user reload
-        post: newPost,
-        createdAt: new Date().toISOString(),
-        isSeen: true
-      }
-      setPosts((prevPosts) => [newFeed, ...prevPosts])
-    } else {
-      // Nếu không có post object, reload như cũ
-      await refetch()
-    }
+  const handlePostCreated = useCallback(async () => {
+    await refetch()
   }, [refetch])
 
   const handlePostUpdated = useCallback((updatedPost: PostData) => {

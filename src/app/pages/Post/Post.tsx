@@ -6,7 +6,7 @@ import ImageModal from './ImageModal'
 import EditPostModal from './EditPostModal'
 import DeletePostModal from './DeletePostModal'
 import PostReaction from './PostReaction'
-import { message } from 'antd'
+import { Button, message } from 'antd'
 import { postService } from '@/app/services/post.service'
 import { commentService } from '@/app/services/comment.service'
 import { Avatar } from 'antd'
@@ -18,6 +18,7 @@ import { PictureOutlined, CloseOutlined } from '@ant-design/icons'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { interactionService } from '@/app/services/interaction.service'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 
 interface PostProps extends PostData {
   feedId?: string
@@ -55,7 +56,7 @@ const Post: React.FC<PostProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  
+
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -63,6 +64,8 @@ const Post: React.FC<PostProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [reactions, setReactions] = useState<PostReactionDto[]>(postReactionUsers)
   const [localTotalLiked, setLocalTotalLiked] = useState(totalLiked)
+  const [summarizedContent, setSummarizedContent] = useState<string>('')
+  const [isSummarizing, setIsSummarizing] = useState<boolean>(false)
 
   const [showComments, setShowComments] = useState(false)
   const [localTotalComment, setLocalTotalComment] = useState(totalComment)
@@ -204,15 +207,15 @@ const Post: React.FC<PostProps> = ({
       }
 
       const response = await commentService.createComment(formData)
-      
+
       if (response.message?.includes('success')) {
         message.success('Comment sent successfully')
         setCommentText('')
         setSelectedImages([])
         previewUrls.forEach((url) => URL.revokeObjectURL(url))
         setPreviewUrls([])
-        setLocalTotalComment(prev => prev + 1)
-        
+        setLocalTotalComment((prev) => prev + 1)
+
         if (onPostUpdated) {
           onPostUpdated({
             id,
@@ -257,6 +260,22 @@ const Post: React.FC<PostProps> = ({
       }
     } catch (error) {
       message.error('An error occurred while reacting')
+    }
+  }
+
+  const summarizePost = async () => {
+    setIsSummarizing(true)
+    try {
+      const response = await postService.summarizePost(content)
+      if (response.status === 200) {
+        const data = response.data as ResponseHasData<string>
+        const newContent = data.data as string
+        setSummarizedContent(newContent)
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setIsSummarizing(false)
     }
   }
 
@@ -407,6 +426,7 @@ const Post: React.FC<PostProps> = ({
               </div>
             </div>
             <div className='relative'>
+              <Button onClick={summarizePost} disabled={isSummarizing || !!summarizedContent} loading={isSummarizing}>Summarize this post</Button>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 hover:border hover:border-gray-300 border border-transparent'
@@ -429,6 +449,9 @@ const Post: React.FC<PostProps> = ({
         {/* Content */}
         <div className='px-4 pb-2'>
           <p className='text-gray-900 leading-relaxed font-medium text-[15px]'>{content}</p>
+          {summarizedContent && (
+            <p className='text-gray-500 leading-relaxed font-medium text-[15px] mt-2'>{summarizedContent}</p>
+          )}
         </div>
 
         {/* Image Carousel */}
@@ -450,10 +473,10 @@ const Post: React.FC<PostProps> = ({
             <div className='flex items-center justify-between'>
               {/* Like and Comment buttons - Bên trái */}
               <div className='flex items-center space-x-4'>
-                <div 
+                <div
                   className={`rounded-full transition-colors h-10 flex items-center border ${
-                    reactions.find(r => r.userId === currentUserId) 
-                      ? 'bg-gray-100 border-gray-300' 
+                    reactions.find((r) => r.userId === currentUserId)
+                      ? 'bg-gray-100 border-gray-300'
                       : 'border-transparent hover:bg-gray-100 hover:border-gray-300'
                   }`}
                 >
@@ -486,16 +509,18 @@ const Post: React.FC<PostProps> = ({
                 {postReactionUsers && postReactionUsers.length > 0 && (
                   <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10'>
                     <div className='flex items-center -space-x-1'>
-                      {Array.from(new Set(postReactionUsers.map((r) => r.reaction))).slice(0, 3).map((reactionEmoji, index) => (
-                        <div
-                          key={index}
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                            index === 0 ? 'z-30' : index === 1 ? 'z-20' : 'z-10'
-                          }`}
-                        >
-                          {reactionEmoji}
-                        </div>
-                      ))}
+                      {Array.from(new Set(postReactionUsers.map((r) => r.reaction)))
+                        .slice(0, 3)
+                        .map((reactionEmoji, index) => (
+                          <div
+                            key={index}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                              index === 0 ? 'z-30' : index === 1 ? 'z-20' : 'z-10'
+                            }`}
+                          >
+                            {reactionEmoji}
+                          </div>
+                        ))}
                     </div>
                     <span className='whitespace-nowrap'>{getReactionText()}</span>
                   </div>
@@ -503,7 +528,7 @@ const Post: React.FC<PostProps> = ({
 
                 {localTotalComment > 0 && (
                   <button
-                    onClick={() => setShowComments(true)} 
+                    onClick={() => setShowComments(true)}
                     className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap'
                   >
                     {localTotalComment} Comment
