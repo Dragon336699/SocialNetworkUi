@@ -44,5 +44,63 @@ export const conversationService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+
+  async deleteConversation(conversationId: string): Promise<{
+    data: BaseResponse
+    status: number
+  }> {
+    const response = await apiClient.delete<BaseResponse>(
+      `conversation/deleteConversation`,
+      {
+        data: {
+          conversationId
+        },
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async changeNickname(
+    conversationId: string,
+    targetUserId: string,
+    newNickname: string
+  ): Promise<{
+    data: BaseResponse
+    status: number
+  }> {
+    const response = await apiClient.put<BaseResponse>(
+      `conversation/changeNickname`,
+      {
+        conversationId,
+        targetUserId,
+        newNickname
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async changeConversationName(
+    conversationId: string,
+    newConversationName: string
+  ): Promise<{
+    data: BaseResponse
+    status: number
+  }> {
+    const response = await apiClient.put<BaseResponse>(
+      `conversation/changeConversationName`,
+      {
+        conversationId,
+        newConversationName
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

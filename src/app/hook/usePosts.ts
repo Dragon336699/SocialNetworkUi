@@ -78,8 +78,7 @@ export const usePosts = (): UsePostsReturn => {
       const newFeed: FeedDto = {
         feedId: '', // Tạm thời để empty, sẽ được update khi user reload
         post: newPost,
-        createdAt: new Date().toISOString(),
-        isSeen: true
+        createdAt: new Date().getTime()
       }
       setPosts((prevPosts) => [newFeed, ...prevPosts])
     } else {
