@@ -501,7 +501,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
   return (
     <>
-      <div className='fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-0 md:p-4'>
+      <div className='fixed inset-0 bg-black bg-opacity-60 z-[110] flex items-center justify-center p-0 md:p-4'>
         <div className='bg-white w-full h-full md:h-[90vh] md:max-w-[1000px] md:rounded-xl md:border md:border-gray-200 flex flex-col overflow-hidden shadow-2xl'>
           <div className='relative px-4 py-3 border-b border-gray-200 bg-white flex justify-center items-center'>
             <h3 className='font-bold text-xl text-center'>{fullName}'s post</h3>

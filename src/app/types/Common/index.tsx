@@ -7,7 +7,7 @@ export interface ModalProps {
   subTitle?: string
   isLoading?: boolean
   title?: string
-  onCreatePostSuccess?: () => void
+  onCreatePostSuccess?: (data?: any) => void
   groupId?: string
   currentUser: UserDto
 }
