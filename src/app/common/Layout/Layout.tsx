@@ -3,6 +3,7 @@ import Navbar from '../Navbar/Navbar'
 import NotificationSide from '../Navbar/NotificationSide'
 import { useState } from 'react'
 import Header from '../Header/Header'
+import Chatbot from '../../components/Chatbot/Chatbot'
 
 const Layout: React.FC = () => {
   const [showNoti, setShowNoti] = useState(false)
@@ -21,6 +22,7 @@ const Layout: React.FC = () => {
           <Outlet />
         </div>
       </div>
+      <Chatbot />
     </div>
   )
 }
