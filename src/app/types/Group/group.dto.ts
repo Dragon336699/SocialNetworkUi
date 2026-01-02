@@ -5,8 +5,8 @@ export enum GroupRole {
   User = 'User',
   Administrator = 'Administrator',
   SuperAdministrator = 'SuperAdministrator',
-  Pending = 'Pending'
-
+  Pending = 'Pending',
+  Inviting = 'Inviting'
 }
 
 export interface GroupDto {
@@ -28,4 +28,14 @@ export interface GroupUserDto {
   roleName: string
   joinedAt: string
   user?: UserDto
+}
+
+export interface GroupInvitationDto {
+  groupId: string
+  groupName: string
+  groupDescription: string
+  groupImageUrl: string
+  isPublic: boolean
+  memberCount: number
+  invitedAt: string
 }

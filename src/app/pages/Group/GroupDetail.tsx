@@ -42,6 +42,7 @@ import PendingJoinRequestsModal from '@/app/common/Modals/Group/PendingJoinReque
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
 import GroupDropdownMenu, { PendingDropdownMenu, JoinedDropdownMenu } from './GroupDropdownMenu'
+import InviteFriendsModal from '@/app/common/Modals/Group/InviteFriendsModal'
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -68,6 +69,7 @@ const GroupDetail = () => {
   const [isEditGroupOpen, setIsEditGroupOpen] = useState(false)
   const [isManageMembersOpen, setIsManageMembersOpen] = useState(false)
   const [isPendingRequestsOpen, setIsPendingRequestsOpen] = useState(false)
+  const [isInvited, setIsInvited] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserDto>(defaultUser)
   const [pendingRequestCount, setPendingRequestCount] = useState(0)
   const [activeTab, setActiveTab] = useState('posts')
@@ -78,7 +80,9 @@ const GroupDetail = () => {
   const [showPendingDropdown, setShowPendingDropdown] = useState(false)
   const [showJoinedDropdown, setShowJoinedDropdown] = useState(false)
   const [isInviteFriendsOpen, setIsInviteFriendsOpen] = useState(false)
-  
+  const [acceptingInvite, setAcceptingInvite] = useState(false)
+  const [rejectingInvite, setRejectingInvite] = useState(false)
+
   const currentUserRole = group?.groupUsers?.find((gu) => gu.userId === currentUser?.id)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
   const isAdmin = currentUserRole === GroupRole.Administrator || isSuperAdmin
@@ -127,13 +131,20 @@ const GroupDetail = () => {
             if (userStatus.roleName === GroupRole.Pending) {
               setIsPending(true)
               setIsJoined(false)
+              setIsInvited(false)
+            } else if (userStatus.roleName === GroupRole.Inviting) {
+              setIsInvited(true)
+              setIsPending(false)
+              setIsJoined(false)
             } else {
               setIsJoined(true)
               setIsPending(false)
+              setIsInvited(false)
             }
           } else {
             setIsJoined(false)
             setIsPending(false)
+            setIsInvited(false)
           }
 
           if (response.group.posts) {
@@ -174,13 +185,20 @@ const GroupDetail = () => {
           if (userStatus.roleName === GroupRole.Pending) {
             setIsPending(true)
             setIsJoined(false)
+            setIsInvited(false)
+          } else if (userStatus.roleName === GroupRole.Inviting) {
+            setIsInvited(true)
+            setIsPending(false)
+            setIsJoined(false)
           } else {
             setIsJoined(true)
             setIsPending(false)
+            setIsInvited(false)
           }
         } else {
           setIsJoined(false)
           setIsPending(false)
+          setIsInvited(false)
         }
 
         if (response.group.posts) {
@@ -197,6 +215,41 @@ const GroupDetail = () => {
       }
     } catch (error) {
       console.error('Error refreshing group data:', error)
+    }
+  }
+
+  const handleAcceptInvite = async () => {
+    if (!groupId) return
+
+    try {
+      setAcceptingInvite(true)
+      await groupService.acceptGroupInvite(groupId)
+      message.success('Successfully joined the group!')
+      await refreshGroupData()
+      setIsInvited(false)
+      setIsJoined(true)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Unable to accept invitation'
+      message.error(errorMessage)
+    } finally {
+      setAcceptingInvite(false)
+    }
+  }
+
+  const handleRejectInvite = async () => {
+    if (!groupId) return
+
+    try {
+      setRejectingInvite(true)
+      await groupService.rejectGroupInvite(groupId)
+      message.success('Invitation rejected')
+      await refreshGroupData()
+      setIsInvited(false)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Unable to reject invitation'
+      message.error(errorMessage)
+    } finally {
+      setRejectingInvite(false)
     }
   }
 
@@ -363,6 +416,12 @@ const GroupDetail = () => {
             groupId={groupId || ''}
             onRequestsUpdated={handleMembersUpdated}
           />
+          <InviteFriendsModal
+            isModalOpen={isInviteFriendsOpen}
+            handleCancel={() => setIsInviteFriendsOpen(false)}
+            group={group}
+            onInviteSuccess={refreshGroupData}
+          />
           <Modal
             open={isImageViewerOpen}
             onCancel={() => setIsImageViewerOpen(false)}
@@ -448,7 +507,7 @@ const GroupDetail = () => {
               <div className='flex items-center gap-2'>
                 <div className='flex -space-x-2'>
                   {group.groupUsers
-                    ?.filter(gu => gu.roleName !== GroupRole.Pending)
+                    ?.filter(gu => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
                     .slice(0, 10)
                     .map((member, index) => (
                       <Avatar
@@ -494,6 +553,7 @@ const GroupDetail = () => {
 
               <div className='ml-4 flex items-center gap-2'>
                 <Button
+                  type='primary'
                   icon={<UserAddOutlined />}
                   onClick={() => setIsInviteFriendsOpen(true)}
                   className='flex items-center'
@@ -548,7 +608,35 @@ const GroupDetail = () => {
           </div>
         )}
         
-        {!isJoined && !isPending && (
+        {/* Hiển thị 2 nút Accept và Reject khi được mời */}
+        {isInvited && (
+          <div className='mt-4 flex justify-end gap-3'>
+            <Button 
+              type='primary'
+              size='large'
+              icon={<CheckOutlined />}
+              onClick={handleAcceptInvite}
+              loading={acceptingInvite}
+              disabled={rejectingInvite}
+            >
+              Accept Invitation
+            </Button>
+            <Button 
+              danger
+              type='primary' 
+              size='large' 
+              icon={<CloseOutlined />} 
+              onClick={handleRejectInvite}
+              loading={rejectingInvite}
+              disabled={acceptingInvite}
+            >
+              Reject
+            </Button>
+          </div>
+        )}
+
+        {/* Hiển thị nút Join Group khi chưa tham gia và không được mời */}
+        {!isJoined && !isPending && !isInvited && (
           <div className='mt-4 flex justify-end'>
             <Button type='primary' size='large' icon={<UserOutlined />} onClick={handleJoinGroup}>
               Join Group
