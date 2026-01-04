@@ -6,6 +6,7 @@ import { chatService } from '../../services/chat.service'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRobot } from '@fortawesome/free-solid-svg-icons'
 import { BaseResponse } from '../../types/Base/Responses/baseResponse'
+import { CHATBOT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 
 // Mock chatbot user data
 const chatbotUser: UserDto = {
@@ -15,13 +16,13 @@ const chatbotUser: UserDto = {
   status: 'online',
   firstName: 'Chat',
   lastName: 'Bot',
-  avatarUrl: '/public/vite.svg',
+  avatarUrl: CHATBOT_AVATAR_URL,
   gender: 'Other'
 }
 
 const BotTypingIndicator = () => (
   <div className='flex items-end gap-2 justify-start'>
-    <img src={chatbotUser.avatarUrl || '/public/vite.svg'} alt='avatar' className='w-6 h-6 rounded-full' />
+    <img src={chatbotUser.avatarUrl || CHATBOT_AVATAR_URL} alt='avatar' className='w-6 h-6 rounded-full' />
     <div className='max-w-xs lg:max-w-md px-3 py-2 rounded-xl bg-gray-200 text-gray-800 rounded-bl-none'>
       <div className='flex items-center justify-center space-x-1'>
         <div className='w-2 h-2 bg-gray-500 rounded-full animate-pulse [animation-delay:-0.3s]'></div>
@@ -186,7 +187,7 @@ const Chatbot = () => {
                   >
                     {(!loggedInUser || msg.senderId !== loggedInUser.id) && (
                       <img
-                        src={msg.sender.avatarUrl || '/public/vite.svg'}
+                        src={msg.sender.avatarUrl || CHATBOT_AVATAR_URL}
                         alt='avatar'
                         className='w-6 h-6 rounded-full'
                       />
