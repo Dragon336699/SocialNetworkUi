@@ -37,7 +37,12 @@ function App() {
 
   useEffect(() => {
     useUserStore.getState().fetchUser()
-    if (isLoggedIn) chatService.start()
+  }, [])
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      chatService.start()
+    }
   }, [isLoggedIn])
 
   return (

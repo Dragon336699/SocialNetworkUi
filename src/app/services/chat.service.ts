@@ -19,10 +19,14 @@ export const chatService = {
 
     try {
       await connection.start()
-      console.log('SinalR connected')
+      connection.on('ReceivePrivateMessage', (message: MessageDto) => {
+        window.dispatchEvent(new CustomEvent('new-private-message', { detail: message }))
+      })
     } catch (err) {
       console.log('SignalR connection failed', err)
     }
+    
+    return connection
   },
 
   onReceivePrivateMessage(callback: (privateResponse: MessageDto) => void) {
