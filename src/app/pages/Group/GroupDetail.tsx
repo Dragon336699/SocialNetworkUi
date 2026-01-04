@@ -474,8 +474,8 @@ const GroupDetail = () => {
       )}
 
       {/* Group Header with Image */}
-      <Card className='mb-6 border-2 border-gray-200 font-semibold'>
-        <div className='relative -mt-6 -mx-6 mb-4'>
+      <Card className='mb-6 border-2 border-gray-200 font-semibold' styles={{ body: { overflow: 'visible' } }}>
+        <div className='relative -mt-6 -mx-6 mb-4 overflow-hidden rounded-t-lg'>
           {group.imageUrl && (
             <div
               className='w-full h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'

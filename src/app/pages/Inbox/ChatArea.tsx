@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, Skeleton, Tooltip, Image, message, Dropdown, Modal } from 'antd'
-import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons'
+import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCheck,
@@ -114,6 +114,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const waveformRef = useRef(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const reactions = ['👍', '❤️', '😂', '😮', '😢']
   const reactionBarRef = useRef<HTMLDivElement>(null)
   const pickerEmotionRef = useRef<HTMLDivElement>(null)
@@ -141,7 +142,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     navigate(`/profile/${userName}`)
   }
 
-  // Xử lý xóa conversation
   const handleDeleteConversation = () => {
     Modal.confirm({
       title: 'Delete Conversation',
@@ -164,7 +164,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     })
   }
 
-  // Xử lý đổi nickname
   const handleChangeNickname = async () => {
     if (!newNickname.trim()) {
       message.warning('Please enter a nickname')
@@ -193,7 +192,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   }
 
-  // Xử lý đổi tên group
   const handleChangeGroupName = async () => {
     if (!newGroupName.trim()) {
       message.warning('Please enter a group name')
@@ -346,19 +344,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const textarea = textareaRef.current
     if (!textarea) {
       setText(text + emoji.native)
-      setShowEmojiPicker(false)
       return
     }
     const start = textarea.selectionStart || 0
     const end = textarea.selectionEnd || 0
     const newText = text.slice(0, start) + emoji.native + text.slice(end)
     setText(newText)
-    setShowEmojiPicker(false)
     requestAnimationFrame(() => {
       textarea.focus()
       textarea.selectionStart = textarea.selectionEnd = start + emoji.native.length
     })
   }
+
+  const scrollToNewestMessage = () => {
+    const scrollableDiv = document.getElementById('scrollableDiv')
+    if (scrollableDiv) {
+      scrollableDiv.scrollTo({
+        top: scrollableDiv.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }
+ 
+  useEffect(() => {
+    const scrollableDiv = document.getElementById('scrollableDiv')
+    if (!scrollableDiv) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv     
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 300
+      setShowScrollToBottom(!isNearBottom)
+    }
+
+    scrollableDiv.addEventListener('scroll', handleScroll)
+    return () => scrollableDiv.removeEventListener('scroll', handleScroll)
+  }, [conversationId])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -527,26 +547,28 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
       {/* Body - Messages List */}
       {conversationId && (
-        <div 
-          id='scrollableDiv' 
-          className='flex-1 overflow-y-auto px-[20px] pb-4 flex flex-col'
-        >
+        <div className='relative flex-1 overflow-hidden'>
+          <div 
+            id='scrollableDiv' 
+            className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'
+          >
+
           {/* Loading indicator at top */}
           {isLoadingMore && (
             <div className='text-center py-3 text-gray-500'>
               <div className='inline-flex items-center gap-2'>
                 <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
-                <span className='text-sm'>Đang tải tin nhắn cũ...</span>
+                <span className='text-sm'>Loading older messages...</span>
               </div>
             </div>
           )}
           {!isLoadingMore && hasMore && (
             <div className='text-center py-2 text-gray-400'>
-              <span className='text-sm'>↑ Kéo lên để xem tin nhắn cũ hơn</span>
+              <span className='text-sm'>↑ Scroll up to see older messages</span>
             </div>
           )}
           {!hasMore && messages.length > 0 && (
-            <Divider plain>Đã hết tin nhắn 🤐</Divider>
+            <Divider plain>No more messages 🤐</Divider>
           )}
           
           <List
@@ -661,6 +683,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 )
               }}
             />
+          </div>
+          
+          {/* Scroll to bottom button */}
+          {showScrollToBottom && (
+            <button
+              onClick={scrollToNewestMessage}
+              className='absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 bg-white border-2 border-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-all z-50'
+              title='Scroll to newest message'
+            >
+              <ArrowDownOutlined className='text-gray-600' />
+            </button>
+          )}
         </div>
       )}
 

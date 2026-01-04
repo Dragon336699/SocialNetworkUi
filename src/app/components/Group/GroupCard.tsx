@@ -61,7 +61,6 @@ const GroupCard = ({
       message.success('Join request sent! Waiting for approval.')
       setPending(true)
       setJoined(false)
-      if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to send join request'
       message.error(errorMessage)
@@ -77,8 +76,7 @@ const GroupCard = ({
       message.success('Join request cancelled!')
       setPending(false)
       setJoined(false)
-      setShowPendingDropdown(false)
-      if (onJoinSuccess) onJoinSuccess()
+      setShowPendingDropdown(false)     
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
       message.error(errorMessage)
@@ -107,7 +105,7 @@ const GroupCard = ({
     >
       <div className='flex h-full'>
         {/* Image Section - Left */}
-        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden'>
+        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden rounded-l-lg'>
           {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
             <img 
               src={currentGroup.imageUrl} 
@@ -128,7 +126,7 @@ const GroupCard = ({
         </div>
 
         {/* Content Section - Right */}
-        <div className='flex-1 p-4 flex flex-col' onClick={(e) => e.stopPropagation()}>
+        <div className='flex-1 p-4 flex flex-col overflow-visible' onClick={(e) => e.stopPropagation()}>
           {/* Header - Fixed height area */}
           <div className='flex flex-col' style={{ minHeight: '60px', maxHeight: '60px' }}>
             <Title 

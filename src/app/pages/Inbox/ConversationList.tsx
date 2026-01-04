@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Avatar, ConfigProvider, Input, Skeleton } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -21,6 +22,25 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onNewMessageClick,
   onConversationClick
 }) => {
+  const [showNoConversation, setShowNoConversation] = useState(false)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+    
+    if (conversations.length === 0) {
+      timer = setTimeout(() => {
+        setShowNoConversation(true)
+      }, 5000)
+    } else {
+      setShowNoConversation(false)
+    }
+    
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }, [conversations])
   return (
     <div className='w-[15%] min-w-[280px] p-[20px] border-r border-gray-100'>
       <div className='flex justify-between items-center mb-4'>
@@ -53,71 +73,80 @@ const ConversationList: React.FC<ConversationListProps> = ({
         />
       </ConfigProvider>
       <div className='mt-4 flex flex-col gap-3 overflow-y-auto max-h-[calc(100vh-250px)]'>
-        {conversations.length === 0
-          ? Array.from({ length: 10 }).map((_, i) => (
+        {conversations.length === 0 ? (
+          showNoConversation ? (
+            <div className='flex flex-col items-center justify-center py-8 text-gray-500'>
+              <p className='text-base'>No conversation</p>
+              <p className='text-sm mt-1'>Start a new conversation!</p>
+            </div>
+          ) : (
+            Array.from({ length: 10 }).map((_, i) => (
               <Skeleton className='mb-3' key={i} active avatar paragraph={{ rows: 1 }} />
             ))
-          : conversations.map((conversation) => {
-              const seenByMe =
-                conversation.newestMessage?.senderId !== userInfo?.id &&
-                conversation.newestMessage?.status !== 'Seen'
-                  ? false
-                  : true
+          )
+        ) : (
+          conversations.map((conversation) => {
+            const seenByMe =
+              conversation.newestMessage?.senderId !== userInfo?.id &&
+              conversation.newestMessage?.status !== 'Seen'
+                ? false
+                : true
 
-              return (
-                <div
-                  key={conversation.id}
-                  onClick={() => onConversationClick(conversation.id)}
-                  className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 ${
-                    conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-gray-50' : ''
-                  } rounded-[12px] py-[12px] px-[16px] transition-colors`}
-                >
-                  {conversation && conversation.type === 'Personal' ? (
+            return (
+              <div
+                key={conversation.id}
+                onClick={() => onConversationClick(conversation.id)}
+                className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 ${
+                  conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-gray-50' : ''
+                } rounded-[12px] py-[12px] px-[16px] transition-colors`}
+              >
+                {conversation && conversation.type === 'Personal' ? (
+                  <Avatar
+                    draggable='false'
+                    className='select-none border-2 border-gray-200'
+                    size={42}
+                    src={conversation.conversationUsers[0]?.user.avatarUrl || DEFAULT_AVATAR_URL}
+                  />
+                ) : (
+                  <Avatar.Group>
                     <Avatar
                       draggable='false'
                       className='select-none border-2 border-gray-200'
-                      size={42}
+                      size={40}
                       src={conversation.conversationUsers[0]?.user.avatarUrl || DEFAULT_AVATAR_URL}
                     />
-                  ) : (
-                    <Avatar.Group>
-                      <Avatar
-                        draggable='false'
-                        className='select-none border-2 border-gray-200'
-                        size={40}
-                        src={conversation.conversationUsers[0]?.user.avatarUrl || DEFAULT_AVATAR_URL}
-                      />
-                      <Avatar
-                        draggable='false'
-                        className='select-none border-2 border-gray-200'
-                        size={40}
-                        src={conversation.conversationUsers[1]?.user.avatarUrl || DEFAULT_AVATAR_URL}
-                      />
-                    </Avatar.Group>
-                  )}
-                  <div className='flex flex-col justify-around overflow-hidden flex-1'>
-                    <p className={`text-base font-medium select-none truncate ${seenByMe ? '' : 'font-semibold'}`}>
-                      {conversation.type === 'Personal'
-                        ? conversation.conversationUsers[0]?.nickName
-                        : conversation.conversationName}
-                    </p>
-                    <span
-                      className={`text-sm truncate select-none ${seenByMe ? 'text-gray-500' : 'font-medium text-gray-900'}`}
-                    >
-                      {conversation.newestMessage?.senderId.toLowerCase() === userInfo?.id.toLowerCase() &&
-                      (!conversation.newestMessage?.messageAttachments ||
-                        conversation.newestMessage.messageAttachments.length === 0)
-                        ? 'You: '
-                        : ''}
-                      {conversation.newestMessage?.content === ''
-                        ? conversation.newestMessage.sender.firstName + ' sent attachments'
-                        : conversation.newestMessage?.content}
-                    </span>
-                  </div>
-                  {!seenByMe && <div className='text-blue-500 text-sm font-medium'>●</div>}
+                    <Avatar
+                      draggable='false'
+                      className='select-none border-2 border-gray-200'
+                      size={40}
+                      src={conversation.conversationUsers[1]?.user.avatarUrl || DEFAULT_AVATAR_URL}
+                    />
+                  </Avatar.Group>
+                )}
+                <div className='flex flex-col justify-around overflow-hidden flex-1'>
+                  <p className={`text-base font-medium select-none truncate ${seenByMe ? '' : 'font-semibold'}`}>
+                    {conversation.type === 'Personal'
+                      ? conversation.conversationUsers[0]?.nickName
+                      : conversation.conversationName}
+                  </p>
+                  <span
+                    className={`text-sm truncate select-none ${seenByMe ? 'text-gray-500' : 'font-medium text-gray-900'}`}
+                  >
+                    {conversation.newestMessage?.senderId.toLowerCase() === userInfo?.id.toLowerCase() &&
+                    (!conversation.newestMessage?.messageAttachments ||
+                      conversation.newestMessage.messageAttachments.length === 0)
+                      ? 'You: '
+                      : ''}
+                    {conversation.newestMessage?.content === ''
+                      ? conversation.newestMessage.sender.firstName + ' sent attachments'
+                      : conversation.newestMessage?.content}
+                  </span>
                 </div>
-              )
-            })}
+                {!seenByMe && <div className='text-blue-500 text-sm font-medium'>●</div>}
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   )

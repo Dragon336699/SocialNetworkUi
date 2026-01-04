@@ -328,8 +328,14 @@ const Inbox: React.FC<InboxProps> = () => {
 
   const updateItemInConversations = async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
     try {
-      setConversations((prev) =>
-        prev.map((conv) => {
+      setConversations((prev) => {
+        const conversationExists = prev.some((conv) => conv.id === convId)     
+        if (!conversationExists && newestMessage) {
+          fetchAllConversations()
+          return prev
+        }
+        
+        return prev.map((conv) => {
           if (conv.id !== convId) return conv
           const updatedConv = { ...conv }
           if (newestMessage) {
@@ -342,7 +348,7 @@ const Inbox: React.FC<InboxProps> = () => {
           }
           return updatedConv
         })
-      )
+      })
     } catch (err) {
       return
     }
@@ -383,15 +389,16 @@ const Inbox: React.FC<InboxProps> = () => {
 
   useEffect(() => {
     chatService.start().then(() => {
-      chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
-        if (conversationId !== undefined) {
-          setMessages((prev) => [...prev, newReceivedMessage])
-          updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
-          // Scroll to bottom when receiving new message
+      chatService.onReceivePrivateMessage(async (newReceivedMessage) => {       
+        updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
+      
+        if (conversationId !== undefined && newReceivedMessage.conversationId === conversationId) {
+          setMessages((prev) => [...prev, newReceivedMessage])     
           setTimeout(() => {
             scrollToBottom('smooth')
           }, 100)
         }
+        
         const updateMessageStatus = await chatService.updateMessageStatus({
           messageId: newReceivedMessage.id,
           status: 'Delivered'
@@ -479,6 +486,28 @@ const Inbox: React.FC<InboxProps> = () => {
       }
     }
   }, [userInfo, conversationId, skipMessages])
+
+  // Mark newest message as Seen when opening a conversation
+  useEffect(() => {
+    if (
+      messages.length > 0 &&
+      userInfo &&
+      conversationId &&
+      messages[messages.length - 1].sender.id !== userInfo.id &&
+      messages[messages.length - 1].status !== 'Seen'
+    ) {
+      const markAsSeen = async () => {
+        const updateMessageStatus = await chatService.updateMessageStatus({
+          messageId: messages[messages.length - 1].id,
+          status: 'Seen'
+        })
+        if (updateMessageStatus) {
+          updateItemInConversations(conversationId, null, 'Seen')
+        }
+      }
+      markAsSeen()
+    }
+  }, [conversationId, messages.length > 0 && messages[messages.length - 1]?.id])
 
   // Scroll to bottom after messages are loaded for the first time
   useEffect(() => {
@@ -593,8 +622,7 @@ const Inbox: React.FC<InboxProps> = () => {
           handleSendMessage={handleSendMessage}
           handleSendReaction={handleSendReaction}
           onConversationDeleted={() => {
-            navigate('/Inbox')
-            fetchAllConversations()
+            window.location.href = '/Inbox'
           }}
           onNicknameChanged={(userId: string, newNickname: string) => {
             setConversationUsers(prev => 
