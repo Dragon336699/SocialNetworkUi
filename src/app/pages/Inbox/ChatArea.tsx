@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, Skeleton, Tooltip, Image, message, Dropdown, Modal } from 'antd'
-import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined } from '@ant-design/icons'
+import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined, ArrowDownOutlined } from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCheck,
@@ -26,7 +26,6 @@ import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import WaveSurfer from 'wavesurfer.js'
-import InfiniteScroll from 'react-infinite-scroll-component'
 import { UserDto } from '@/app/types/User/user.dto'
 import { MessageDto } from '@/app/types/Message/messge.dto'
 import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
@@ -64,6 +63,8 @@ interface ChatAreaProps {
   messageEndRef: React.RefObject<HTMLDivElement>
   recorderRef: React.MutableRefObject<RecordRTC | null>
   streamRef: React.MutableRefObject<MediaStream | null>
+  hasMore: boolean
+  isLoadingMore: boolean
   loadMoreMessage: () => void
   handleSendMessage: () => void
   handleSendReaction: (messageId: string, reaction: string) => Promise<void>
@@ -100,6 +101,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   messageEndRef,
   recorderRef,
   streamRef,
+  hasMore,
+  isLoadingMore,
   loadMoreMessage,
   handleSendMessage,
   handleSendReaction,
@@ -111,6 +114,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const waveformRef = useRef(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const reactions = ['👍', '❤️', '😂', '😮', '😢']
   const reactionBarRef = useRef<HTMLDivElement>(null)
   const pickerEmotionRef = useRef<HTMLDivElement>(null)
@@ -138,7 +142,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     navigate(`/profile/${userName}`)
   }
 
-  // Xử lý xóa conversation
   const handleDeleteConversation = () => {
     Modal.confirm({
       title: 'Delete Conversation',
@@ -161,7 +164,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     })
   }
 
-  // Xử lý đổi nickname
   const handleChangeNickname = async () => {
     if (!newNickname.trim()) {
       message.warning('Please enter a nickname')
@@ -190,7 +192,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   }
 
-  // Xử lý đổi tên group
   const handleChangeGroupName = async () => {
     if (!newGroupName.trim()) {
       message.warning('Please enter a group name')
@@ -343,19 +344,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     const textarea = textareaRef.current
     if (!textarea) {
       setText(text + emoji.native)
-      setShowEmojiPicker(false)
       return
     }
     const start = textarea.selectionStart || 0
     const end = textarea.selectionEnd || 0
     const newText = text.slice(0, start) + emoji.native + text.slice(end)
     setText(newText)
-    setShowEmojiPicker(false)
     requestAnimationFrame(() => {
       textarea.focus()
       textarea.selectionStart = textarea.selectionEnd = start + emoji.native.length
     })
   }
+
+  const scrollToNewestMessage = () => {
+    const scrollableDiv = document.getElementById('scrollableDiv')
+    if (scrollableDiv) {
+      scrollableDiv.scrollTo({
+        top: scrollableDiv.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }
+ 
+  useEffect(() => {
+    const scrollableDiv = document.getElementById('scrollableDiv')
+    if (!scrollableDiv) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv     
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 300
+      setShowScrollToBottom(!isNearBottom)
+    }
+
+    scrollableDiv.addEventListener('scroll', handleScroll)
+    return () => scrollableDiv.removeEventListener('scroll', handleScroll)
+  }, [conversationId])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -524,48 +547,55 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
       {/* Body - Messages List */}
       {conversationId && (
-        <div 
-          id='scrollableDiv' 
-          className='flex-1 overflow-y-auto px-[20px] pb-4'
-        >
-          <InfiniteScroll
-            dataLength={messages.length}
-            next={loadMoreMessage}
-            hasMore={true}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column-reverse'
-            }}
-            inverse={true}
-            loader={<div></div>}
-            endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
-            scrollableTarget='scrollableDiv'
+        <div className='relative flex-1 overflow-hidden'>
+          <div 
+            id='scrollableDiv' 
+            className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'
           >
-            <List
-              className='w-full'
-              dataSource={messages}
-              renderItem={(item, index) => {
-                const isMe = item.sender?.id == userInfo?.id
-                const isFirst = index === 18
-                return (
-                  <div
-                    id={`msg-${item.id}`}
-                    ref={isFirst ? firstMessageRef : null}
-                    className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
-                    key={item.id}
-                  >
-                    {!isMe && (
-                      <a href='#' className='mr-2'>
-                        <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
-                      </a>
-                    )}
 
-                    <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
-                      <div className='flex items-center'>
-                        <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
-                          {item.repliedMessage && (
-                            item.repliedMessage.content !== '' ? (
-                              <p className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}>
+          {/* Loading indicator at top */}
+          {isLoadingMore && (
+            <div className='text-center py-3 text-gray-500'>
+              <div className='inline-flex items-center gap-2'>
+                <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
+                <span className='text-sm'>Loading older messages...</span>
+              </div>
+            </div>
+          )}
+          {!isLoadingMore && hasMore && (
+            <div className='text-center py-2 text-gray-400'>
+              <span className='text-sm'>↑ Scroll up to see older messages</span>
+            </div>
+          )}
+          {!hasMore && messages.length > 0 && (
+            <Divider plain>No more messages 🤐</Divider>
+          )}
+          
+          <List
+            className='w-full'
+            dataSource={messages}
+            renderItem={(item, index) => {
+              const isMe = item.sender?.id == userInfo?.id
+              const isFirst = index === 18
+              return (
+                <div
+                  id={`msg-${item.id}`}
+                  ref={isFirst ? firstMessageRef : null}
+                  className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
+                  key={item.id}
+                >
+                  {!isMe && (
+                    <a href='#' className='mr-2'>
+                      <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
+                    </a>
+                  )}
+
+                  <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
+                    <div className='flex items-center'>
+                      <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
+                        {item.repliedMessage && (
+                          item.repliedMessage.content !== '' ? (
+                            <p className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}>
                                 {item.repliedMessage.content}
                               </p>
                             ) : item.repliedMessage.messageAttachments[0]?.fileType === 'Image' ? (
@@ -653,7 +683,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 )
               }}
             />
-          </InfiniteScroll>
+          </div>
+          
+          {/* Scroll to bottom button */}
+          {showScrollToBottom && (
+            <button
+              onClick={scrollToNewestMessage}
+              className='absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 bg-white border-2 border-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition-all z-50'
+              title='Scroll to newest message'
+            >
+              <ArrowDownOutlined className='text-gray-600' />
+            </button>
+          )}
         </div>
       )}
 

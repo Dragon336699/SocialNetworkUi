@@ -1,4 +1,4 @@
-import { GroupDto, GroupUserDto } from './group.dto'
+import { GroupDto, GroupUserDto, GroupInvitationDto } from './group.dto'
 
 export interface CreateGroupResponse {
   groupId?: string
@@ -72,3 +72,21 @@ export interface KickMemberResponse {
   success: boolean
 }
 
+export interface InviteMemberResponse {
+  message: string
+}
+
+export interface AcceptGroupInviteResponse {
+  message: string
+  group?: GroupDto
+}
+
+export interface RejectGroupInviteResponse {
+  message: string
+}
+
+export interface GetMyGroupInvitationsResponse {
+  message: string
+  invitations: GroupInvitationDto[]
+  totalCount: number
+}
