@@ -1,4 +1,4 @@
-name: CI - React UI
+name: CI/CD - React UI
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
     steps: 
@@ -18,7 +18,38 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+
       - name: Install dependencies
         run: npm install
+
       - name: Build
         run: npm run build
+
+  cd:
+    needs: ci
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: long1409
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build & Push image
+        run: |
+          docker build -t long1409/socialnetwork-ui:latest .
+          docker push long1409/socialnetwork-ui:latest
+      
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 72.62.78.5
+          username: root
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            cd projects
+            docker compose pull frontend-react
+            docker compose up -d frontend-react
