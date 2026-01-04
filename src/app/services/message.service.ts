@@ -53,5 +53,24 @@ export const messageService = {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
+  },
+
+  async getImageAttachments(
+    conversationId: string,
+    skip: number,
+    take: number
+  ): Promise<{ data: BaseResponse | ResponseHasData<any[]>; status: number }> {
+    const response = await apiClient.post<BaseResponse | ResponseHasData<any[]>>(
+      'message/getImageAttachments',
+      {
+        conversationId,
+        skip,
+        take
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

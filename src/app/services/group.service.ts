@@ -14,7 +14,11 @@ import {
   RejectJoinRequestResponse,
   CancelJoinRequestResponse,
   GetPendingJoinRequestsResponse,
-  SearchMyGroupsResponse
+  SearchMyGroupsResponse,
+  InviteMemberResponse,
+  AcceptGroupInviteResponse,
+  RejectGroupInviteResponse,
+  GetMyGroupInvitationsResponse
 } from '../types/Group/GroupResponse'
 import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
 
@@ -188,6 +192,41 @@ export const groupService = {
       {},
       { withCredentials: true }
     )
+    return data
+  },
+
+  async inviteMember(groupId: string, targetUserId: string): Promise<InviteMemberResponse> {
+    const { data } = await apiClient.post<InviteMemberResponse>(
+      `group/${groupId}/invite-member`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async acceptGroupInvite(groupId: string): Promise<AcceptGroupInviteResponse> {
+    const { data } = await apiClient.post<AcceptGroupInviteResponse>(
+      `group/${groupId}/accept-invite`,
+      {},
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async rejectGroupInvite(groupId: string): Promise<RejectGroupInviteResponse> {
+    const { data } = await apiClient.post<RejectGroupInviteResponse>(
+      `group/${groupId}/reject-invite`,
+      {},
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async getMyGroupInvitations(skip: number = 0, take: number = 10): Promise<GetMyGroupInvitationsResponse> {
+    const { data } = await apiClient.get<GetMyGroupInvitationsResponse>('group/my-invitations', {
+      params: { skip, take },
+      withCredentials: true
+    })
     return data
   }
 }
