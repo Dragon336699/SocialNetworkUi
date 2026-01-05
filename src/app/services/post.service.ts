@@ -8,7 +8,11 @@ import {
   DeletePostResponse,
   PostReactionResponse,
   GetNewsFeedResponse,
-  SeenPost
+  SeenPost,
+  GetPendingPostsResponse,
+  ApprovePostResponse,
+  RejectPostResponse,
+  CancelPendingPostResponse
 } from '../types/Post/Post'
 
 export const postService = {
@@ -109,5 +113,46 @@ export const postService = {
       }
     )
     return { data: response.data, status: response.status }
+  },
+
+  async getPendingPosts(groupId: string, skip: number = 0, take: number = 10): Promise<GetPendingPostsResponse> {
+    const { data } = await apiClient.get<GetPendingPostsResponse>(`post/group/${groupId}/pending`, {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async approvePost(postId: string): Promise<ApprovePostResponse> {
+    const { data } = await apiClient.post<ApprovePostResponse>(`post/${postId}/approve`, {}, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async rejectPost(postId: string): Promise<RejectPostResponse> {
+    const { data } = await apiClient.post<RejectPostResponse>(`post/${postId}/reject`, {}, {
+      withCredentials: true
+    })
+    return data
+  },
+
+  async getMyPendingPosts(groupId?: string, skip: number = 0, take: number = 10): Promise<GetPendingPostsResponse> {
+    const params: { skip: number; take: number; groupId?: string } = { skip, take }
+    if (groupId) {
+      params.groupId = groupId
+    }
+    const { data } = await apiClient.get<GetPendingPostsResponse>('post/my-pending', {
+      params,
+      withCredentials: true
+    })
+    return data
+  },
+
+  async cancelPendingPost(postId: string): Promise<CancelPendingPostResponse> {
+    const { data } = await apiClient.post<CancelPendingPostResponse>(`post/${postId}/cancel`, {}, {
+      withCredentials: true
+    })
+    return data
   }
 }

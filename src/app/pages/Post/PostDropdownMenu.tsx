@@ -9,6 +9,7 @@ interface PostDropdownMenuProps {
   onDeleteClick?: () => void
   postId?: string
   isOwner?: boolean
+  isGroupAdmin?: boolean
 }
 
 const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
@@ -18,7 +19,8 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
   onTurnOffNotifications,
   onDeleteClick,
   postId,
-  isOwner = false
+  isOwner = false,
+  isGroupAdmin = false
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -64,7 +66,6 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
         ref={dropdownRef}
         className='absolute right-0 top-8 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
       >
-        {/* Xem chi tiết bài viết */}
         <button
           onClick={handleViewDetails}
           className='w-full flex items-center px-2 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
@@ -85,10 +86,9 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
           </svg>
           <span className='text-sm font-medium text-gray-900'>View post details</span>
         </button>
-
+       
         {isOwner && (
           <>
-            {/* Chỉnh sửa bài viết */}
             <button
               onClick={handleEditClick}
               className='w-full flex items-center px-2 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
@@ -107,9 +107,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
                 />
               </svg>
               <span className='text-sm font-medium text-gray-900'>Edit post</span>
-            </button>
-
-            {/* Xóa bài viết */}
+            </button>       
             <button
               onClick={handleDeleteClick}
               className='w-full flex items-center px-2 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
@@ -130,6 +128,28 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
               <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete post</span>
             </button>
           </>
+        )}
+
+        {!isOwner && isGroupAdmin && (
+          <button
+            onClick={handleDeleteClick}
+            className='w-full flex items-center px-2 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
+          >
+            <svg
+              className='w-5 h-5 mr-1.5 text-red-500 flex-shrink-0'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+              />
+            </svg>
+            <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete post</span>
+          </button>
         )}
       </div>
     </>

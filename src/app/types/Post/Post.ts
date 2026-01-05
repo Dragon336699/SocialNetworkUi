@@ -2,6 +2,9 @@ import { BaseResponse } from '../Base/Responses/baseResponse'
 import { FeedDto } from '../Base/Responses/Feed/FeedDto.dto'
 
 import { UserDto } from '../User/user.dto'
+
+export type PostPrivacy = 'Public' | 'Friends' | 'Private' | 'PendingApproval'
+
 export interface User {
   id: string
   firstName?: string
@@ -31,7 +34,7 @@ export interface PostData {
   updatedAt?: string
   userId: string
   groupId?: string
-  postPrivacy: 'Public' | 'Friends' | 'Private'
+  postPrivacy: PostPrivacy
   user: UserDto
   group?: PostGroup
   postImages?: PostImage[]
@@ -84,4 +87,24 @@ export type SeenPost = {
   feedId: string
   createdAt: number
   postId: string
+}
+
+// Pending Posts types
+export interface GetPendingPostsResponse {
+  message: string
+  posts: PostData[] | null
+  totalCount: number
+}
+
+export interface ApprovePostResponse {
+  message: string
+  post?: PostData
+}
+
+export interface RejectPostResponse {
+  message: string
+}
+
+export interface CancelPendingPostResponse {
+  message: string
 }

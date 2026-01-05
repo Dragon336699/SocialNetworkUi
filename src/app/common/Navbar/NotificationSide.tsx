@@ -124,7 +124,7 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
         } else {          
           return [newNoti, ...prevNotis]
         }
-      })    
+      })
       fetchUnreadCount()
     })
   }, [])

@@ -205,7 +205,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
           </Select>
         </Form.Item>
 
-        {previewImage && !removeImage && (
+        {previewImage && previewImage !== 'default-group-image.jpg' && !removeImage && (
           <Form.Item label={<span className='font-semibold'>Group Image</span>}>
             <div className='relative w-full'>
               <img
@@ -241,7 +241,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
               className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 flex items-center px-3 gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed'
             >
               <PictureOutlined />
-              <span>{imageFile ? 'Change Image' : previewImage && !removeImage ? 'Change Image' : 'Select Image'}</span>
+              <span>{imageFile ? 'Change Image' : previewImage && previewImage !== 'default-group-image.jpg' && !removeImage ? 'Change Image' : 'Select Image'}</span>
             </button>
             
             <div ref={emojiWrapperRef} className='relative inline-block'>

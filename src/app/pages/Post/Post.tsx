@@ -30,6 +30,7 @@ interface PostProps extends PostData {
   currentUserId?: string
   currentUser: UserDto
   hideHeader?: boolean
+  isGroupAdmin?: boolean // Admin/SuperAdmin can delete posts in group
 }
 
 const Post: React.FC<PostProps> = ({
@@ -49,7 +50,8 @@ const Post: React.FC<PostProps> = ({
   onSeen,
   currentUserId = '',
   currentUser,
-  hideHeader = false
+  hideHeader = false,
+  isGroupAdmin = false
 }) => {
   const navigate = useNavigate()
   const postRef = useRef<HTMLDivElement | null>(null)
@@ -440,6 +442,7 @@ const Post: React.FC<PostProps> = ({
                 onClose={() => setShowDropdown(false)}
                 postId={id}
                 isOwner={currentUserId === user.id}
+                isGroupAdmin={isGroupAdmin}
                 {...handleDropdownActions}
               />
             </div>

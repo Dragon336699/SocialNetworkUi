@@ -361,6 +361,7 @@ const SearchPage: React.FC = () => {
   }
 
   const renderPosts = () => {
+    // Backend already filters: private groups, pending approval posts, and private posts from others' profiles
     const posts = searchResults?.posts || []
 
     if (posts.length === 0) {

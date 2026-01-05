@@ -51,7 +51,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
       const response = await postService.getPostById(postId)
       const post = response.post
       setText(post.content || '')
-      setPrivacy(post.postPrivacy || 'Public')
+      setPrivacy(post.postPrivacy as 'Public' | 'Friends' | 'Private')
 
       const images = post.postImages || []
       setOriginalImages(images)
