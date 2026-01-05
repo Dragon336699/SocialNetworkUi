@@ -28,7 +28,7 @@ import MyPendingPostsModal from '@/app/common/Modals/Group/MyPendingPostsModal'
 import { postService } from '@/app/services/post.service'
 import GroupSidebar from '@/app/components/Group/GroupSidebar'
 import { GroupMembersTab, GroupPhotosTab } from '@/app/components/Group/GroupTabs'
-import ImageViewerModal from '@/app/components/Group/ImageViewerModal'
+import ImageViewerModal from '@/app/common/Modals/Group/ImageViewerModal'
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
