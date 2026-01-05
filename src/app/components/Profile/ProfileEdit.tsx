@@ -15,7 +15,7 @@ interface ProfileEditProps {
 const { TextArea } = Input
 const { Option } = Select
 
-const ProfileEdit: React.FC<ProfileEditProps> = ({ userInfo, onBack }) => {
+const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack }) => {
   const { fetchUser } = useUserStore()
   const [form] = Form.useForm()
   const [isLoading, setIsLoading] = useState(false)
@@ -31,7 +31,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ userInfo, onBack }) => {
         message.success('Profile updated successfully!')
         navigate(`/profile/${data.userName}`)
         await fetchUser()
-        // refreshData()
+        refreshData()
         if (onBack) onBack()
       } else {
         message.error('Error updating profile')

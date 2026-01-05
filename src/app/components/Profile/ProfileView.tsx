@@ -79,7 +79,7 @@ const ProfileView = ({
   onPostUpdated: (updatedPost: PostData) => void
   onPostDeleted: (postId: string) => void
 }) => {
-  const { user } = useUserStore()
+  const { user, fetchUser } = useUserStore()
   const { userName } = useParams()
   const isMe = user?.userName === userName
   const navigate = useNavigate()
@@ -406,6 +406,7 @@ const ProfileView = ({
         message.success('Avatar changed successfully!')
         setPreviewImage(croppedImg)
         setCropModalOpen(false)
+        await fetchUser()
       }
     } catch (err) {
       setLoading(false)
