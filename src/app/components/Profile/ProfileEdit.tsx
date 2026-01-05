@@ -3,6 +3,8 @@ import { Button, Input, Select, Form, Card, message } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { UserDto } from '@/app/types/User/user.dto'
 import { userService } from '@/app/services/user.service'
+import { useNavigate } from 'react-router-dom'
+import { useUserStore } from '@/app/stores/auth'
 
 interface ProfileEditProps {
   refreshData: () => void
@@ -13,9 +15,11 @@ interface ProfileEditProps {
 const { TextArea } = Input
 const { Option } = Select
 
-const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack }) => {
+const ProfileEdit: React.FC<ProfileEditProps> = ({ userInfo, onBack }) => {
+  const { fetchUser } = useUserStore()
   const [form] = Form.useForm()
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async () => {
     setIsLoading(true)
@@ -25,7 +29,9 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ refreshData, userInfo, onBack
 
       if (response.status === 200) {
         message.success('Profile updated successfully!')
-        refreshData()
+        navigate(`/profile/${data.userName}`)
+        await fetchUser()
+        // refreshData()
         if (onBack) onBack()
       } else {
         message.error('Error updating profile')

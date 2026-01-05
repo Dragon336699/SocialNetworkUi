@@ -2,7 +2,7 @@ import { apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import { UserDto } from '../types/User/user.dto'
-import { RelationData, SentFriendRequestData, SuggestUsers } from '../types/UserRelation/userRelation'
+import { SentFriendRequestData, SuggestUsers } from '../types/UserRelation/userRelation'
 
 export const relationService = {
   async addFriend(userId: string): Promise<{ data: BaseResponse; status: number }> {
@@ -39,13 +39,14 @@ export const relationService = {
   },
 
   async getFriendRequestsReceived(
-    page?: number,
-    pageSize?: number
+    skip?: number,
+    take?: number,
+    keySearch?: string
   ): Promise<{ data: BaseResponse | ResponseHasData<SentFriendRequestData[]>; status: number }> {
     const response = await apiClient.get<BaseResponse | ResponseHasData<SentFriendRequestData[]>>(
       `friend-request/received`,
       {
-        params: { page, pageSize },
+        params: { skip, take, keySearch },
         withCredentials: true
       }
     )
@@ -53,11 +54,12 @@ export const relationService = {
   },
 
   async getFriendRequestsSent(
-    page?: number,
-    pageSize?: number
+    skip?: number,
+    take?: number,
+    keySearch?: string
   ): Promise<{ data: ResponseHasData<SentFriendRequestData[]>; status: number }> {
     const response = await apiClient.get<ResponseHasData<SentFriendRequestData[]>>(`friend-request/sent`, {
-      params: { page, pageSize },
+      params: { skip, take, keySearch },
       withCredentials: true
     })
     return { data: response.data, status: response.status }
@@ -66,10 +68,11 @@ export const relationService = {
   async getFriendsList(
     userId?: string,
     skip?: number,
-    take?: number
+    take?: number,
+    keySearch?: string
   ): Promise<{ data: ResponseHasData<UserDto[]>; status: number }> {
     const response = await apiClient.get<ResponseHasData<UserDto[]>>(`user-relation/friends`, {
-      params: { userId, skip, take },
+      params: { userId, skip, take, keySearch },
       withCredentials: true
     })
     return { data: response.data, status: response.status }
@@ -164,5 +167,5 @@ export const relationService = {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
-  },
+  }
 }

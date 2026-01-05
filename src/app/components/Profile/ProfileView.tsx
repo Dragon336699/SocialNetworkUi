@@ -32,6 +32,9 @@ import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { ActionType } from '@/app/types/Common'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 import { interactionService } from '@/app/services/interaction.service'
+import { conversationService } from '@/app/services/conversation.service'
+import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -123,6 +126,22 @@ const ProfileView = ({
     if (!isMe) interactionService.viewUser(userInfo.id)
   }, [])
 
+  const handleContactClick = async (friendId: string) => {
+    try {
+      const response = await conversationService.createConversation([friendId], 'Personal')
+      if (response.status === 400) {
+        const res = response.data as BaseResponse
+        message.error(res.message)
+      } else if (response.status === 200) {
+        const res = response.data as ResponseHasData<string>
+        navigate(`/Inbox/${res.data}`)
+      }
+    } catch (err) {
+      console.log('Error: ', err)
+      message.error('Cannot open conversation')
+    }
+  }
+
   const handleFriend = async () => {
     try {
       setLoadingRequestFriend(true)
@@ -149,6 +168,7 @@ const ProfileView = ({
         if (res.status === 200) {
           setRelation('friend')
           setLoadingRequestFriend(false)
+          refreshData()
           message.success('Accepted successfully')
         }
       }
@@ -533,41 +553,40 @@ const ProfileView = ({
           {!isMe && (
             <div className='mt-6 pt-6 border-t border-blue-200'>
               <Row gutter={[12, 12]}>
-                <Col flex='auto' xs={24} sm={8}>
-                  <Button
-                    block
-                    loading={loadingRequestFriend}
-                    size='large'
-                    icon={friendButtonConfig[relation].icon}
-                    onClick={handleFriend}
-                  >
+                {/* Friend */}
+                <Col xs={24} sm={isFriend ? 12 : 8}>
+                  <Button block size='large' icon={friendButtonConfig[relation].icon} onClick={handleFriend}>
                     {friendButtonConfig[relation].text}
                   </Button>
                 </Col>
 
-                <Col flex='auto' xs={24} sm={8}>
-                  <Button
-                    block
-                    size='large'
-                    icon={
-                      isFollowing ? (
-                        <HeartFilled className='text-red-600 hover:text-red-700' />
-                      ) : (
-                        <HeartOutlined className='text-red-500 hover:text-red-600' />
-                      )
-                    }
-                    onClick={isFollowing ? () => handleUnFollow(selectedFriend || userInfo) : () => handleFollow()}
-                  >
-                    {isFollowing ? 'Unfollow' : 'Follow'}
-                  </Button>
-                </Col>
+                {/* Follow – chỉ hiện khi CHƯA là bạn */}
+                {!isFriend && (
+                  <Col xs={24} sm={8}>
+                    <Button
+                      block
+                      size='large'
+                      icon={
+                        isFollowing ? (
+                          <HeartFilled className='text-red-600' />
+                        ) : (
+                          <HeartOutlined className='text-red-500' />
+                        )
+                      }
+                      onClick={isFollowing ? () => handleUnFollow(selectedFriend || userInfo) : () => handleFollow()}
+                    >
+                      {isFollowing ? 'Unfollow' : 'Follow'}
+                    </Button>
+                  </Col>
+                )}
 
-                <Col flex='auto' xs={24} sm={8}>
+                {/* Message */}
+                <Col xs={24} sm={isFriend ? 12 : 8}>
                   <Button
                     block
                     size='large'
-                    icon={<SendOutlined className='text-green-500 hover:text-green-600' />}
-                    onClick={() => {}}
+                    icon={<SendOutlined className='text-green-500' />}
+                    onClick={() => handleContactClick(userInfo.id)}
                   >
                     Send message
                   </Button>

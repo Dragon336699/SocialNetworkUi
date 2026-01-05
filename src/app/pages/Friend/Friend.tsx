@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Input, Empty, Tabs, message, Avatar, Button, Typography } from 'antd'
 import {
   SearchOutlined,
@@ -13,10 +13,10 @@ import FriendCard from '@/app/components/Friend/FriendCard'
 import RequestCard from '@/app/components/Friend/RequestCard'
 import ActionConfirmModal from '@/app/common/Modals/ActionConfirmModal'
 import { relationService } from '@/app/services/relation.service'
-import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { UserDto } from '@/app/types/User/user.dto'
 import { SentFriendRequestData, SuggestUsers } from '@/app/types/UserRelation/userRelation'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
+import useDebounce from '@/app/hook/useDebounce'
 
 const { Title, Text } = Typography
 
@@ -28,72 +28,77 @@ const FriendsList: React.FC = () => {
   const [suggestUser, setSuggestUsers] = useState<SuggestUsers[]>([])
 
   const [searchText, setSearchText] = useState('')
-  const [activeTab, setActiveTab] = useState('friends')
+  const debouncedSearchText = useDebounce(searchText, 500)
 
+  const [activeTab, setActiveTab] = useState('friends')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedFriend, setSelectedFriend] = useState<UserDto | null>(null)
   const [currentAction, setCurrentAction] = useState<ActionType>('unfriend')
   const [globalLoading, setGlobalLoading] = useState(false)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
-  const filteredFriends = useMemo(
-    () =>
-      friends.filter((f: UserDto) => (f.firstName + ' ' + f.lastName).toLowerCase().includes(searchText.toLowerCase())),
-    [friends, searchText]
-  )
-  const filteredSent = useMemo(
-    () =>
-      sentRequests.filter((f) =>
-        (f.receiver?.firstName + ' ' + f.receiver?.lastName).toLowerCase().includes(searchText.toLowerCase())
-      ),
-    [sentRequests, searchText]
-  )
-  const filteredReceived = useMemo(
-    () =>
-      receivedRequests.filter((f) =>
-        (f.sender?.firstName + ' ' + f.sender?.lastName).toLowerCase().includes(searchText.toLowerCase())
-      ),
-    [receivedRequests, searchText]
-  )
+  const getFriends = useCallback(async (search?: string) => {
+    try {
+      const res = await relationService.getFriendsList(undefined, undefined, undefined, search)
+      if (res.status === 200) setFriends((res.data as any).data || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }, [])
+
+  const getFriendRequestsReceived = useCallback(async (search?: string) => {
+    try {
+      const res = await relationService.getFriendRequestsReceived(undefined, undefined, search)
+      if (res.status === 200) setReceivedRequests((res.data as any).data || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }, [])
+
+  const getFriendRequestsSent = useCallback(async (search?: string) => {
+    try {
+      const res = await relationService.getFriendRequestsSent(undefined, undefined, search)
+      if (res.status === 200) setSentRequests((res.data as any).data || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }, [])
+
+  const getSuggestFriends = async () => {
+    try {
+      const res = await relationService.getSuggestFriends()
+      if (res.status === 200) setSuggestUsers((res.data as any).data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(() => {
+    getFriends(debouncedSearchText)
+    getFriendRequestsReceived(debouncedSearchText)
+    getFriendRequestsSent(debouncedSearchText)
+  }, [debouncedSearchText, getFriends, getFriendRequestsReceived, getFriendRequestsSent])
+
+  useEffect(() => {
+    getSuggestFriends()
+  }, [])
 
   const handleTabChange = (key: string) => {
     setActiveTab(key)
     setSearchText('')
   }
 
-  const handleOpenModalAction = (type: ActionType, friend: UserDto) => {
-    setSelectedFriend(friend)
-    setCurrentAction(type)
-    setModalOpen(true)
-  }
-
   const handleConfirmModalAction = async () => {
     if (!selectedFriend) return
     setGlobalLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
     if (currentAction === 'unfriend') {
       await relationService.unFriend(selectedFriend.id)
       message.success('Unfriended successfully')
-      getFriends()
+      getFriends(debouncedSearchText)
     }
     setGlobalLoading(false)
     setModalOpen(false)
     setSelectedFriend(null)
-  }
-
-  const getFriends = async () => {
-    try {
-      const res = await relationService.getFriendsList()
-      if (res.status === 200) {
-        const resData = res.data as ResponseHasData<UserDto[]>
-        setFriends(resData.data as UserDto[])
-      } else {
-        message.error('Error while getting friend list')
-      }
-    } catch (e) {
-      console.log('Error get list follower: ', e)
-    }
   }
 
   const approveFriendRequest = async (senderId: string) => {
@@ -102,9 +107,12 @@ const FriendsList: React.FC = () => {
       const res = await relationService.approveFriendRequest(senderId)
       if (res.status === 200) {
         message.success('Friend request approved')
-        getFriendRequestsReceived()
-        getFriends()
+        getFriendRequestsReceived(debouncedSearchText)
+        getFriends(debouncedSearchText)
       }
+    } catch (e) {
+      message.error('Error approving friend request')
+      console.error(e)
     } finally {
       setActionLoadingId(null)
     }
@@ -116,8 +124,11 @@ const FriendsList: React.FC = () => {
       const res = await relationService.declineFriendRequest(senderId)
       if (res.status === 200) {
         message.success('Friend request declined')
-        getFriendRequestsReceived()
+        getFriendRequestsReceived(debouncedSearchText)
       }
+    } catch (e) {
+      message.error('Error declining friend request')
+      console.error(e)
     } finally {
       setActionLoadingId(null)
     }
@@ -129,54 +140,29 @@ const FriendsList: React.FC = () => {
       const res = await relationService.cancelFriendRequest(receiverId)
       if (res.status === 200) {
         message.success('Request canceled')
-        getFriendRequestsSent()
+        getFriendRequestsSent(debouncedSearchText)
       }
+    } catch (e) {
+      message.error('Error canceling friend request')
+      console.error(e)
     } finally {
       setActionLoadingId(null)
     }
   }
 
-  const getFriendRequestsReceived = async () => {
-    try {
-      const res = await relationService.getFriendRequestsReceived()
-      if (res.status === 200) setReceivedRequests((res.data as any).data)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const getFriendRequestsSent = async () => {
-    try {
-      const res = await relationService.getFriendRequestsSent()
-      if (res.status === 200) setSentRequests((res.data as any).data)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  const getSuggestFriends = async () => {
-    try {
-      const res = await relationService.getSuggestFriends()
-      if (res.status === 200) setSuggestUsers((res.data as any).data)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   const handleAddFriend = async (userId: string) => {
-    const res = await relationService.addFriend(userId)
-    if (res.status === 200) {
-      message.success('Friend request sent')
-      setRequestedSuggestIds((prev) => [...prev, userId])
+    try {
+      const res = await relationService.addFriend(userId)
+      if (res.status === 200) {
+        message.success('Friend request sent')
+        setRequestedSuggestIds((prev) => [...prev, userId])
+        getFriendRequestsSent(debouncedSearchText)
+      }
+    } catch (e) {
+      message.error('Error sending friend request')
+      console.error(e)
     }
   }
-
-  useEffect(() => {
-    getFriendRequestsReceived()
-    getFriends()
-    getFriendRequestsSent()
-    getSuggestFriends()
-  }, [])
 
   const renderSearchBar = (placeholder: string) => (
     <Input
@@ -195,21 +181,27 @@ const FriendsList: React.FC = () => {
       label: (
         <span>
           <TeamOutlined className='mr-2' />
-          Friends ({friends.length})
+          Friends
         </span>
       ),
       children: (
         <div className='mt-2'>
           {renderSearchBar('Search friends...')}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            {filteredFriends.length > 0 ? (
-              filteredFriends.map((friend: any) => (
-                <FriendCard key={friend.id} friend={friend} onAction={handleOpenModalAction} />
-              ))
-            ) : (
-              <Empty description='No friends found' />
-            )}
+            {friends.length > 0 &&
+              friends.map((friend: any) => (
+                <FriendCard
+                  key={friend.id}
+                  friend={friend}
+                  onAction={(type, f) => {
+                    setSelectedFriend(f)
+                    setCurrentAction(type)
+                    setModalOpen(true)
+                  }}
+                />
+              ))}
           </div>
+          {friends.length === 0 && <Empty description='No requests' />}
         </div>
       )
     },
@@ -218,14 +210,14 @@ const FriendsList: React.FC = () => {
       label: (
         <span>
           <UserOutlined className='mr-2' />
-          Requests ({receivedRequests.length})
+          Requests
         </span>
       ),
       children: (
         <div className='mt-2'>
           {renderSearchBar('Search received requests...')}
           <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-            {filteredReceived.map((req) => (
+            {receivedRequests.map((req) => (
               <RequestCard
                 key={req.senderId}
                 request={req}
@@ -236,7 +228,7 @@ const FriendsList: React.FC = () => {
               />
             ))}
           </div>
-          {filteredReceived.length === 0 && <Empty description='No requests' />}
+          {receivedRequests.length === 0 && <Empty description='No requests' />}
         </div>
       )
     },
@@ -245,14 +237,14 @@ const FriendsList: React.FC = () => {
       label: (
         <span>
           <SendOutlined className='mr-2' />
-          Sent ({sentRequests.length})
+          Sent
         </span>
       ),
       children: (
         <div className='mt-2'>
           {renderSearchBar('Search sent requests...')}
           <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
-            {filteredSent.map((req) => (
+            {sentRequests.map((req) => (
               <RequestCard
                 key={req.receiverId}
                 request={req}
@@ -262,7 +254,7 @@ const FriendsList: React.FC = () => {
               />
             ))}
           </div>
-          {filteredSent.length === 0 && <Empty description='No sent requests' />}
+          {sentRequests.length === 0 && <Empty description='No sent requests' />}
         </div>
       )
     }
