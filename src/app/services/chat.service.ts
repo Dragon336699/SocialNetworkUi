@@ -6,6 +6,8 @@ import { MessageDto } from '../types/Message/messge.dto'
 import { UpdateStatusMessageRequest } from '../types/Message/Requests/updateStatusMessageReq'
 import { UserDto } from '../types/User/user.dto'
 import { NotificationDto } from '../types/Notification/notification.dto'
+import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
+import { apiAIClient } from '../environments/axiosClient'
 let connection: HubConnection | null = null
 
 export const chatService = {
@@ -94,5 +96,16 @@ export const chatService = {
       return
     }
     connection.on('SendPrivateNoti', callback)
+  },
+
+  async askChatbot(question: string): Promise<{ data: ResponseHasData<string>; status: number }> {
+    const response = await apiAIClient.post<ResponseHasData<string>>(
+      'chatbot/qa',
+      { question },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

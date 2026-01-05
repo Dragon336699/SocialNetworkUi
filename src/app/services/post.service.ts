@@ -1,5 +1,6 @@
-import { apiClient } from '../environments/axiosClient'
+import { apiAIClient, apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
+import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import {
   GetAllPostsResponse,
   GetPostByIdResponse,
@@ -82,5 +83,31 @@ export const postService = {
       withCredentials: true
     })
     return data
+  },
+
+  async rewriteCaption(caption: string): Promise<{ data: ResponseHasData<string>; status: number }> {
+    const response = await apiAIClient.post<ResponseHasData<string>>(
+      'post/rewrite',
+      {
+        caption
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async summarizePost(content: string): Promise<{ data: ResponseHasData<string>; status: number }> {
+    const response = await apiAIClient.post<ResponseHasData<string>>(
+      'post/summary',
+      {
+        content
+      },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
   }
 }

@@ -12,7 +12,7 @@ interface UsePostsReturn {
   loadMore: () => Promise<void>
   refetch: () => Promise<void>
   clearError: () => void
-  handlePostCreated: (newPost?: PostData) => void
+  handlePostCreated: () => void
   handlePostUpdated: (updatedPost: PostData) => void
   handlePostDeleted: (postId: string) => void
   handleSeenPost: (post: SeenPost[]) => void

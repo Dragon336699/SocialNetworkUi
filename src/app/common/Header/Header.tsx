@@ -41,7 +41,7 @@ const Header: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryDto[]>([])
   const [myGroupIds, setMyGroupIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string>('')
-  
+
   const debounceRef = useRef<NodeJS.Timeout>()
   const searchInputRef = useRef<any>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
@@ -137,11 +137,11 @@ const Header: React.FC = () => {
       try {
         const response = await groupService.getMyGroups(0, 100)
         const approvedGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUserId)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUserId)
             return userStatus && userStatus.roleName !== GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
         setMyGroupIds(approvedGroupIds)
       } catch (error) {
         console.error('Error fetching my groups:', error)
@@ -235,7 +235,7 @@ const Header: React.FC = () => {
     e.stopPropagation()
     try {
       await searchService.deleteSearchHistory(historyId)
-      setSearchHistory(prev => prev.filter(item => item.id !== historyId))
+      setSearchHistory((prev) => prev.filter((item) => item.id !== historyId))
       message.success('History cleared.')
     } catch (error) {
       console.error('Error deleting history:', error)
@@ -378,7 +378,11 @@ const Header: React.FC = () => {
                     <Avatar src={noti.imageUrls[1]} className='border border-gray-200' />
                   </Avatar.Group>
                 ) : (
-                  <Avatar size={45} src={noti.imageUrls[0] || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
+                  <Avatar
+                    size={45}
+                    src={noti.imageUrls[0] || DEFAULT_AVATAR_URL}
+                    className='border-2 border-gray-200'
+                  />
                 )}
                 {noti.unread && (
                   <div className='absolute -top-0.5 -right-0.5 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white' />
@@ -422,33 +426,35 @@ const Header: React.FC = () => {
 
       return (
         <div className='max-h-[400px] overflow-y-auto'>
-          {users && users.map(user => (
-            <div
-              key={user.id}
-              className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
-              onClick={() => handleResultClick('user', user)}
-            >
-              <Avatar src={user.avatarUrl} size={44} icon={<UserOutlined />} className='border-2 border-gray-200' />
-              <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm'>{user.userName}</div>
-                <div className='text-xs text-gray-500'>{user.firstName}</div>
+          {users &&
+            users.map((user) => (
+              <div
+                key={user.id}
+                className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
+                onClick={() => handleResultClick('user', user)}
+              >
+                <Avatar src={user.avatarUrl} size={44} icon={<UserOutlined />} className='border-2 border-gray-200' />
+                <div className='ml-3 flex-1 min-w-0'>
+                  <div className='font-semibold text-gray-900 text-sm'>{user.userName}</div>
+                  <div className='text-xs text-gray-500'>{user.firstName}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {groups && groups.map(group => (
-            <div
-              key={group.id}
-              className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
-              onClick={() => handleResultClick('group', group)}
-            >
-              <Avatar src={group.imageUrl} size={44} icon={<UserOutlined />} className='border-2 border-gray-200' />
-              <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm'>{group.name}</div>
-                <div className='text-xs text-gray-500'>{group.isPublic ? 'Public' : 'Private'} Group</div>
+          {groups &&
+            groups.map((group) => (
+              <div
+                key={group.id}
+                className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
+                onClick={() => handleResultClick('group', group)}
+              >
+                <Avatar src={group.imageUrl} size={44} icon={<UserOutlined />} className='border-2 border-gray-200' />
+                <div className='ml-3 flex-1 min-w-0'>
+                  <div className='font-semibold text-gray-900 text-sm'>{group.name}</div>
+                  <div className='text-xs text-gray-500'>{group.isPublic ? 'Public' : 'Private'} Group</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       )
     }
@@ -473,7 +479,7 @@ const Header: React.FC = () => {
           </div>
         ) : (
           <div className='max-h-[400px] overflow-y-auto'>
-            {searchHistory.map(history => (
+            {searchHistory.map((history) => (
               <div
                 key={history.id}
                 className='flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors group'
@@ -541,7 +547,7 @@ const Header: React.FC = () => {
             }
             className='rounded-2xl py-2 px-4 border-gray-200 bg-slate-50 hover:bg-slate-100 focus:bg-white transition-all'
           />
-          
+
           {showSearch && (
             <div className='absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-50'>
               {renderSearchDropdown()}
@@ -566,13 +572,13 @@ const Header: React.FC = () => {
           </Dropdown>
 
           <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement='bottomRight' arrow>
-            <div className='flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 pl-1 pr-3 rounded-2xl transition-all border border-transparent hover:border-slate-100'>
-            <Avatar src={user?.avatarUrl || DEFAULT_AVATAR_URL} className='shadow-sm border-2 border-gray-200' size={36} />
-              <div className='hidden md:block text-left max-w-[160px]'>
-                <div className='text-[13px] font-bold text-slate-800 leading-none truncate'>
-                  {user?.lastName} {user?.firstName}
-                </div>
-              </div>
+            <div className='flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 pl-1 pr-3 rounded-2xl transition-all border border-transparent hover:border-slate-100 items-end'>
+              <Avatar
+                src={user?.avatarUrl || DEFAULT_AVATAR_URL}
+                className='shadow-sm border-2 border-gray-200'
+                size={36}
+              />
+              <div className='hidden md:block text-left max-w-[160px]'></div>
             </div>
           </Dropdown>
         </div>

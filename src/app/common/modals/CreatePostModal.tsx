@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react'
 import { Modal, Button, Input, Avatar, Flex, Typography, Divider, message } from 'antd'
-import {
-  PictureOutlined,
-  CloseOutlined,
-  SmileOutlined
-} from '@ant-design/icons'
+import { PictureOutlined, CloseOutlined, SmileOutlined } from '@ant-design/icons'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
 import { useUserStore } from '@/app/stores/auth'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -23,13 +20,14 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
 
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
+  const [isRewriting, setIsRewriting] = useState<boolean>(false)
 
   const textAreaRef = useRef<TextAreaRef>(null)
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
-  
+
   const renderPrivacyIcon = () => {
     const iconClass = 'w-4 h-4 text-gray-500'
 
@@ -62,6 +60,30 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
         )
       default:
         return null
+    }
+  }
+
+  const rewriteCaption = async () => {
+    setIsRewriting(true)
+    try {
+      const response = await postService.rewriteCaption(text)
+      if (response.status === 200) {
+        const data = response.data as ResponseHasData<string>
+        const newText = data.data
+        setText('')
+        let index = 0
+        const interval = setInterval(() => {
+          setText((prev) => prev + newText[index])
+          index++
+          if (index >= newText.length) {
+            clearInterval(interval)
+          }
+        }, 5)
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setIsRewriting(false)
     }
   }
 
@@ -163,21 +185,21 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
       centered={false}
       maskClosable={false}
       className='create-post-modal'
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'visible',
         padding: 0,
         top: 50
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '1px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
         },
-        body: { 
+        body: {
           padding: '0 24px 24px 24px',
           overflow: 'visible'
         },
@@ -187,7 +209,10 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
         }
       }}
       title={
-        <Flex justify='space-between' style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '12px', marginBottom: '16px' }}>
+        <Flex
+          justify='space-between'
+          style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '12px', marginBottom: '16px' }}
+        >
           <Flex align='center' gap='small'>
             <div style={{ border: '2px solid #E5E7EB', borderRadius: '50%', padding: 0, display: 'inline-flex' }}>
               <Avatar size={40} src={currentUser?.avatarUrl} style={{ minWidth: 40, minHeight: 40 }}>
@@ -195,12 +220,17 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
               </Avatar>
             </div>
             <Flex vertical>
-              <Text strong style={{ fontSize: '15px', fontWeight: 600 }}>{fullName}</Text>
+              <Text strong style={{ fontSize: '15px', fontWeight: 600 }}>
+                {fullName}
+              </Text>
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>
-            <Button 
-              className='flex items-center gap-1 px-2 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded' 
+            <Button onClick={rewriteCaption} disabled={!text || isRewriting} loading={isRewriting}>
+              Rewrite caption
+            </Button>
+            <Button
+              className='flex items-center gap-1 px-2 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded'
               onClick={handlePrivacyClick}
             >
               {renderPrivacyIcon()}
@@ -229,25 +259,29 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
 
       <Divider className='my-3 border-gray-200' />
 
-      <div 
-        className='grid gap-2 pb-5' 
-        style={{ 
+      <div
+        className='grid gap-2 pb-5'
+        style={{
           gridTemplateColumns: images.length === 1 ? '1fr' : images.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)'
         }}
       >
         {images.slice(0, 6).map((file, index) => (
-          <div 
-            key={index} 
-            className='relative rounded-lg overflow-hidden' 
-            style={{ 
+          <div
+            key={index}
+            className='relative rounded-lg overflow-hidden'
+            style={{
               paddingBottom: images.length === 1 ? '0' : images.length === 2 ? '100%' : '75%'
             }}
           >
-            <img 
-              src={URL.createObjectURL(file)} 
-              alt={`preview-${index}`} 
+            <img
+              src={URL.createObjectURL(file)}
+              alt={`preview-${index}`}
               className='w-full object-cover rounded-lg'
-              style={images.length === 1 ? { height: 'auto' } : { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              style={
+                images.length === 1
+                  ? { height: 'auto' }
+                  : { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }
+              }
             />
             <button
               onClick={() => removeImage(index)}
@@ -266,14 +300,14 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
 
       <Flex justify='space-between' align='center'>
         <Flex gap='small' align='center'>
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 flex items-center px-3 gap-2 font-semibold text-sm cursor-pointer'
           >
             <PictureOutlined />
             <span>Picture</span>
           </button>
-          
+
           <input
             type='file'
             accept='image/*'
@@ -284,16 +318,14 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
           />
 
           <div ref={emojiWrapperRef} className='relative inline-block'>
-            <button 
+            <button
               onClick={() => setShowEmojiPicker((prev) => !prev)}
               className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 w-10 flex items-center justify-center cursor-pointer'
             >
               <SmileOutlined />
             </button>
             {showEmojiPicker && (
-              <div 
-                className='absolute bottom-full left-0 mb-2 z-[9999] h-96 overflow-hidden shadow-lg bg-white rounded-lg'
-              >
+              <div className='absolute bottom-full left-0 mb-2 z-[9999] h-96 overflow-hidden shadow-lg bg-white rounded-lg'>
                 <Picker
                   data={data}
                   onEmojiSelect={handleEmojiSelect}

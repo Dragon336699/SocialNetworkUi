@@ -2,7 +2,7 @@ import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import Post from '../Post/Post'
 import { usePosts } from '@/app/hook/usePosts'
 import { Avatar, Typography, Spin, Alert, Button, Empty, message, Badge, Divider } from 'antd'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { CheckOutlined, ReloadOutlined, UserAddOutlined } from '@ant-design/icons'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
@@ -13,7 +13,7 @@ import { relationService } from '@/app/services/relation.service'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import { SuggestUsers } from '@/app/types/UserRelation/userRelation'
 import { conversationService } from '@/app/services/conversation.service'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 
 const { Title, Text } = Typography
@@ -35,6 +35,8 @@ const Home = () => {
   const [friendsList, setFriendsList] = useState<UserDto[]>([])
   const [suggestUsers, setSuggestUsers] = useState<SuggestUsers[]>([])
   const [requestedSuggestIds, setRequestedSuggestIds] = useState<string[]>([])
+  const location = useLocation()
+  const prevPath = useRef(location.pathname)
 
   const getFriend = async () => {
     try {
@@ -96,7 +98,7 @@ const Home = () => {
 
   const handleCreatePostSuccess = async (newPost?: any) => {
     setIsOpenCreatePost(false)
-    handlePostCreated(newPost)
+    handlePostCreated()
   }
 
   const { addSeen, flushNow } = useSeenPost(async (postsInfo: SeenPost[]) => {
@@ -128,9 +130,11 @@ const Home = () => {
 
   useEffect(() => {
     return () => {
-      flushNow()
+      if (prevPath.current !== location.pathname) {
+        flushNow()
+      }
     }
-  }, [flushNow])
+  }, [location.pathname, flushNow])
 
   const handleScroll = useCallback(() => {
     const scrollTop = document.documentElement.scrollTop
