@@ -29,5 +29,5 @@ export const interactionService = {
         withCredentials: true
       }
     )
-  },
+  }
 }

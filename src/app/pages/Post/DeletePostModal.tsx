@@ -62,19 +62,19 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({ isOpen, onClose, onDe
       centered
       width={420}
       closable={false}
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'hidden',
         padding: 0
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '1px solid #E5E7EB',
           borderRadius: '8px',
           overflow: 'hidden'
         },
-        body: { 
+        body: {
           padding: '16px 24px'
         },
         header: {

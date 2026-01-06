@@ -10,6 +10,7 @@ import CreateGroupModal from '@/app/common/Modals/Group/CreateGroupModal'
 import MyGroupsPage from './MyGroupsPage'
 import GroupsFeed from './GroupsFeed'
 import GroupsDiscover from './GroupsDiscover'
+import { useCallback } from 'react'
 
 const { Title, Text } = Typography
 
@@ -25,17 +26,71 @@ const Groups = () => {
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
   const [showAllGroups, setShowAllGroups] = useState(false)
 
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const response = await userService.getUserInfoByToken()
+      if (response.status === 200 && response.data && 'id' in response.data) {
+        setCurrentUser(response.data as UserDto)
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }, [])
+
+  const fetchMyGroups = useCallback(async () => {
+    if (!currentUser?.id) return
+    try {
+      setLoading(true)
+      const response = await groupService.getMyGroups(0, 50)
+
+      const approvedGroups = (response.groups || []).filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser.id)
+        return userStatus && userStatus.roleName !== GroupRole.Pending
+      })
+
+      setMyGroups(approvedGroups)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to fetch your groups'
+      message.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentUser?.id])
+
+  const handleSearch = useCallback(
+    async (term: string) => {
+      if (!currentUser?.id) return
+      try {
+        setSearchLoading(true)
+        const response = await groupService.searchMyGroups(term, 0, 50)
+
+        const approvedGroups = (response.groups || []).filter((group) => {
+          const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser.id)
+          return userStatus && userStatus.roleName !== GroupRole.Pending
+        })
+
+        setMyGroups(approvedGroups)
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || 'Failed to search groups'
+        message.error(errorMessage)
+        setMyGroups([])
+      } finally {
+        setSearchLoading(false)
+      }
+    },
+    [currentUser?.id]
+  )
+
   useEffect(() => {
     fetchCurrentUser()
-  }, [])
+  }, [fetchCurrentUser])
 
   useEffect(() => {
     if (currentUser?.id) {
       fetchMyGroups()
     }
-  }, [currentUser])
+  }, [currentUser?.id, fetchMyGroups])
 
-  // Phát hiện chế độ xem hiện tại từ URL
   useEffect(() => {
     if (location.pathname === '/groups') {
       setActiveView('feed')
@@ -44,12 +99,10 @@ const Groups = () => {
     } else if (location.pathname === '/groups/my-groups') {
       setActiveView('my-groups')
     } else if (location.pathname.startsWith('/groups/')) {
-      // Khi vào trang chi tiết nhóm, bỏ highlight tất cả menu items
       setActiveView(null)
     }
   }, [location.pathname])
 
-  // Debounce search term
   useEffect(() => {
     if (!currentUser?.id) return
 
@@ -62,62 +115,8 @@ const Groups = () => {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchTerm, currentUser])
+  }, [searchTerm, currentUser?.id, fetchMyGroups, handleSearch])
 
-  // Lấy thông tin người dùng hiện tại
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await userService.getUserInfoByToken()
-      if (response.status === 200 && response.data && 'id' in response.data) {
-        setCurrentUser(response.data as UserDto)
-      }
-    } catch (error) {
-      console.error('Error fetching current user:', error)
-    }
-  }
-
-  // Lấy danh sách nhóm của người dùng
-  const fetchMyGroups = async () => {
-    try {
-      setLoading(true)
-      const response = await groupService.getMyGroups(0, 50)
-
-      const approvedGroups = (response.groups || []).filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
-        return userStatus && userStatus.roleName !== GroupRole.Pending
-      })
-
-      setMyGroups(approvedGroups)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to fetch your groups'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Tìm kiếm nhóm
-  const handleSearch = async (term: string) => {
-    try {
-      setSearchLoading(true)
-      const response = await groupService.searchMyGroups(term, 0, 50)
-
-      const approvedGroups = (response.groups || []).filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
-        return userStatus && userStatus.roleName !== GroupRole.Pending
-      })
-
-      setMyGroups(approvedGroups)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to search groups'
-      message.error(errorMessage)
-      setMyGroups([])
-    } finally {
-      setSearchLoading(false)
-    }
-  }
-
-  // Xử lý khi tạo nhóm thành công
   const handleCreateGroupSuccess = () => {
     setIsCreateModalOpen(false)
     setSearchTerm('')
@@ -125,14 +124,12 @@ const Groups = () => {
     fetchMyGroups()
   }
 
-  // Lấy danh sách hiển thị (5 nhóm đầu hoặc tất cả)
   const displayedGroups = showAllGroups || searchTerm.trim() ? myGroups : myGroups.slice(0, 5)
   const hasMoreGroups = myGroups.length > 5
 
   const isGroupDetailPage = location.pathname.startsWith('/groups/') && location.pathname.split('/').length === 3
   const currentGroupId = isGroupDetailPage ? location.pathname.split('/groups/')[1] : null
 
-  // Xử lý click menu
   const handleMenuClick = (view: 'feed' | 'discover' | 'my-groups') => {
     setActiveView(view)
     if (view === 'feed') {
@@ -144,7 +141,6 @@ const Groups = () => {
     }
   }
 
-  // Render nội dung chính
   const renderMainContent = () => {
     if (isGroupDetailPage) {
       return <Outlet />
@@ -197,7 +193,6 @@ const Groups = () => {
           }
         `}
       </style>
-      
       <CreateGroupModal
         isModalOpen={isCreateModalOpen}
         handleCancel={() => setIsCreateModalOpen(false)}
@@ -206,9 +201,9 @@ const Groups = () => {
 
       <div className='flex min-h-screen bg-gray-50'>
         {/* Main Content - LEFT SIDE */}
-        <div 
-          className='flex-1 min-w-0 overflow-y-auto main-content-scroll' 
-          style={{ 
+        <div
+          className='flex-1 min-w-0 overflow-y-auto main-content-scroll'
+          style={{
             maxHeight: '100vh',
             scrollbarWidth: 'thin',
             scrollbarColor: '#d1d5db #f9fafb'
@@ -218,7 +213,7 @@ const Groups = () => {
         </div>
 
         {/* Right Sidebar - Groups List - Reduced Width */}
-        <div 
+        <div
           className='w-72 bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0'
           style={{
             scrollbarWidth: 'thin',
@@ -251,49 +246,59 @@ const Groups = () => {
               <div
                 onClick={() => handleMenuClick('feed')}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'feed' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeView === 'feed' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'feed' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeView === 'feed' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
                   <ProfileOutlined className={`text-lg ${activeView === 'feed' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
-                <Text strong className='text-sm'>Your Feed</Text>
+                <Text strong className='text-sm'>
+                  Your Feed
+                </Text>
               </div>
 
               <div
                 onClick={() => handleMenuClick('discover')}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'discover' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeView === 'discover' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'discover' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
-                  <CompassOutlined className={`text-lg ${activeView === 'discover' ? 'text-white' : 'text-gray-700'}`} />
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeView === 'discover' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
+                  <CompassOutlined
+                    className={`text-lg ${activeView === 'discover' ? 'text-white' : 'text-gray-700'}`}
+                  />
                 </div>
-                <Text strong className='text-sm'>Discover</Text>
+                <Text strong className='text-sm'>
+                  Discover
+                </Text>
               </div>
 
               <div
                 onClick={() => handleMenuClick('my-groups')}
                 className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'my-groups' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeView === 'my-groups' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'my-groups' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
-                  <UsergroupAddOutlined className={`text-lg ${activeView === 'my-groups' ? 'text-white' : 'text-gray-700'}`} />
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeView === 'my-groups' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
+                  <UsergroupAddOutlined
+                    className={`text-lg ${activeView === 'my-groups' ? 'text-white' : 'text-gray-700'}`}
+                  />
                 </div>
-                <Text strong className='text-sm'>Your Groups</Text>
+                <Text strong className='text-sm'>
+                  Your Groups
+                </Text>
               </div>
             </div>
 
@@ -338,9 +343,7 @@ const Groups = () => {
                         key={group.id}
                         onClick={() => navigate(`/groups/${group.id}`)}
                         className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                          currentGroupId === group.id 
-                            ? 'bg-gray-200' 
-                            : 'hover:bg-gray-100'
+                          currentGroupId === group.id ? 'bg-gray-200' : 'hover:bg-gray-100'
                         }`}
                       >
                         <div className='rounded-full border-2 border-gray-200 flex-shrink-0'>

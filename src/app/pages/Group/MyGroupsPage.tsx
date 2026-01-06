@@ -5,6 +5,7 @@ import { userService } from '@/app/services/user.service'
 import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { UserDto } from '@/app/types/User/user.dto'
 import GroupCard from '../../components/Group/GroupCard'
+import { useCallback } from 'react'
 
 const { Title, Text } = Typography
 
@@ -17,18 +18,7 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
 
-  useEffect(() => {
-    fetchCurrentUser()
-  }, [])
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      fetchMyGroups()
-    }
-  }, [currentUser])
-
-  // Lấy thông tin người dùng hiện tại
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const response = await userService.getUserInfoByToken()
       if (response.status === 200 && response.data && 'id' in response.data) {
@@ -37,16 +27,15 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
     } catch (error) {
       console.error('Error fetching current user:', error)
     }
-  }
+  }, [])
 
-  // Lấy danh sách các nhóm của người dùng
-  const fetchMyGroups = async () => {
+  const fetchMyGroups = useCallback(async () => {
     try {
       setLoading(true)
       const response = await groupService.getMyGroups(0, 100)
 
-      const approvedGroups = (response.groups || []).filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+      const approvedGroups = (response.groups || []).filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
         return userStatus && userStatus.roleName !== GroupRole.Pending
       })
 
@@ -57,17 +46,27 @@ const MyGroupsPage = ({ onGroupsUpdate }: MyGroupsPageProps) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentUser?.id])
+
+  useEffect(() => {
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchMyGroups()
+    }
+  }, [currentUser, fetchMyGroups])
 
   // Xử lý khi xóa nhóm
   const handleGroupDeleted = (groupId: string) => {
-    setGroups(prev => prev.filter(g => g.id !== groupId))
+    setGroups((prev) => prev.filter((g) => g.id !== groupId))
     if (onGroupsUpdate) onGroupsUpdate()
   }
 
   // Xử lý khi cập nhật nhóm
   const handleGroupUpdated = (updatedGroup: GroupDto) => {
-    setGroups(prev => prev.map(g => g.id === updatedGroup.id ? updatedGroup : g))
+    setGroups((prev) => prev.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)))
     if (onGroupsUpdate) onGroupsUpdate()
   }
 

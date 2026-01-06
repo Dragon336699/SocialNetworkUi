@@ -1,6 +1,7 @@
 import { chatService } from '@/app/services/chat.service'
 import { messageService } from '@/app/services/message.service'
 import { notificationService } from '@/app/services/notification.service'
+import { MessageDto } from '@/app/types/Message/messge.dto'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 const UnreadContext = createContext<any>(null)
@@ -26,14 +27,27 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     getUnreadMessage()
     getUnreadNotifications()
-    chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
-      const updateMessageStatus = await chatService.updateMessageStatus({
+
+    const handleNewMessage = (event: CustomEvent<MessageDto>) => {
+      const newReceivedMessage = event.detail
+
+      setUnreadMessages((prev) => {
+        const newCount = prev + 1
+        document.title = `(${newCount}) ${baseTitle}`
+        return newCount
+      })
+
+      chatService.updateMessageStatus({
         messageId: newReceivedMessage.id,
         status: 'Delivered'
       })
-      getUnreadMessage()
-      if (!updateMessageStatus) return
-    })
+    }
+
+    window.addEventListener('new-private-message', handleNewMessage as EventListener)
+
+    return () => {
+      window.removeEventListener('new-private-message', handleNewMessage as EventListener)
+    }
   }, [])
 
   return (

@@ -5,7 +5,8 @@ import { relationService } from '@/app/services/relation.service'
 import { groupService } from '@/app/services/group.service'
 import { UserDto } from '@/app/types/User/user.dto'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
-import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
+import { GroupDto } from '@/app/types/Group/group.dto'
+import { useCallback } from 'react'
 
 interface InviteFriendsModalProps {
   isModalOpen: boolean
@@ -27,35 +28,20 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
   const [loading, setLoading] = useState(false)
   const [inviting, setInviting] = useState(false)
 
-  useEffect(() => {
-    if (isModalOpen) {
-      fetchFriendsNotInGroup()
-    } else {
-      setSelectedFriends([])
-      setSearchText('')
-    }
-  }, [isModalOpen])
-
-  useEffect(() => {
-    filterFriends()
-  }, [searchText, friends])
-
-  const fetchFriendsNotInGroup = async () => {
+  const fetchFriendsNotInGroup = useCallback(async () => {
     try {
       setLoading(true)
       const response = await relationService.getFriendsList(undefined, 0, 1000)
-      
+
       if (response.status === 200 && response.data && 'data' in response.data) {
         const resData = response.data as ResponseHasData<UserDto[]>
-        let allFriends: UserDto[] = [] 
-        if (resData.data && Array.isArray(resData.data)) 
-          { allFriends = resData.data as UserDto[] }
-        
-        // Lọc ra những bạn bè chưa có trong group (bao gồm cả những người đã được mời)
-        const memberIds = new Set(
-          group.groupUsers?.map(gu => gu.userId) || []
-        )
-        
+        let allFriends: UserDto[] = []
+        if (resData.data && Array.isArray(resData.data)) {
+          allFriends = resData.data as UserDto[]
+        }
+
+        const memberIds = new Set(group.groupUsers?.map((gu) => gu.userId) || [])
+
         const friendsNotInGroup = allFriends.filter((friend: UserDto) => !memberIds.has(friend.id))
         setFriends(friendsNotInGroup)
         setFilteredFriends(friendsNotInGroup)
@@ -66,26 +52,39 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     } finally {
       setLoading(false)
     }
-  }
+  }, [group.groupUsers])
 
-  const filterFriends = () => {
+  const filterFriends = useCallback(() => {
     if (!searchText.trim()) {
       setFilteredFriends(friends)
       return
     }
 
     const searchLower = searchText.toLowerCase()
-    const filtered = friends.filter(friend => {
+    const filtered = friends.filter((friend) => {
       const fullName = `${friend.firstName} ${friend.lastName}`.toLowerCase()
       return fullName.includes(searchLower) || friend.email?.toLowerCase().includes(searchLower)
     })
     setFilteredFriends(filtered)
-  }
+  }, [searchText, friends])
+
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchFriendsNotInGroup()
+    } else {
+      setSelectedFriends([])
+      setSearchText('')
+    }
+  }, [isModalOpen, fetchFriendsNotInGroup])
+
+  useEffect(() => {
+    filterFriends()
+  }, [searchText, friends, filterFriends])
 
   const handleToggleSelect = (userId: string) => {
-    setSelectedFriends(prev => {
+    setSelectedFriends((prev) => {
       if (prev.includes(userId)) {
-        return prev.filter(id => id !== userId)
+        return prev.filter((id) => id !== userId)
       } else {
         return [...prev, userId]
       }
@@ -96,7 +95,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     if (selectedFriends.length === filteredFriends.length) {
       setSelectedFriends([])
     } else {
-      setSelectedFriends(filteredFriends.map(f => f.id))
+      setSelectedFriends(filteredFriends.map((f) => f.id))
     }
   }
 
@@ -130,7 +129,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
       if (failCount > 0) {
         message.warning(`Failed to invite ${failCount} friend${failCount > 1 ? 's' : ''}`)
       }
-    } catch (error) {
+    } catch {
       message.error('Failed to send invitations')
     } finally {
       setInviting(false)
@@ -181,9 +180,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
             >
               Select All
             </Checkbox>
-            <span className='text-gray-500 text-sm'>
-              {selectedFriends.length} selected
-            </span>
+            <span className='text-gray-500 text-sm'>{selectedFriends.length} selected</span>
           </div>
         )}
 
@@ -224,9 +221,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                   <div className='font-semibold text-gray-800'>
                     {friend.firstName} {friend.lastName}
                   </div>
-                  {friend.email && (
-                    <div className='text-sm text-gray-500'>{friend.email}</div>
-                  )}
+                  {friend.email && <div className='text-sm text-gray-500'>{friend.email}</div>}
                 </div>
               </div>
             ))}

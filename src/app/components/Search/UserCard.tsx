@@ -15,13 +15,7 @@ interface UserCardProps {
   onStatusChange?: () => void
 }
 
-const UserCard = ({
-  user,
-  currentUserId = '',
-  isFriend = false,
-  isPending = false,
-  onStatusChange
-}: UserCardProps) => {
+const UserCard = ({ user, currentUserId = '', isFriend = false, isPending = false }: UserCardProps) => {
   const [loading, setLoading] = useState(false)
   const [friendStatus, setFriendStatus] = useState(isFriend)
   const [pendingStatus, setPendingStatus] = useState(isPending)
@@ -104,10 +98,10 @@ const UserCard = ({
 
     if (friendStatus) {
       return (
-        <Button 
-          type='default' 
-          icon={<CheckOutlined />} 
-          disabled 
+        <Button
+          type='default'
+          icon={<CheckOutlined />}
+          disabled
           className='bg-gray-100 text-gray-600 border-gray-300'
           block
           size='small'
@@ -131,7 +125,7 @@ const UserCard = ({
           >
             Pending
           </Button>
-          
+
           {/* Custom Dropdown Menu */}
           {showPendingDropdown && (
             <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
@@ -143,9 +137,7 @@ const UserCard = ({
                 className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
               >
                 <CloseOutlined className='text-xs text-red-500' />
-                <span className='text-xs font-medium text-red-500'>
-                  Cancel
-                </span>
+                <span className='text-xs font-medium text-red-500'>Cancel</span>
               </button>
             </div>
           )}
@@ -154,21 +146,14 @@ const UserCard = ({
     }
 
     return (
-      <Button
-        type='primary'
-        icon={<UserAddOutlined />}
-        loading={loading}
-        onClick={handleAddFriend}
-        block
-        size='small'
-      >
+      <Button type='primary' icon={<UserAddOutlined />} loading={loading} onClick={handleAddFriend} block size='small'>
         Add Friend
       </Button>
     )
   }
 
   return (
-    <div 
+    <div
       className='bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer'
       onClick={handleViewProfile}
       style={{ height: '220px' }}
@@ -177,11 +162,7 @@ const UserCard = ({
         {/* Avatar Section - Top */}
         <div className='h-20 flex-shrink-0 bg-gray-200 overflow-hidden rounded-t-lg'>
           {user.avatarUrl ? (
-            <img 
-              src={user.avatarUrl} 
-              alt={user.userName} 
-              className='w-full h-full object-cover' 
-            />
+            <img src={user.avatarUrl} alt={user.userName} className='w-full h-full object-cover' />
           ) : (
             <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
               <Avatar
@@ -200,11 +181,11 @@ const UserCard = ({
         <div className='flex-1 p-2.5 flex flex-col overflow-visible' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className='mb-1.5'>
-            <Title 
-              level={5} 
-              className='mb-0.5 line-clamp-1 overflow-hidden' 
-              style={{ 
-                fontSize: '13px', 
+            <Title
+              level={5}
+              className='mb-0.5 line-clamp-1 overflow-hidden'
+              style={{
+                fontSize: '13px',
                 fontWeight: 600
               }}
             >
@@ -212,7 +193,7 @@ const UserCard = ({
             </Title>
             <div className='border-b border-gray-200'></div>
           </div>
-          
+
           {/* Info & Actions */}
           <div className='flex-1 flex flex-col justify-between'>
             {/* User Info */}
@@ -226,9 +207,7 @@ const UserCard = ({
             </div>
 
             {/* Action Button */}
-            <div>
-              {renderActionButton()}
-            </div>
+            <div>{renderActionButton()}</div>
           </div>
         </div>
       </div>

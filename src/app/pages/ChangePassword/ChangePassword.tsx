@@ -96,7 +96,7 @@ const ChangePasswordPopup: React.FC<ChangePasswordPopupProps> = ({ visible, onCl
                   hasSpecialChar: (value) =>
                     /.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-].*/.test(value) ||
                     'Password must contain at least one special character'
-                },
+                }
               }}
               render={({ field }) => (
                 <Input.Password

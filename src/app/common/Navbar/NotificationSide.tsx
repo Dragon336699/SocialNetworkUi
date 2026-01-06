@@ -119,12 +119,12 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
       setNotifications((prevNotis) => {
         const existingNoti = prevNotis.find((noti) => noti.id === newNoti.id)
 
-        if (existingNoti) {     
+        if (existingNoti) {
           return prevNotis.map((noti) => (noti.id === newNoti.id ? newNoti : noti))
-        } else {          
+        } else {
           return [newNoti, ...prevNotis]
         }
-      })    
+      })
       fetchUnreadCount()
     })
   }, [])

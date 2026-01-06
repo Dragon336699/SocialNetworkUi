@@ -50,15 +50,12 @@ export const conversationService = {
     data: BaseResponse
     status: number
   }> {
-    const response = await apiClient.delete<BaseResponse>(
-      `conversation/deleteConversation`,
-      {
-        data: {
-          conversationId
-        },
-        withCredentials: true
-      }
-    )
+    const response = await apiClient.delete<BaseResponse>(`conversation/deleteConversation`, {
+      data: {
+        conversationId
+      },
+      withCredentials: true
+    })
     return { data: response.data, status: response.status }
   },
 
