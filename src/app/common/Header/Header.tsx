@@ -46,6 +46,16 @@ const Header: React.FC = () => {
   const searchInputRef = useRef<any>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const queryParam = searchParams.get('q')
+    if (location.pathname === '/search' && queryParam) {
+      setSearchValue(queryParam)
+    } else if (location.pathname !== '/search') {
+      setSearchValue('')
+    }
+  }, [location.pathname, location.search])
+
   const fetchNotifications = async () => {
     try {
       const response = await notificationService.getNotis(0, 15)
@@ -232,7 +242,6 @@ const Header: React.FC = () => {
 
       navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`)
       setShowSearch(false)
-      setSearchValue('')
       setSearchResults(null)
     }
   }
@@ -264,10 +273,10 @@ const Header: React.FC = () => {
     if (history.navigateUrl) {
       navigate(history.navigateUrl)
     } else if (history.content) {
+      setSearchValue(history.content)
       navigate(`/search?q=${encodeURIComponent(history.content)}`)
     }
     setShowSearch(false)
-    setSearchValue('')
     setSearchResults(null)
   }
 
@@ -298,7 +307,7 @@ const Header: React.FC = () => {
       }
     }
     setShowSearch(false)
-    setSearchValue('')
+    setSearchResults(null)
   }
 
   const handleSearchFocus = () => {
