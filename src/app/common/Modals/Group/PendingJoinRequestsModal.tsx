@@ -3,6 +3,7 @@ import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/i
 import { GroupUserDto } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState, useEffect } from 'react'
+import { useCallback } from 'react'
 
 interface PendingJoinRequestsModalProps {
   isModalOpen: boolean
@@ -21,13 +22,7 @@ const PendingJoinRequestsModal = ({
   const [actionLoading, setActionLoading] = useState<string>('')
   const [pendingRequests, setPendingRequests] = useState<GroupUserDto[]>([])
 
-  useEffect(() => {
-    if (isModalOpen) {
-      fetchPendingRequests()
-    }
-  }, [isModalOpen, groupId])
-
-  const fetchPendingRequests = async () => {
+  const fetchPendingRequests = useCallback(async () => {
     try {
       setLoading(true)
       const response = await groupService.getPendingJoinRequests(groupId, 0, 50)
@@ -38,7 +33,7 @@ const PendingJoinRequestsModal = ({
     } finally {
       setLoading(false)
     }
-  }
+  }, [groupId])
 
   const handleApprove = async (targetUserId: string, userName: string) => {
     try {
@@ -70,6 +65,12 @@ const PendingJoinRequestsModal = ({
     }
   }
 
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchPendingRequests()
+    }
+  }, [isModalOpen, groupId, fetchPendingRequests])
+
   const renderActions = (request: GroupUserDto) => {
     const userName = request.user
       ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() || 'this user'
@@ -77,28 +78,20 @@ const PendingJoinRequestsModal = ({
 
     return (
       <div className='flex items-center gap-2'>
-        <Popconfirm
-          title='Approve Request'
-          description={`Allow ${userName} to join the group?`}
-          onConfirm={() => handleApprove(request.userId, userName)}
-          okText='Approve'
-          cancelText='Cancel'
-          okButtonProps={{ type: 'primary' }}
+        <button
+          className='px-3 h-8 text-sm font-semibold rounded border-2 border-blue-500 bg-blue-500 text-white hover:bg-blue-600 hover:border-blue-600 transition-colors disabled:opacity-50 flex items-center gap-1'
+          disabled={actionLoading === request.userId}
+          onClick={() => handleApprove(request.userId, userName)}
         >
-          <button 
-            className='px-3 h-8 text-sm font-semibold rounded border-2 border-blue-500 bg-blue-500 text-white hover:bg-blue-600 hover:border-blue-600 transition-colors disabled:opacity-50 flex items-center gap-1'
-            disabled={actionLoading === request.userId}
-          >
-            {actionLoading === request.userId ? (
-              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-            ) : (
-              <>
-                <CheckOutlined />
-                <span>Approve</span>
-              </>
-            )}
-          </button>
-        </Popconfirm>
+          {actionLoading === request.userId ? (
+            <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+          ) : (
+            <>
+              <CheckOutlined />
+              <span>Approve</span>
+            </>
+          )}
+        </button>
 
         <Popconfirm
           title='Reject Request'
@@ -108,7 +101,7 @@ const PendingJoinRequestsModal = ({
           cancelText='Cancel'
           okButtonProps={{ danger: true }}
         >
-          <button 
+          <button
             className='px-3 h-8 text-sm font-semibold rounded border-2 border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 transition-colors disabled:opacity-50 flex items-center gap-1'
             disabled={actionLoading === request.userId}
           >
@@ -132,9 +125,7 @@ const PendingJoinRequestsModal = ({
         <div className='flex justify-between items-center border-b-2 border-gray-200 pb-3 mb-4'>
           <div className='flex flex-col gap-1'>
             <span className='text-lg font-semibold'>Join Requests</span>
-            <span className='text-sm text-gray-500 font-normal'>
-              Manage pending requests to join this group
-            </span>
+            <span className='text-sm text-gray-500 font-normal'>Manage pending requests to join this group</span>
           </div>
           <Button
             icon={<CloseOutlined />}
@@ -150,21 +141,21 @@ const PendingJoinRequestsModal = ({
       closable={false}
       centered={false}
       maskClosable={false}
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'visible',
         padding: 0,
         top: 50
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
         },
-        body: { 
+        body: {
           padding: '0 24px 24px 24px',
           overflow: 'visible'
         },
@@ -208,9 +199,7 @@ const PendingJoinRequestsModal = ({
                   }
                   description={
                     <div className='flex flex-col'>
-                      <span className='text-xs text-gray-600 font-medium'>
-                        {request.user?.email || 'No email'}
-                      </span>
+                      <span className='text-xs text-gray-600 font-medium'>{request.user?.email || 'No email'}</span>
                       <span className='text-xs text-gray-600'>
                         Requested: {new Date(request.joinedAt).toLocaleDateString('en-US')}
                       </span>
@@ -222,11 +211,7 @@ const PendingJoinRequestsModal = ({
           />
         </>
       ) : (
-        <Empty 
-          description='No pending join requests' 
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          className='py-8'
-        />
+        <Empty description='No pending join requests' image={Empty.PRESENTED_IMAGE_SIMPLE} className='py-8' />
       )}
     </Modal>
   )

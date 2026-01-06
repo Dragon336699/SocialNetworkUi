@@ -1,4 +1,4 @@
-import { faComment, faHouse, faUsers, faUserFriends, faSearch, faBars } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faHouse, faUsers, faUserFriends, faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Badge, ConfigProvider, Menu, MenuProps, Dropdown } from 'antd'
 import Sider from 'antd/es/layout/Sider'
@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
 import { NavbarProps } from '../Interfaces/NavbarProps'
-import SearchComponent from '@/app/components/Search/SearchComponent'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -51,7 +50,6 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
 const Navbar: React.FC<NavbarProps> = () => {
   const navigate = useNavigate()
   const { unreadMessages } = useUnread()
-  const [showSearch, setShowSearch] = useState(false)
   const [items, setItems] = useState<MenuItem[]>([])
   // const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -77,8 +75,6 @@ const Navbar: React.FC<NavbarProps> = () => {
       return
     } else navigate(`/${e.key}`)
   }
-
-  const handleCollapseNavbar = () => setCollapsed(true)
 
   useEffect(() => {
     setItems((prev) => {
@@ -139,8 +135,6 @@ const Navbar: React.FC<NavbarProps> = () => {
           </Dropdown>
         </div>
       </Sider>
-
-      {/* <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} /> */}
     </ConfigProvider>
   )
 }

@@ -12,16 +12,9 @@ interface ImageModalProps {
   onNext: () => void
 }
 
-const ImageModal: React.FC<ImageModalProps> = ({
-  postImages,
-  selectedImageIndex,
-  onClose,
-  onPrevious,
-  onNext
-}) => {
+const ImageModal: React.FC<ImageModalProps> = ({ postImages, selectedImageIndex, onClose, onPrevious, onNext }) => {
   if (selectedImageIndex === null || !postImages) return null
 
-  // Xử lý sự kiện phím
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose()
@@ -47,7 +40,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         />
 
-        {/* Mũi tên điều hướng */}
         {postImages.length > 1 && (
           <>
             {selectedImageIndex > 0 && (
@@ -80,7 +72,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
           </>
         )}
 
-        {/* Bộ đếm ảnh */}
         <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-70 px-4 py-2 rounded-full text-sm font-medium z-10'>
           {selectedImageIndex + 1} / {postImages.length}
         </div>

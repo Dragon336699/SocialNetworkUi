@@ -11,7 +11,6 @@ export const useGroups = () => {
   const [skip, setSkip] = useState(0)
   const take = 10
 
-  // Fetch groups
   const fetchGroups = useCallback(
     async (reset: boolean = false) => {
       try {
@@ -48,7 +47,6 @@ export const useGroups = () => {
     [skip, take]
   )
 
-  // Fetch my groups
   const fetchMyGroups = useCallback(
     async (reset: boolean = false) => {
       try {
@@ -85,36 +83,30 @@ export const useGroups = () => {
     [skip, take]
   )
 
-  // Load more
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
       fetchGroups(false)
     }
   }, [loading, hasMore, fetchGroups])
 
-  // Refetch
   const refetch = useCallback(() => {
     setSkip(0)
     setHasMore(true)
     fetchGroups(true)
   }, [fetchGroups])
 
-  // Clear error
   const clearError = useCallback(() => {
     setError(null)
   }, [])
 
-  // Handle group created
   const handleGroupCreated = useCallback(() => {
     refetch()
   }, [refetch])
 
-  // Handle group updated
   const handleGroupUpdated = useCallback((updatedGroup: GroupDto) => {
     setGroups((prev) => prev.map((group) => (group.id === updatedGroup.id ? updatedGroup : group)))
   }, [])
 
-  // Handle group deleted
   const handleGroupDeleted = useCallback((groupId: string) => {
     setGroups((prev) => prev.filter((group) => group.id !== groupId))
     message.success('Group deleted successfully')

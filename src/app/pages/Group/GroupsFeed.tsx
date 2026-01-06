@@ -12,6 +12,7 @@ import PostDropdownMenu from '../Post/PostDropdownMenu'
 import EditPostModal from '../Post/EditPostModal'
 import DeletePostModal from '../Post/DeletePostModal'
 import { getTimeAgo } from '@/app/helper'
+import { useCallback } from 'react'
 
 const { Text } = Typography
 
@@ -31,26 +32,13 @@ const GroupsFeed = () => {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<UserDto>(defaultUser)
   const [myGroupIds, setMyGroupIds] = useState<string[]>([])
-  const [dropdownStates, setDropdownStates] = useState<{[key: string]: boolean}>({})
-  
-  // States cho Edit và Delete Post
+  const [dropdownStates, setDropdownStates] = useState<{ [key: string]: boolean }>({})
   const [editingPost, setEditingPost] = useState<PostData | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchCurrentUser()
-  }, [])
-
-  useEffect(() => {
-    if (currentUser.id) {
-      fetchMyGroupsAndPosts()
-    }
-  }, [currentUser.id])
-
-  // Lấy thông tin người dùng hiện tại
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const response = await userService.getUserInfoByToken()
       if (response.status === 200 && response.data && 'id' in response.data) {
@@ -59,23 +47,22 @@ const GroupsFeed = () => {
     } catch (error) {
       console.error('Error fetching current user:', error)
     }
-  }
+  }, [])
 
-  // Lấy tất cả nhóm và bài viết của người dùng
-  const fetchMyGroupsAndPosts = async () => {
+  const fetchMyGroupsAndPosts = useCallback(async () => {
     try {
       setLoading(true)
       const groupsResponse = await groupService.getMyGroups(0, 50)
 
-      const approvedGroups = groupsResponse.groups.filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser.id)
+      const approvedGroups = groupsResponse.groups.filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser.id)
         return userStatus && userStatus.roleName !== GroupRole.Pending
       })
-      setMyGroupIds(approvedGroups.map(group => group.id))
+      setMyGroupIds(approvedGroups.map((group) => group.id))
       const allPosts: PostData[] = []
-      approvedGroups.forEach(group => {
+      approvedGroups.forEach((group) => {
         if (group.posts && group.posts.length > 0) {
-          const postsWithGroup = (group.posts as unknown as PostData[]).map(post => ({
+          const postsWithGroup = (group.posts as unknown as PostData[]).map((post) => ({
             ...post,
             group: {
               id: group.id,
@@ -87,7 +74,6 @@ const GroupsFeed = () => {
           allPosts.push(...postsWithGroup)
         }
       })
-      // Sắp xếp bài viết theo ngày tạo mới nhất
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       setPosts(allPosts)
     } catch (error: any) {
@@ -96,7 +82,17 @@ const GroupsFeed = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentUser.id])
+
+  useEffect(() => {
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
+
+  useEffect(() => {
+    if (currentUser.id) {
+      fetchMyGroupsAndPosts()
+    }
+  }, [currentUser.id, fetchMyGroupsAndPosts])
 
   const handlePostUserClick = (e: React.MouseEvent, userName: string) => {
     e.stopPropagation()
@@ -117,11 +113,7 @@ const GroupsFeed = () => {
 
   const handlePostUpdated = (updatedPost: PostData) => {
     setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === updatedPost.id 
-          ? { ...post, ...updatedPost, group: post.group } 
-          : post
-      )
+      prevPosts.map((post) => (post.id === updatedPost.id ? { ...post, ...updatedPost, group: post.group } : post))
     )
   }
 
@@ -130,27 +122,25 @@ const GroupsFeed = () => {
   }
 
   const toggleDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: !prev[postId]
     }))
   }
 
   const closeDropdown = (postId: string) => {
-    setDropdownStates(prev => ({
+    setDropdownStates((prev) => ({
       ...prev,
       [postId]: false
     }))
   }
 
-  // Handler cho Edit Post
   const handleEditPost = (post: PostData) => {
     setEditingPost(post)
     setIsEditModalOpen(true)
     closeDropdown(post.id)
   }
 
-  // Handler khi edit thành công
   const handleEditSuccess = (updatedPost: PostData) => {
     setIsEditModalOpen(false)
     setEditingPost(null)
@@ -158,20 +148,17 @@ const GroupsFeed = () => {
     handlePostUpdated(updatedPost)
   }
 
-  // Handler khi đóng edit modal
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false)
     setEditingPost(null)
   }
 
-  // Handler cho Delete Post
   const handleDeletePost = (postId: string) => {
     setDeletingPostId(postId)
     setIsDeleteModalOpen(true)
     closeDropdown(postId)
   }
 
-  // Handler khi delete thành công
   const handleDeleteSuccess = () => {
     if (deletingPostId) {
       handlePostDeleted(deletingPostId)
@@ -181,7 +168,6 @@ const GroupsFeed = () => {
     message.success('Post deleted successfully!')
   }
 
-  // Handler khi đóng delete modal
   const handleCloseDeleteModal = () => {
     setIsDeleteModalOpen(false)
     setDeletingPostId(null)
@@ -208,7 +194,7 @@ const GroupsFeed = () => {
       </svg>
     )
   }
-  
+
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>

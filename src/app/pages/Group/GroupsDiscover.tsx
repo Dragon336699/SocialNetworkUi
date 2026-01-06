@@ -13,12 +13,6 @@ const GroupsDiscover = () => {
 
   const { groups, loading, hasMore, fetchGroups, loadMore, refetch } = useGroups()
 
-  useEffect(() => {
-    fetchCurrentUser()
-    fetchGroups(true)
-  }, [])
-
-  // Lấy thông tin người dùng hiện tại
   const fetchCurrentUser = async () => {
     try {
       const response = await userService.getUserInfoByToken()
@@ -29,8 +23,11 @@ const GroupsDiscover = () => {
       console.error('Error fetching current user:', error)
     }
   }
+  useEffect(() => {
+    fetchCurrentUser()
+    fetchGroups(true)
+  }, [fetchGroups])
 
-  // Xử lý cuộn vô hạn
   const handleScroll = useCallback(() => {
     const scrollTop = document.documentElement.scrollTop
     const scrollHeight = document.documentElement.scrollHeight
@@ -76,8 +73,7 @@ const GroupsDiscover = () => {
         <>
           <Row gutter={[16, 16]}>
             {groups.map((group) => {
-              // Check if current user is already a member
-              const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+              const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
               const isJoined = userStatus && userStatus.roleName !== GroupRole.Pending
               const isPending = userStatus?.roleName === GroupRole.Pending
 

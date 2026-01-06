@@ -9,7 +9,6 @@ interface PostReactionProps {
   totalLiked: number
 }
 
-// Hàm helper để chuyển đổi biểu tượng reaction thành văn bản
 const getReactionText = (reaction: string): string => {
   const reactionMap: { [key: string]: string } = {
     '👍': 'Like',
@@ -22,12 +21,11 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
-// Hàm helper để lấy màu chữ theo reaction
 const getReactionColor = (reaction: string): string => {
   if (reaction === '❤️' || reaction === '😡') {
-    return '#EF4444' // red-500
+    return '#EF4444'
   }
-  return '#F59E0B' // amber-500 (màu vàng)
+  return '#F59E0B'
 }
 
 const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendReaction, currentUserId }) => {
@@ -36,7 +34,6 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
   const [showReactionBar, setShowReactionBar] = useState<boolean>(false)
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
 
-  // Xử lý sự kiện click bên ngoài để đóng reaction bar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
@@ -47,7 +44,6 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
       }
     }
 
-    // Xử lý sự kiện nhấn phím Escape để đóng reaction bar
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setShowReactionBar(false)
@@ -63,13 +59,11 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
     }
   }, [showReactionBar])
 
-  // Xử lý khi người dùng chọn một reaction
   const handleReaction = (reaction: string) => {
     onSendReaction(postId, reaction)
     setShowReactionBar(false)
   }
 
-  // Xử lý khi di chuột vào nút Like để hiển thị reaction bar
   const handleMouseEnter = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -81,7 +75,6 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
     setHoverTimeout(timeout)
   }
 
-  // Xử lý khi di chuột ra khỏi nút Like để ẩn reaction bar
   const handleMouseLeave = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -93,9 +86,8 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
     setHoverTimeout(timeout)
   }
 
-  // Xử lý khi người dùng click vào nút Like
   const handleLikeClick = () => {
-    const currentUserReaction = reactions?.find(r => r.userId === currentUserId)
+    const currentUserReaction = reactions?.find((r) => r.userId === currentUserId)
     if (currentUserReaction) {
       handleReaction(currentUserReaction.reaction)
     } else {
@@ -103,7 +95,7 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
     }
   }
 
-  const userReaction = reactions?.find(r => r.userId === currentUserId)
+  const userReaction = reactions?.find((r) => r.userId === currentUserId)
 
   return (
     <div className='relative'>
@@ -138,7 +130,7 @@ const PostReaction: React.FC<PostReactionProps> = ({ postId, reactions, onSendRe
           <div
             ref={reactionBarRef}
             className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full mb-2 animate-fadeInUp'
-            style={{ 
+            style={{
               minWidth: '200px',
               background: '#F3F4F6',
               border: '1px solid #D1D5DB',

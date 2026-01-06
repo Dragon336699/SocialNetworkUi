@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Avatar, message } from 'antd'
-import {
-  CloseOutlined,
-  ShareAltOutlined,
-  MessageOutlined,
-  PictureOutlined,
-  SendOutlined,
-  MoreOutlined
-} from '@ant-design/icons'
+import { CloseOutlined, MessageOutlined, PictureOutlined, MoreOutlined } from '@ant-design/icons'
 import { commentService } from '@/app/services/comment.service'
 import { CommentDto } from '@/app/types/Comment/CommentResponses'
 import ImageCarousel from '../Post/ImageCarousel'
@@ -20,6 +13,7 @@ import EditPostModal from '../Post/EditPostModal'
 import DeletePostModal from '../Post/DeletePostModal'
 import { PostData } from '@/app/types/Post/Post'
 import { getTimeAgo } from '@/app/helper'
+import { useCallback } from 'react'
 
 interface PostCommentModalProps {
   isOpen: boolean
@@ -41,7 +35,6 @@ interface PostCommentModalProps {
   onPostDeleted?: (postId: string) => void
 }
 
-// Hàm chuyển đổi biểu tượng reaction thành văn bản
 const getReactionText = (reaction: string): string => {
   const reactionMap: { [key: string]: string } = {
     '👍': 'Like',
@@ -54,12 +47,11 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
-// Hàm helper để lấy màu chữ theo reaction
 const getReactionColor = (reaction: string): string => {
   if (reaction === '❤️' || reaction === '😡') {
-    return '#EF4444' // red-500
+    return '#EF4444'
   }
-  return '#F59E0B' // amber-500 (màu vàng)
+  return '#F59E0B'
 }
 
 const PostCommentModal: React.FC<PostCommentModalProps> = ({
@@ -73,7 +65,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   postImages = [],
   postCreatedAt,
   postPrivacy,
-  totalLiked,
   totalComment,
   postReactionUsers,
   onCommentCountChange,
@@ -92,7 +83,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   const [content, setContent] = useState('')
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
-  const [replyTo, setReplyTo] = useState<{ id: string, name: string } | null>(null)
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null)
   const [editingComment, setEditingComment] = useState<CommentDto | null>(null)
   const [showPostReactionPicker, setShowPostReactionPicker] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
@@ -110,36 +101,32 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   const reactionBarRef = useRef<HTMLDivElement>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-  // Hàm cập nhật nội dung bài viết khi thay đổi
-  useEffect(() => {
-    setCurrentPostContent(postContent)
-    setCurrentPostImages(postImages)
-    setCurrentPostPrivacy(postPrivacy)
-  }, [postContent, postImages, postPrivacy])
-
-  // Hàm tải danh sách bình luận
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true)
       const response = await commentService.getCommentsByPostId(postId, 0, 100)
       if (response.comments) {
         setComments(response.comments)
       }
-    } catch (error) {
+    } catch {
       message.error('Failed to load comments')
     } finally {
       setLoading(false)
     }
-  }
+  }, [postId])
 
-  // Hàm xử lý tải bình luận khi modal mở
+  useEffect(() => {
+    setCurrentPostContent(postContent)
+    setCurrentPostImages(postImages)
+    setCurrentPostPrivacy(postPrivacy)
+  }, [postContent, postImages, postPrivacy])
+
   useEffect(() => {
     if (isOpen) {
       loadComments()
     }
-  }, [isOpen, postId])
+  }, [isOpen, postId, loadComments])
 
-  // Hàm điều chỉnh chiều cao textarea tự động
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -147,7 +134,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }, [content])
 
-  // Hàm xử lý sự kiện click bên ngoài để đóng bảng chọn emoji
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (emojiWrapperRef.current && !emojiWrapperRef.current.contains(event.target as Node)) {
@@ -162,7 +148,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }, [showEmojiPicker])
 
-  // Hàm xử lý sự kiện click bên ngoài và phím Escape để đóng thanh reaction
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
@@ -188,7 +173,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }, [showPostReactionPicker])
 
-  // Hàm xử lý khi chọn emoji
   const handleEmojiSelect = (emojiData: any) => {
     const emoji = emojiData.native
     const textarea = textareaRef.current
@@ -205,7 +189,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     })
   }
 
-  // Hàm xử lý khi chọn hình ảnh
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
@@ -222,20 +205,17 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setPreviewUrls([url])
   }
 
-  // Hàm xóa hình ảnh đã chọn
   const removeImage = (index: number) => {
     URL.revokeObjectURL(previewUrls[index])
     setSelectedImages((prev) => prev.filter((_, i) => i !== index))
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Hàm xóa hình ảnh hiện có
   const removeExistingImage = (imageId: string) => {
     setImagesToDelete((prev) => [...prev, imageId])
     setExistingImages((prev) => prev.filter((img) => img.id !== imageId))
   }
 
-  // Hàm gửi bình luận hoặc cập nhật bình luận
   const handleSubmit = async () => {
     if (!content.trim() && selectedImages.length === 0 && existingImages.length === 0) {
       message.warning('Please enter content or select an image')
@@ -291,7 +271,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }
 
-  // Hàm đặt lại form nhập liệu
   const resetForm = () => {
     setContent('')
     setSelectedImages([])
@@ -303,7 +282,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setImagesToDelete([])
   }
 
-  // Hàm xử lý reaction cho bài viết
   const handleReaction = (reaction: string) => {
     if (onPostReaction) {
       onPostReaction(postId, reaction)
@@ -311,7 +289,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setShowPostReactionPicker(false)
   }
 
-  // Hàm xử lý khi di chuột vào khu vực reaction
   const handleMouseEnterReaction = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -323,7 +300,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setHoverTimeout(timeout)
   }
 
-  // Hàm xử lý khi di chuột rời khu vực reaction
   const handleMouseLeaveReaction = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -335,9 +311,8 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setHoverTimeout(timeout)
   }
 
-  // Hàm xử lý khi nhấp vào nút Like
   const handleLikeClick = () => {
-    const currentUserReaction = postReactionUsers?.find(r => r.userId === currentUserId)
+    const currentUserReaction = postReactionUsers?.find((r) => r.userId === currentUserId)
     if (currentUserReaction) {
       handleReaction(currentUserReaction.reaction)
     } else {
@@ -345,28 +320,23 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }
 
-  // Hàm chuyển đến hình ảnh trước đó
   const handlePreviousImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : prevIndex))
   }
 
-  // Hàm chuyển đến hình ảnh tiếp theo
   const handleNextImage = () => {
-    setCurrentImageIndex((prevIndex) => prevIndex < currentPostImages.length - 1 ? prevIndex + 1 : prevIndex)
+    setCurrentImageIndex((prevIndex) => (prevIndex < currentPostImages.length - 1 ? prevIndex + 1 : prevIndex))
   }
 
-  // Hàm chuyển đến hình ảnh cụ thể
   const handleGoToImage = (index: number) => {
     setCurrentImageIndex(index)
   }
 
-  // Hàm xử lý mở modal chỉnh sửa bài viết
   const handleEditPost = () => {
     setShowEditModal(true)
     setShowDropdown(false)
   }
 
-  // Hàm xử lý lưu bài viết đã chỉnh sửa
   const handleSavePost = (updatedPostData: PostData) => {
     setCurrentPostContent(updatedPostData.content || '')
     setCurrentPostImages(updatedPostData.postImages || [])
@@ -377,13 +347,11 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     setShowEditModal(false)
   }
 
-  // Hàm xử lý mở modal xóa bài viết
   const handleDeleteClick = () => {
     setShowDeleteModal(true)
     setShowDropdown(false)
   }
 
-  // Hàm xử lý khi xóa bài viết thành công
   const handleDeleteSuccess = () => {
     if (onPostDeleted) {
       onPostDeleted(postId)
@@ -392,7 +360,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     onClose()
   }
 
-  // Hàm hiển thị biểu tượng quyền riêng tư
   const renderPrivacyIcon = () => {
     const iconClass = 'w-3 h-3 text-gray-500'
 
@@ -428,7 +395,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
   }
 
-  // Hàm hiển thị thông tin về các reaction và bình luận
   const renderReactionsInfo = () => {
     const hasReactions = postReactionUsers && postReactionUsers.length > 0
     const hasComments = totalComment > 0
@@ -553,7 +519,9 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             </div>
 
             <div className='px-4 pb-3'>
-              <p className='text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium'>{currentPostContent}</p>
+              <p className='text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium'>
+                {currentPostContent}
+              </p>
             </div>
 
             {currentPostImages && currentPostImages.length > 0 && (
@@ -571,15 +539,14 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
             <div className='px-4 py-3 border-t border-gray-100'>
               <div className='space-y-3'>
-                {/* Row 1: Like, Comment buttons và Reactions Info */}
+                {/* Like, Comment buttons và Reactions Info */}
                 <div className='flex items-center justify-between'>
-                  {/* Like and Comment buttons - Bên trái */}
                   <div className='flex items-center space-x-4'>
                     <div className='relative'>
                       <div
                         className={`rounded-full transition-colors h-10 flex items-center border ${
-                          userReaction 
-                            ? 'bg-gray-100 border-gray-300' 
+                          userReaction
+                            ? 'bg-gray-100 border-gray-300'
                             : 'border-transparent hover:bg-gray-100 hover:border-gray-300'
                         }`}
                         onMouseEnter={handleMouseEnterReaction}
@@ -739,10 +706,10 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             )}
 
             <div className='flex gap-2 items-center'>
-              <div className='flex-shrink-0 rounded-full border-2 border-black'>
-                <Avatar 
-                  src={currentUser.avatarUrl} 
-                  size={32} 
+              <div className='flex-shrink-0 rounded-full border-2 border-gray-200'>
+                <Avatar
+                  src={currentUser.avatarUrl}
+                  size={32}
                   className='rounded-full object-cover w-8 h-8 min-w-8 min-h-8'
                 >
                   {currentUser.firstName?.[0] || ''}
@@ -795,7 +762,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                       <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
                         <path
                           fillRule='evenodd'
-                          d='M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z' 
+                          d='M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z'
                           clipRule='evenodd'
                         />
                       </svg>
@@ -829,7 +796,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
               )}
             </div>
           </div>
-
         </div>
       </div>
 

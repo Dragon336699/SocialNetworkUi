@@ -1,35 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Typography,
-  Button,
-  Spin,
-  Space,
-  Tag,
-  message,
-  Modal,
-  Avatar,
-  Card,
-  Tabs,
-  Empty,
-  List,
-  Badge
-} from 'antd'
+import { Typography, Button, Spin, Space, Tag, message, Modal, Avatar, Card, Tabs, Empty } from 'antd'
 import {
   GlobalOutlined,
   LockOutlined,
   UserOutlined,
   FileTextOutlined,
-  CheckOutlined,
-  MoreOutlined,
-  CrownOutlined,
-  StarOutlined,
   ClockCircleOutlined,
   CloseOutlined,
-  LeftOutlined,
-  RightOutlined,
-  UserAddOutlined,
-  DeleteOutlined
+  CheckOutlined
 } from '@ant-design/icons'
 import { groupService } from '@/app/services/group.service'
 import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
@@ -41,8 +20,15 @@ import ManageMembersModal from '@/app/common/Modals/Group/ManageMembersModal'
 import PendingJoinRequestsModal from '@/app/common/Modals/Group/PendingJoinRequestsModal'
 import { userService } from '@/app/services/user.service'
 import { UserDto } from '@/app/types/User/user.dto'
-import GroupDropdownMenu, { PendingDropdownMenu, JoinedDropdownMenu } from './GroupDropdownMenu'
+import { PendingDropdownMenu } from './GroupDropdownMenu'
+import GroupHeaderActions from '@/app/components/Group/GroupHeaderActions'
 import InviteFriendsModal from '@/app/common/Modals/Group/InviteFriendsModal'
+import PendingPostsModal from '@/app/common/Modals/Group/PendingPostsModal'
+import MyPendingPostsModal from '@/app/common/Modals/Group/MyPendingPostsModal'
+import { postService } from '@/app/services/post.service'
+import GroupSidebar from '@/app/components/Group/GroupSidebar'
+import { GroupMembersTab, GroupPhotosTab } from '@/app/components/Group/GroupTabs'
+import ImageViewerModal from '@/app/common/Modals/Group/ImageViewerModal'
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -79,9 +65,14 @@ const GroupDetail = () => {
   const [showAdminDropdown, setShowAdminDropdown] = useState(false)
   const [showPendingDropdown, setShowPendingDropdown] = useState(false)
   const [showJoinedDropdown, setShowJoinedDropdown] = useState(false)
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false)
   const [isInviteFriendsOpen, setIsInviteFriendsOpen] = useState(false)
   const [acceptingInvite, setAcceptingInvite] = useState(false)
   const [rejectingInvite, setRejectingInvite] = useState(false)
+  const [isPendingPostsOpen, setIsPendingPostsOpen] = useState(false)
+  const [isMyPendingPostsOpen, setIsMyPendingPostsOpen] = useState(false)
+  const [pendingPostCount, setPendingPostCount] = useState(0)
+  const [myPendingPostCount, setMyPendingPostCount] = useState(0)
 
   const currentUserRole = group?.groupUsers?.find((gu) => gu.userId === currentUser?.id)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
@@ -148,7 +139,10 @@ const GroupDetail = () => {
           }
 
           if (response.group.posts) {
-            setPosts(response.group.posts as unknown as PostData[])
+            const approvedPosts = (response.group.posts as unknown as PostData[]).filter(
+              (post) => post.postPrivacy !== 'PendingApproval'
+            )
+            setPosts(approvedPosts)
           }
 
           if (
@@ -158,6 +152,21 @@ const GroupDetail = () => {
             const pendingCount =
               response.group.groupUsers?.filter((gu) => gu.roleName === GroupRole.Pending).length || 0
             setPendingRequestCount(pendingCount)
+
+            try {
+              const pendingPostsResponse = await postService.getPendingPosts(groupId, 0, 100)
+              setPendingPostCount(pendingPostsResponse.posts?.length || 0)
+            } catch {
+              setPendingPostCount(0)
+            }
+          }
+          if (userStatus && userStatus.roleName !== GroupRole.Pending && userStatus.roleName !== GroupRole.Inviting) {
+            try {
+              const myPendingPostsResponse = await postService.getMyPendingPosts(groupId, 0, 100)
+              setMyPendingPostCount(myPendingPostsResponse.posts?.length || 0)
+            } catch {
+              setMyPendingPostCount(0)
+            }
           }
         }
       } catch (error: any) {
@@ -202,7 +211,10 @@ const GroupDetail = () => {
         }
 
         if (response.group.posts) {
-          setPosts(response.group.posts as unknown as PostData[])
+          const approvedPosts = (response.group.posts as unknown as PostData[]).filter(
+            (post) => post.postPrivacy !== 'PendingApproval'
+          )
+          setPosts(approvedPosts)
         }
 
         if (
@@ -211,6 +223,22 @@ const GroupDetail = () => {
         ) {
           const pendingCount = response.group.groupUsers?.filter((gu) => gu.roleName === GroupRole.Pending).length || 0
           setPendingRequestCount(pendingCount)
+
+          try {
+            const pendingPostsResponse = await postService.getPendingPosts(groupId, 0, 100)
+            setPendingPostCount(pendingPostsResponse.posts?.length || 0)
+          } catch {
+            setPendingPostCount(0)
+          }
+        }
+
+        if (userStatus && userStatus.roleName !== GroupRole.Pending && userStatus.roleName !== GroupRole.Inviting) {
+          try {
+            const myPendingPostsResponse = await postService.getMyPendingPosts(groupId, 0, 100)
+            setMyPendingPostCount(myPendingPostsResponse.posts?.length || 0)
+          } catch {
+            setMyPendingPostCount(0)
+          }
         }
       }
     } catch (error) {
@@ -341,38 +369,6 @@ const GroupDetail = () => {
     await refreshGroupData()
   }
 
-  const renderRoleTag = (roleName: string) => {
-    if (roleName === GroupRole.SuperAdministrator) {
-      return (
-        <Tag color='gold' icon={<StarOutlined />}>
-          Owner
-        </Tag>
-      )
-    }
-    if (roleName === GroupRole.Administrator) {
-      return (
-        <Tag color='blue' icon={<CrownOutlined />}>
-          Admin
-        </Tag>
-      )
-    }
-    return null
-  }
-
-  const getAllImages = () => {
-    const allImages: string[] = []
-    posts.forEach(post => {
-      if (post.postImages && post.postImages.length > 0) {
-        post.postImages.forEach(img => {
-          if (img.imageUrl) {
-            allImages.push(img.imageUrl)
-          }
-        })
-      }
-    })
-    return allImages
-  }
-
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
@@ -422,81 +418,50 @@ const GroupDetail = () => {
             group={group}
             onInviteSuccess={refreshGroupData}
           />
-          <Modal
-            open={isImageViewerOpen}
-            onCancel={() => setIsImageViewerOpen(false)}
-            footer={null}
-            width='90vw'
-            style={{ top: 20, maxWidth: '1200px' }}
-            closeIcon={<CloseOutlined style={{ color: 'white', fontSize: '24px' }} />}
-            styles={{
-              body: { padding: 0, background: 'black' },
-              content: { padding: 0, background: 'black', borderRadius: 0, border: '2px solid white' }
-            }}
-          >
-            <div className='relative bg-black' style={{ minHeight: '70vh' }}>
-              <div className='flex items-center justify-center' style={{ minHeight: '70vh' }}>
-                <img
-                  src={viewerImages[currentViewerIndex]}
-                  alt={`Image ${currentViewerIndex + 1}`}
-                  className='max-w-full max-h-[70vh] object-contain'
-                />
-              </div>
-
-              {viewerImages.length > 1 && (
-                <>
-                  {currentViewerIndex > 0 && (
-                    <button
-                      onClick={handleViewerPrevious}
-                      className='absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-3 transition-all'
-                    >
-                      <LeftOutlined style={{ fontSize: '24px' }} />
-                    </button>
-                  )}
-
-                  {currentViewerIndex < viewerImages.length - 1 && (
-                    <button
-                      onClick={handleViewerNext}
-                      className='absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-3 transition-all'
-                    >
-                      <RightOutlined style={{ fontSize: '24px' }} />
-                    </button>
-                  )}
-
-                  <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full'>
-                    {currentViewerIndex + 1} / {viewerImages.length}
-                  </div>
-                </>
-              )}
-            </div>
-          </Modal>
+          <PendingPostsModal
+            isModalOpen={isPendingPostsOpen}
+            handleCancel={() => setIsPendingPostsOpen(false)}
+            groupId={groupId || ''}
+            onPostsUpdated={refreshGroupData}
+          />
+          <MyPendingPostsModal
+            isModalOpen={isMyPendingPostsOpen}
+            handleCancel={() => setIsMyPendingPostsOpen(false)}
+            groupId={groupId}
+            onPostsUpdated={refreshGroupData}
+          />
+          <ImageViewerModal
+            isOpen={isImageViewerOpen}
+            onClose={() => setIsImageViewerOpen(false)}
+            images={viewerImages}
+            currentIndex={currentViewerIndex}
+            onPrevious={handleViewerPrevious}
+            onNext={handleViewerNext}
+          />
         </>
       )}
 
       {/* Group Header with Image */}
       <Card className='mb-6 border-2 border-gray-200 font-semibold' styles={{ body: { overflow: 'visible' } }}>
         <div className='relative -mt-6 -mx-6 mb-4 overflow-hidden rounded-t-lg'>
-          {group.imageUrl && (
+          {group.imageUrl && group.imageUrl !== 'default-group-image.jpg' ? (
             <div
               className='w-full h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
               onClick={() => openImageViewer([group.imageUrl!], 0)}
             >
-              <img
-                src={group.imageUrl}
-                alt={group.name}
-                className='w-full h-full object-cover block max-w-full'
-              />
+              <img src={group.imageUrl} alt={group.name} className='w-full h-full object-cover block max-w-full' />
             </div>
+          ) : (
+            <div className='w-full h-32 bg-gray-100' />
           )}
         </div>
 
         <Space direction='vertical' size='small' className='w-full'>
-          <div className='flex justify-between items-center'>
-            <Title level={2} className='mb-0'>
+          <div className='flex justify-between items-center gap-4'>
+            <Title level={2} className='mb-0 flex-shrink-0 max-w-xs break-words'>
               {group.name}
             </Title>
-            <div className='flex items-center gap-4'>
-
+            <div className='flex items-center gap-4 flex-shrink-0'>
               <Tag
                 icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
                 color={group.isPublic ? 'blue' : 'orange'}
@@ -507,7 +472,7 @@ const GroupDetail = () => {
               <div className='flex items-center gap-2'>
                 <div className='flex -space-x-2'>
                   {group.groupUsers
-                    ?.filter(gu => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
+                    ?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
                     .slice(0, 10)
                     .map((member, index) => (
                       <Avatar
@@ -542,7 +507,7 @@ const GroupDetail = () => {
           </div>
         </Space>
 
-        {(isJoined && !isPending) && (
+        {isJoined && !isPending && (
           <div className='-mx-6 -mb-6 mt-3'>
             <div className='flex justify-between items-center px-6'>
               <Tabs activeKey={activeTab} onChange={setActiveTab} size='large' className='font-semibold flex-1'>
@@ -551,67 +516,37 @@ const GroupDetail = () => {
                 <TabPane tab='Photos' key='photos' />
               </Tabs>
 
-              <div className='ml-4 flex items-center gap-2'>
-                <Button
-                  type='primary'
-                  icon={<UserAddOutlined />}
-                  onClick={() => setIsInviteFriendsOpen(true)}
-                  className='flex items-center'
-                >
-                  Invite
-                </Button>
-
-                <div className='relative'>
-                  {isAdmin ? (
-                    <>
-                      <button
-                        onClick={() => setShowAdminDropdown(!showAdminDropdown)}
-                        className='flex items-center gap-2 px-3.5 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium relative'
-                      >
-                        <MoreOutlined />
-                        {pendingRequestCount > 0 && (
-                          <Badge count={pendingRequestCount} offset={[10, 0]} />
-                        )}
-                      </button>
-                      <GroupDropdownMenu
-                        isOpen={showAdminDropdown}
-                        onClose={() => setShowAdminDropdown(false)}
-                        isAdmin={isAdmin}
-                        isSuperAdmin={isSuperAdmin}
-                        pendingRequestCount={pendingRequestCount}
-                        onPendingRequests={() => setIsPendingRequestsOpen(true)}
-                        onManageMembers={() => setIsManageMembersOpen(true)}
-                        onEditGroup={() => setIsEditGroupOpen(true)}
-                        onLeaveGroup={handleLeaveGroup}
-                        onDeleteGroup={handleDeleteGroup}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setShowJoinedDropdown(!showJoinedDropdown)}
-                        className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
-                      >
-                        <CheckOutlined />
-                        <span>Joined</span>
-                      </button>
-                      <JoinedDropdownMenu
-                        isOpen={showJoinedDropdown}
-                        onClose={() => setShowJoinedDropdown(false)}
-                        onLeaveGroup={handleLeaveGroup}
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
+              <GroupHeaderActions
+                isAdmin={isAdmin}
+                isSuperAdmin={isSuperAdmin}
+                pendingRequestCount={pendingRequestCount}
+                pendingPostCount={pendingPostCount}
+                myPendingPostCount={myPendingPostCount}
+                showAdminDropdown={showAdminDropdown}
+                showJoinedDropdown={showJoinedDropdown}
+                showMemberDropdown={showMemberDropdown}
+                onToggleAdminDropdown={() => setShowAdminDropdown(!showAdminDropdown)}
+                onToggleJoinedDropdown={() => setShowJoinedDropdown(!showJoinedDropdown)}
+                onToggleMemberDropdown={() => setShowMemberDropdown(!showMemberDropdown)}
+                onCloseAdminDropdown={() => setShowAdminDropdown(false)}
+                onCloseJoinedDropdown={() => setShowJoinedDropdown(false)}
+                onCloseMemberDropdown={() => setShowMemberDropdown(false)}
+                onInviteFriends={() => setIsInviteFriendsOpen(true)}
+                onPendingRequests={() => setIsPendingRequestsOpen(true)}
+                onManageMembers={() => setIsManageMembersOpen(true)}
+                onEditGroup={() => setIsEditGroupOpen(true)}
+                onLeaveGroup={handleLeaveGroup}
+                onDeleteGroup={handleDeleteGroup}
+                onManagePosts={() => setIsPendingPostsOpen(true)}
+                onMyPendingPosts={() => setIsMyPendingPostsOpen(true)}
+              />
             </div>
           </div>
         )}
-        
-        {/* Hiển thị 2 nút Accept và Reject khi được mời */}
+
         {isInvited && (
           <div className='mt-4 flex justify-end gap-3'>
-            <Button 
+            <Button
               type='primary'
               size='large'
               icon={<CheckOutlined />}
@@ -621,11 +556,11 @@ const GroupDetail = () => {
             >
               Accept Invitation
             </Button>
-            <Button 
+            <Button
               danger
-              type='primary' 
-              size='large' 
-              icon={<CloseOutlined />} 
+              type='primary'
+              size='large'
+              icon={<CloseOutlined />}
               onClick={handleRejectInvite}
               loading={rejectingInvite}
               disabled={acceptingInvite}
@@ -635,7 +570,6 @@ const GroupDetail = () => {
           </div>
         )}
 
-        {/* Hiển thị nút Join Group khi chưa tham gia và không được mời */}
         {!isJoined && !isPending && !isInvited && (
           <div className='mt-4 flex justify-end'>
             <Button type='primary' size='large' icon={<UserOutlined />} onClick={handleJoinGroup}>
@@ -690,6 +624,7 @@ const GroupDetail = () => {
                         currentUser={currentUser}
                         onPostUpdated={handlePostCreated}
                         onPostDeleted={handlePostCreated}
+                        isGroupAdmin={isAdmin || isSuperAdmin}
                       />
                     ))}
                   </div>
@@ -705,296 +640,20 @@ const GroupDetail = () => {
               </div>
 
               {/* Right Column - Sticky Sidebar */}
-              <div className='w-80 flex-shrink-0'>
-                <div className='sticky top-6 space-y-4'>
-                  {/* About Section */}
-                  <div className='bg-white rounded-lg p-4 shadow-sm border-2 border-gray-200'>
-                    <Title level={5} className='mb-3'>About</Title>
-                    <div className='space-y-3'>
-                      <div>
-                        <Text className='text-gray-700 text-sm'>{group.description}</Text>
-                      </div>
-                      
-                      <div className='border-t-2 border-gray-200 pt-3 space-y-2'>
-                        <div className='flex items-center gap-2'>
-                          {group.isPublic ? <GlobalOutlined className='text-black' /> : <LockOutlined className='text-black' />}
-                          <Text className='text-sm font-medium'>
-                            {group.isPublic ? 'Public group' : 'Private group'}
-                          </Text>
-                        </div>
-                        
-                        <div className='flex items-center gap-2'>
-                          <UserOutlined className='text-black' />
-                          <Text className='text-sm'>
-                            <span className='font-semibold'>{group.memberCount}</span> members
-                          </Text>
-                        </div>
-                        
-                        <div className='flex items-center gap-2'>
-                          <FileTextOutlined className='text-black' />
-                          <Text className='text-sm'>
-                            <span className='font-semibold'>{group.postCount}</span> posts
-                          </Text>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Recent Photos Section */}
-                  <div className='bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4'>
-                    <div className='flex items-center justify-between mb-3'>
-                      <Title level={5} className='mb-0'>Recent Photos</Title>
-                    </div>
-                    <div className='border-t-2 border-gray-200 mb-3'></div>
-                    {(() => {
-                      const allImages = getAllImages()
-                      if (allImages.length === 0) {
-                        return (
-                          <div className='text-center py-4'>
-                            <Text type='secondary' className='text-sm'>No photos yet</Text>
-                          </div>
-                        )
-                      }
-                      
-                      const displayCount = Math.min(allImages.length, 6)
-                      const imagesToShow = allImages.slice(0, displayCount)
-                      
-                      const renderImageLayout = () => {
-                        if (displayCount === 1) {
-                          return (
-                            <div className='grid grid-cols-1 gap-3 mb-3'>
-                              <div
-                                className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity h-[200px]'
-                                onClick={() => openImageViewer(allImages, 0)}
-                              >
-                                <img src={imagesToShow[0]} alt='Media 1' className='w-full h-full object-cover' />
-                              </div>
-                            </div>
-                          )
-                        } else if (displayCount === 2) {
-                          return (
-                            <div className='grid grid-cols-1 gap-3 mb-3'>
-                              {imagesToShow.map((imageUrl, index) => (
-                                <div 
-                                  key={index} 
-                                  className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity h-[140px]'
-                                  onClick={() => openImageViewer(allImages, index)}
-                                >
-                                  <img src={imageUrl} alt={`Media ${index + 1}`} className='w-full h-full object-cover' />
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        } else if (displayCount === 3) {
-                          return (
-                            <div className='grid grid-cols-1 gap-3 mb-3'>
-                              {imagesToShow.map((imageUrl, index) => (
-                                <div 
-                                  key={index} 
-                                  className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity h-[140px]'
-                                  onClick={() => openImageViewer(allImages, index)}
-                                >
-                                  <img src={imageUrl} alt={`Media ${index + 1}`} className='w-full h-full object-cover' />
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        } else if (displayCount === 4) {
-                          return (
-                            <div className='space-y-3 mb-3'>
-                              <div className='grid grid-cols-2 gap-3'>
-                                {imagesToShow.slice(0, 2).map((imageUrl, index) => (
-                                  <div 
-                                    key={index} 
-                                    className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity aspect-[4/3]'
-                                    onClick={() => openImageViewer(allImages, index)}
-                                  >
-                                    <img src={imageUrl} alt={`Media ${index + 1}`} className='w-full h-full object-cover' />
-                                  </div>
-                                ))}
-                              </div>
-                              <div className='grid grid-cols-1 gap-3'>
-                                {imagesToShow.slice(2, 4).map((imageUrl, index) => (
-                                  <div 
-                                    key={index + 2} 
-                                    className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity h-[140px]'
-                                    onClick={() => openImageViewer(allImages, index + 2)}
-                                  >
-                                    <img src={imageUrl} alt={`Media ${index + 3}`} className='w-full h-full object-cover' />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )
-                        } else if (displayCount === 5) {
-                          return (
-                            <div className='space-y-3 mb-3'>
-                              <div className='grid grid-cols-2 gap-3'>
-                                {imagesToShow.slice(0, 2).map((imageUrl, index) => (
-                                  <div 
-                                    key={index} 
-                                    className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity aspect-[4/3]'
-                                    onClick={() => openImageViewer(allImages, index)}
-                                  >
-                                    <img src={imageUrl} alt={`Media ${index + 1}`} className='w-full h-full object-cover' />
-                                  </div>
-                                ))}
-                              </div>
-                              <div className='grid grid-cols-2 gap-3'>
-                                {imagesToShow.slice(2, 4).map((imageUrl, index) => (
-                                  <div 
-                                    key={index + 2} 
-                                    className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity aspect-[4/3]'
-                                    onClick={() => openImageViewer(allImages, index + 2)}
-                                  >
-                                    <img src={imageUrl} alt={`Media ${index + 3}`} className='w-full h-full object-cover' />
-                                  </div>
-                                ))}
-                              </div>
-                              <div className='grid grid-cols-1 gap-3'>
-                                <div 
-                                  className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity h-[140px]'
-                                  onClick={() => openImageViewer(allImages, 4)}
-                                >
-                                  <img src={imagesToShow[4]} alt='Media 5' className='w-full h-full object-cover' />
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        } else {
-                          return (
-                            <div className='grid grid-cols-2 gap-3 mb-5'>
-                              {imagesToShow.map((imageUrl, index) => (
-                                <div 
-                                  key={index} 
-                                  className='rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity aspect-[4/3]'
-                                  onClick={() => openImageViewer(allImages, index)}
-                                >
-                                  <img src={imageUrl} alt={`Media ${index + 1}`} className='w-full h-full object-cover' />
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        }
-                      }
-                      
-                      return (
-                        <>
-                          {renderImageLayout()}
-                          {allImages.length > 6 && (
-                            <Button 
-                              size='middle'
-                              block
-                              className='font-medium rounded-lg hover:bg-gray-100 text-gray-500 border-gray-300'
-                              onClick={() => setActiveTab('photos')}
-                            >
-                              See all photos
-                            </Button>
-                          )}
-                        </>
-                      )
-                    })()}
-                  </div>
-                </div>
-              </div>
+              <GroupSidebar
+                group={group}
+                posts={posts}
+                onViewAllPhotos={() => setActiveTab('photos')}
+                onImageClick={openImageViewer}
+              />
             </div>
           )}
 
           {/* Members Tab */}
-          {activeTab === 'members' && (
-            <Card className='border-2 border-gray-200 rounded-lg'>
-              <Title level={4} className='mb-4'>
-                Members ({group.groupUsers?.filter(gu => gu.roleName !== GroupRole.Pending).length || 0})
-              </Title>
-              <div className='border-t-2 border-gray-200 mb-3'></div>
-              <List
-                dataSource={group.groupUsers?.filter(gu => gu.roleName !== GroupRole.Pending) || []}
-                renderItem={(member) => (
-                  <List.Item>
-                    <List.Item.Meta
-                      avatar={
-                        <div className='border-2 border-gray-200 rounded-full'>
-                          <Avatar size={48} src={member.user?.avatarUrl}>
-                            {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
-                          </Avatar>
-                        </div>
-                      }
-                      title={
-                        <Space>
-                          <span className='font-semibold'>
-                            {member.user
-                              ? `${member.user.firstName || ''} ${member.user.lastName || ''}`.trim() || 'Unknown User'
-                              : 'Unknown User'}
-                          </span>
-                          {renderRoleTag(member.roleName)}
-                        </Space>
-                      }
-                      description={
-                        <Text type='secondary' className='text-sm'>
-                          Joined {new Date(member.joinedAt).toLocaleDateString('en-US', { 
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </Text>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
-          )}
+          {activeTab === 'members' && <GroupMembersTab group={group} />}
 
           {/* Photos Tab */}
-          {activeTab === 'photos' && (
-            <Card className='border-2 border-gray-200 rounded-lg'>
-              <Title level={4} className='mb-4'>
-                All Photos
-              </Title>
-              <div className='border-t-2 border-gray-200 mb-3'></div>
-              {(() => {
-                const allImages: Array<{ url: string; postId: string; postContent: string }> = []
-                posts.forEach(post => {
-                  if (post.postImages && post.postImages.length > 0) {
-                    post.postImages.forEach(img => {
-                      if (img.imageUrl) {
-                        allImages.push({
-                          url: img.imageUrl,
-                          postId: post.id,
-                          postContent: post.content
-                        })
-                      }
-                    })
-                  }
-                })
-                
-                return allImages.length > 0 ? (
-                  <div className='grid grid-cols-3 gap-3'>
-                    {allImages.map((image, index) => (
-                      <div 
-                        key={index}
-                        className='aspect-square rounded-lg overflow-hidden border-2 border-gray-200 cursor-pointer hover:opacity-80 transition-opacity hover:shadow-lg'
-                        title={image.postContent.substring(0, 50)}
-                        onClick={() => openImageViewer(allImages.map(img => img.url), index)}
-                      >
-                        <img 
-                          src={image.url} 
-                          alt={`Photo ${index + 1}`}
-                          className='w-full h-full object-cover'
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty 
-                    description='No photos yet' 
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    className='py-8'
-                  />
-                )
-              })()}
-            </Card>
-          )}
+          {activeTab === 'photos' && <GroupPhotosTab posts={posts} onImageClick={openImageViewer} />}
         </div>
       ) : isPending ? (
         <Card>

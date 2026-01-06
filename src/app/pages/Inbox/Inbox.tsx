@@ -388,27 +388,24 @@ const Inbox: React.FC<InboxProps> = () => {
   }, [messages, isChatFocused, isInputFocused])
 
   useEffect(() => {
-    chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
+    const handleNewMessage = (event: CustomEvent<MessageDto>) => {
+      const newReceivedMessage = event.detail
       updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
-
+    
       if (conversationId !== undefined && newReceivedMessage.conversationId === conversationId) {
-        setMessages((prev) => [...prev, newReceivedMessage])
+        setMessages((prev) => [...prev, newReceivedMessage])     
         setTimeout(() => {
           scrollToBottom('smooth')
         }, 100)
       }
+    }
 
-      const updateMessageStatus = await chatService.updateMessageStatus({
-        messageId: newReceivedMessage.id,
-        status: 'Delivered'
-      })
-      if (!updateMessageStatus) return
-    })
+    window.addEventListener('new-private-message', handleNewMessage as EventListener)
 
     return () => {
-      chatService.offReceivePrivateMessage()
+      window.removeEventListener('new-private-message', handleNewMessage as EventListener)
     }
-  })
+  }, [conversationId])
 
   useEffect(() => {
     fetchUserInfo()

@@ -1,6 +1,6 @@
-import { Button, Typography, Space, message, Avatar } from 'antd'
+import { Button, Typography, message, Avatar } from 'antd'
 import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
-import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
+import { GroupDto } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -18,16 +18,7 @@ interface GroupCardProps {
   currentUserId?: string
 }
 
-const GroupCard = ({
-  group,
-  onGroupDeleted,
-  onGroupUpdated,
-  showActions = true,
-  isJoined = false,
-  isPending = false,
-  onJoinSuccess,
-  currentUserId = ''
-}: GroupCardProps) => {
+const GroupCard = ({ group, showActions = true, isJoined = false, isPending = false }: GroupCardProps) => {
   const [loading, setLoading] = useState(false)
   const [joined, setJoined] = useState(isJoined)
   const [pending, setPending] = useState(isPending)
@@ -36,7 +27,6 @@ const GroupCard = ({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -76,7 +66,7 @@ const GroupCard = ({
       message.success('Join request cancelled!')
       setPending(false)
       setJoined(false)
-      setShowPendingDropdown(false)     
+      setShowPendingDropdown(false)
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
       message.error(errorMessage)
@@ -99,7 +89,7 @@ const GroupCard = ({
   }
 
   return (
-    <div 
+    <div
       className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
       onClick={handleViewGroup}
     >
@@ -107,11 +97,7 @@ const GroupCard = ({
         {/* Image Section - Left */}
         <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden rounded-l-lg'>
           {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
-            <img 
-              src={currentGroup.imageUrl} 
-              alt={currentGroup.name} 
-              className='w-full h-full object-cover' 
-            />
+            <img src={currentGroup.imageUrl} alt={currentGroup.name} className='w-full h-full object-cover' />
           ) : (
             <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
               <Avatar
@@ -129,11 +115,11 @@ const GroupCard = ({
         <div className='flex-1 p-4 flex flex-col overflow-visible' onClick={(e) => e.stopPropagation()}>
           {/* Header - Fixed height area */}
           <div className='flex flex-col' style={{ minHeight: '60px', maxHeight: '60px' }}>
-            <Title 
-              level={5} 
-              className='mb-0 line-clamp-2 overflow-hidden' 
-              style={{ 
-                fontSize: '15px', 
+            <Title
+              level={5}
+              className='mb-0 line-clamp-2 overflow-hidden'
+              style={{
+                fontSize: '15px',
                 fontWeight: 600,
                 lineHeight: '1.4'
               }}
@@ -142,7 +128,7 @@ const GroupCard = ({
             </Title>
             <div className='border-b-2 border-gray-200 mt-auto'></div>
           </div>
-          
+
           {/* Stats & Actions - Remaining space */}
           <div className='flex-1 flex flex-col justify-between pt-3'>
             {/* Stats */}
@@ -165,13 +151,7 @@ const GroupCard = ({
             {showActions && (
               <div className='flex gap-2 mt-3 relative'>
                 {!joined && !pending ? (
-                  <Button 
-                    type='primary' 
-                    onClick={handleJoinGroup} 
-                    loading={loading} 
-                    block
-                    size='small'
-                  >
+                  <Button type='primary' onClick={handleJoinGroup} loading={loading} block size='small'>
                     Join
                   </Button>
                 ) : pending ? (
@@ -186,7 +166,7 @@ const GroupCard = ({
                     >
                       Pending
                     </Button>
-                    
+
                     {/* Custom Dropdown Menu */}
                     {showPendingDropdown && (
                       <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
@@ -198,9 +178,7 @@ const GroupCard = ({
                           className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
                         >
                           <CloseOutlined className='text-xs text-red-500' />
-                          <span className='text-xs font-medium text-red-500'>
-                            Cancel
-                          </span>
+                          <span className='text-xs font-medium text-red-500'>Cancel</span>
                         </button>
                       </div>
                     )}
