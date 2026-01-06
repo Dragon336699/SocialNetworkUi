@@ -11,7 +11,11 @@ import { apiAIClient } from '../environments/axiosClient'
 let connection: HubConnection | null = null
 
 export const chatService = {
-  async start(onPrivateMessage?: (msg: MessageDto) => void, onNotification?: (noti: NotificationDto) => void) {
+  async start(
+    onPrivateMessage?: (msg: MessageDto) => void,
+    onNotification?: (noti: NotificationDto) => void,
+    onUpdateUser?: (user: UserDto) => void
+  ) {
     if (connection) return connection
     connection = new HubConnectionBuilder()
       .withUrl(CHAT_HUB_URL, {
