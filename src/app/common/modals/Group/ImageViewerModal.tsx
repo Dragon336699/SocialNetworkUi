@@ -10,14 +10,7 @@ interface ImageViewerModalProps {
   onNext: () => void
 }
 
-const ImageViewerModal = ({
-  isOpen,
-  onClose,
-  images,
-  currentIndex,
-  onPrevious,
-  onNext
-}: ImageViewerModalProps) => {
+const ImageViewerModal = ({ isOpen, onClose, images, currentIndex, onPrevious, onNext }: ImageViewerModalProps) => {
   return (
     <Modal
       open={isOpen}

@@ -2,7 +2,6 @@ import { apiAIClient, apiClient } from '../environments/axiosClient'
 import { BaseResponse } from '../types/Base/Responses/baseResponse'
 import { ResponseHasData } from '../types/Base/Responses/ResponseHasData'
 import {
-  GetAllPostsResponse,
   GetPostByIdResponse,
   UpdatePostResponse,
   DeletePostResponse,
@@ -124,16 +123,24 @@ export const postService = {
   },
 
   async approvePost(postId: string): Promise<ApprovePostResponse> {
-    const { data } = await apiClient.post<ApprovePostResponse>(`post/${postId}/approve`, {}, {
-      withCredentials: true
-    })
+    const { data } = await apiClient.post<ApprovePostResponse>(
+      `post/${postId}/approve`,
+      {},
+      {
+        withCredentials: true
+      }
+    )
     return data
   },
 
   async rejectPost(postId: string): Promise<RejectPostResponse> {
-    const { data } = await apiClient.post<RejectPostResponse>(`post/${postId}/reject`, {}, {
-      withCredentials: true
-    })
+    const { data } = await apiClient.post<RejectPostResponse>(
+      `post/${postId}/reject`,
+      {},
+      {
+        withCredentials: true
+      }
+    )
     return data
   },
 
@@ -150,9 +157,13 @@ export const postService = {
   },
 
   async cancelPendingPost(postId: string): Promise<CancelPendingPostResponse> {
-    const { data } = await apiClient.post<CancelPendingPostResponse>(`post/${postId}/cancel`, {}, {
-      withCredentials: true
-    })
+    const { data } = await apiClient.post<CancelPendingPostResponse>(
+      `post/${postId}/cancel`,
+      {},
+      {
+        withCredentials: true
+      }
+    )
     return data
   }
 }

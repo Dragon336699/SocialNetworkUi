@@ -61,7 +61,7 @@ const GroupHeaderActions = ({
         <div className='relative'>
           <button
             onClick={onToggleAdminDropdown}
-            className='flex items-center gap-2 px-3.5 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium relative'
+            className='flex items-center gap-2 px-3.5 py-1.5 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium relative'
           >
             <MoreOutlined />
             {(pendingRequestCount > 0 || pendingPostCount > 0) && (

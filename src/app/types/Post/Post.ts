@@ -89,7 +89,6 @@ export type SeenPost = {
   postId: string
 }
 
-// Pending Posts types
 export interface GetPendingPostsResponse {
   message: string
   posts: PostData[] | null

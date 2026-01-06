@@ -16,7 +16,6 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
   isOpen,
   onClose,
   onEdit,
-  onTurnOffNotifications,
   onDeleteClick,
   postId,
   isOwner = false,
@@ -86,7 +85,6 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
           </svg>
           <span className='text-sm font-medium text-gray-900'>View post details</span>
         </button>
-       
         {isOwner && (
           <>
             <button
@@ -107,7 +105,7 @@ const PostDropdownMenu: React.FC<PostDropdownMenuProps> = ({
                 />
               </svg>
               <span className='text-sm font-medium text-gray-900'>Edit post</span>
-            </button>       
+            </button>
             <button
               onClick={handleDeleteClick}
               className='w-full flex items-center px-2 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'

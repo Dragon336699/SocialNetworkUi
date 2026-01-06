@@ -194,11 +194,7 @@ const GroupSidebar = ({ group, posts, onViewAllPhotos, onImageClick }: GroupSide
 
             <div className='border-t-2 border-gray-200 pt-3 space-y-2'>
               <div className='flex items-center gap-2'>
-                {group.isPublic ? (
-                  <GlobalOutlined className='text-black' />
-                ) : (
-                  <LockOutlined className='text-black' />
-                )}
+                {group.isPublic ? <GlobalOutlined className='text-black' /> : <LockOutlined className='text-black' />}
                 <Text className='text-sm font-medium'>{group.isPublic ? 'Public group' : 'Private group'}</Text>
               </div>
 

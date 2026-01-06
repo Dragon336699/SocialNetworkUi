@@ -5,7 +5,6 @@ import { CommentDto } from '@/app/types/Comment/CommentResponses'
 import { commentService } from '@/app/services/comment.service'
 import { getTimeAgo } from '@/app/helper'
 
-// Hàm chuyển đổi biểu tượng reaction thành văn bản
 const getReactionText = (reaction: string): string => {
   const reactionMap: { [key: string]: string } = {
     '👍': 'Like',
@@ -18,21 +17,13 @@ const getReactionText = (reaction: string): string => {
   return reactionMap[reaction] || 'Like'
 }
 
-// Hàm helper để lấy màu chữ theo reaction
-const getReactionColor = (reaction: string): string => {
-  if (reaction === '❤️' || reaction === '😡') {
-    return '#EF4444' // red-500
-  }
-  return '#F59E0B' // amber-500 (màu vàng)
-}
-
 interface CommentItemProps {
   comment: CommentDto
   currentUserId: string
   loadComments: () => void
   onCommentCountChange?: (newCount: number) => void
   setEditingComment: (comment: CommentDto | null) => void
-  setReplyTo: (replyTo: { id: string, name: string } | null) => void
+  setReplyTo: (replyTo: { id: string; name: string } | null) => void
   setContent: (content: string) => void
   setExistingImages: (images: any[]) => void
   setImagesToDelete: (images: string[]) => void
@@ -76,29 +67,26 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const isOwner = comment.userId === currentUserId
 
   const userReaction = localReactions?.find((r) => r.userId === currentUserId)
-  const reactionCount = localReactions?.length || 0
 
   const isLongContent = comment.content.length > CHARACTER_LIMIT
-  const displayContent = showFullContent || !isLongContent ? comment.content : comment.content.substring(0, CHARACTER_LIMIT) + '...'
+  const displayContent =
+    showFullContent || !isLongContent ? comment.content : comment.content.substring(0, CHARACTER_LIMIT) + '...'
 
-  // Cập nhật localReactions khi comment prop thay đổi
   useEffect(() => {
     setLocalReactions(comment.commentReactionUsers || [])
   }, [comment.commentReactionUsers])
 
-  // Cập nhật localReplies khi comment.replies thay đổi
   useEffect(() => {
     setLocalReplies(comment.replies || [])
   }, [comment.replies])
 
-  // Hàm tính thống kê reaction
   const getReactionStats = () => {
     if (!localReactions || localReactions.length === 0) {
       return { uniqueReactions: [], total: 0 }
     }
 
     const reactionCounts: { [key: string]: number } = {}
-    localReactions.forEach(r => {
+    localReactions.forEach((r) => {
       reactionCounts[r.reaction] = (reactionCounts[r.reaction] || 0) + 1
     })
 
@@ -114,12 +102,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   const { uniqueReactions, total: totalReactions } = getReactionStats()
 
-  // Hàm tính tổng số phản hồi của bình luận
   const getTotalReplyCount = (commentData: CommentDto): number => {
     if (!commentData.replies || commentData.replies.length === 0) return 0
 
     let total = commentData.replies.length
-    commentData.replies.forEach(reply => {
+    commentData.replies.forEach((reply) => {
       total += getTotalReplyCount(reply)
     })
 
@@ -128,7 +115,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   const totalReplyCount = getTotalReplyCount({ ...comment, replies: localReplies })
 
-  // Hàm xử lý sự kiện click bên ngoài để đóng menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -139,7 +125,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Hàm xử lý sự kiện click bên ngoài và phím Escape để đóng thanh reaction
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
@@ -165,19 +150,16 @@ const CommentItem: React.FC<CommentItemProps> = ({
     }
   }, [showReactionPicker])
 
-  // Hàm xử lý reaction cho bình luận
   const handleReaction = async (reaction: string) => {
     try {
-      const currentUserReaction = localReactions.find(r => r.userId === currentUserId)
+      const currentUserReaction = localReactions.find((r) => r.userId === currentUserId)
       let newReactions = [...localReactions]
 
       if (currentUserReaction) {
         if (currentUserReaction.reaction === reaction) {
-          // Xóa reaction
-          newReactions = localReactions.filter(r => r.userId !== currentUserId)
+          newReactions = localReactions.filter((r) => r.userId !== currentUserId)
         } else {
-          // Thay đổi reaction
-          newReactions = localReactions.map(r => r.userId === currentUserId ? { ...r, reaction: reaction } : r)
+          newReactions = localReactions.map((r) => (r.userId === currentUserId ? { ...r, reaction: reaction } : r))
         }
       } else {
         const newReaction = {
@@ -195,20 +177,17 @@ const CommentItem: React.FC<CommentItemProps> = ({
         reaction
       })
 
-      // Nếu API thất bại, revert lại
       if (!response.message?.includes('success')) {
         setLocalReactions(localReactions)
         message.error('Failed to perform reaction')
       }
-    } catch (error) {
-      // Revert nếu có lỗi
+    } catch {
       setLocalReactions(localReactions)
       message.error('Failed to perform reaction')
     }
     setShowReactionPicker(false)
   }
 
-  // Hàm xử lý khi di chuột vào khu vực reaction
   const handleMouseEnterReaction = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -220,7 +199,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
     setHoverTimeout(timeout)
   }
 
-  // Hàm xử lý khi di chuột rời khu vực reaction
   const handleMouseLeaveReaction = () => {
     if (hoverTimeout) {
       clearTimeout(hoverTimeout)
@@ -232,7 +210,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
     setHoverTimeout(timeout)
   }
 
-  // Hàm xử lý khi nhấp vào nút Like
   const handleLikeClick = () => {
     if (userReaction) {
       handleReaction(userReaction.reaction)
@@ -241,7 +218,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
     }
   }
 
-  // Hàm xử lý xóa bình luận
   const handleDelete = async (commentId: string) => {
     try {
       const response = await commentService.deleteComment(commentId)
@@ -255,12 +231,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
       } else {
         message.error(response.message || 'Failed to delete comment')
       }
-    } catch (error) {
+    } catch {
       message.error('An error occurred')
     }
   }
 
-  // Hàm xử lý chỉnh sửa bình luận
   const handleEdit = (comment: CommentDto) => {
     setEditingComment(comment)
     setContent(comment.content)
@@ -275,55 +250,40 @@ const CommentItem: React.FC<CommentItemProps> = ({
     setImagesToDelete([])
   }
 
-  // Hàm xử lý trả lời bình luận
   const handleReply = (commentId: string, userName: string) => {
     setReplyTo({ id: commentId, name: userName })
     setEditingComment(null)
     setContent('')
     setExistingImages([])
     setImagesToDelete([])
-    
-    // Tự động hiển thị replies khi click reply
+
     setShowReplies(true)
   }
 
-  // Hàm xử lý khi có reply mới
   const handleNewReply = (parentCommentId: string, newComment: CommentDto) => {
     if (comment.id === parentCommentId) {
-      // Thêm reply mới vào danh sách local
-      setLocalReplies(prev => [...prev, newComment])
-      // Tự động mở replies để hiển thị comment mới
+      setLocalReplies((prev) => [...prev, newComment])
       setShowReplies(true)
     } else {
-      // Propagate lên parent nếu không phải comment này
       onNewReply?.(parentCommentId, newComment)
     }
   }
 
   return (
     <div className={`flex gap-2 ${level > 0 ? 'ml-10' : ''} mb-3 relative`}>
-      {/* Đường thẳng đen dọc cho reply */}
-      {level > 0 && (
-        <div className="absolute left-[-20px] top-0 bottom-0 w-[2px] bg-gray-200 h-full" />
-      )}
-      
-      <div className="border-2 border-gray-200 rounded-full flex-shrink-0 self-start">
-        <Avatar 
-          src={comment.user?.avatarUrl} 
-          size={level > 0 ? 32 : 40}
-        >
+      {level > 0 && <div className='absolute left-[-20px] top-0 bottom-0 w-[2px] bg-gray-200 h-full' />}
+      <div className='border-2 border-gray-200 rounded-full flex-shrink-0 self-start'>
+        <Avatar src={comment.user?.avatarUrl} size={level > 0 ? 32 : 40}>
           {comment.user?.firstName?.[0] || 'U'}
         </Avatar>
       </div>
 
       <div className='flex-1'>
-        {/* Container với MoreOutlined bên ngoài */}
         <div
           className='relative flex gap-2 items-start'
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          {/* Khung bình luận với viền đen */}
           <div className='relative inline-block max-w-md'>
             <div className='bg-gray-100 rounded-2xl px-3 py-2 relative border-2 border-gray-200 shadow-sm'>
               <div className='text-sm'>
@@ -336,9 +296,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                     </>
                   )}
                 </div>
-                <div className='text-gray-800 break-words whitespace-pre-wrap mt-0.5'>
-                  {displayContent}
-                </div>
+                <div className='text-gray-800 break-words whitespace-pre-wrap mt-0.5'>{displayContent}</div>
               </div>
 
               {isLongContent && (
@@ -364,7 +322,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 </div>
               )}
 
-              {/* Reaction icons nằm trong khung comment, căn trái */}
               {totalReactions > 0 && (
                 <div className='mt-1 flex items-center gap-1'>
                   {uniqueReactions.map((reaction, idx) => (
@@ -383,17 +340,16 @@ const CommentItem: React.FC<CommentItemProps> = ({
             </div>
           </div>
 
-          {/* MoreOutlined bên ngoài và bên phải */}
           <div className='relative flex-shrink-0' ref={menuRef}>
-            <button 
-              onClick={() => setShowMenu(!showMenu)} 
+            <button
+              onClick={() => setShowMenu(!showMenu)}
               className='text-gray-500 hover:text-gray-700 p-1 transition-opacity duration-200'
               style={{
-                opacity: (isHovering || showMenu) ? 1 : 0,
-                pointerEvents: (isHovering || showMenu) ? 'auto' : 'none'
+                opacity: isHovering || showMenu ? 1 : 0,
+                pointerEvents: isHovering || showMenu ? 'auto' : 'none'
               }}
             >
-              <MoreOutlined className="text-base rotate-90" />
+              <MoreOutlined className='text-base rotate-90' />
             </button>
 
             {isOwner && showMenu && (
@@ -405,7 +361,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                   }}
                   className='w-full px-4 py-2 text-left text-sm hover:bg-gray-200 flex items-center gap-2 whitespace-nowrap border-0 bg-transparent'
                 >
-                  <EditOutlined className="text-sm text-gray-600 flex-shrink-0" />
+                  <EditOutlined className='text-sm text-gray-600 flex-shrink-0' />
                   <span className='font-medium text-gray-900'>Edit</span>
                 </button>
                 <button
@@ -415,7 +371,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                   }}
                   className='w-full px-4 py-2 text-left text-sm hover:bg-red-100 flex items-center gap-2 whitespace-nowrap group border-0 bg-transparent'
                 >
-                  <DeleteOutlined className="text-sm text-red-500 flex-shrink-0" />
+                  <DeleteOutlined className='text-sm text-red-500 flex-shrink-0' />
                   <span className='font-medium text-red-500 group-hover:text-red-700'>Delete</span>
                 </button>
               </div>
@@ -431,8 +387,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
               <button
                 onClick={handleLikeClick}
                 className={`hover:underline transition-colors ${
-                  userReaction 
-                    ? (userReaction.reaction === '❤️' || userReaction.reaction === '😡')
+                  userReaction
+                    ? userReaction.reaction === '❤️' || userReaction.reaction === '😡'
                       ? 'text-red-500'
                       : 'text-amber-500'
                     : ''
@@ -441,12 +397,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 {userReaction ? getReactionText(userReaction.reaction) : 'Like'}
               </button>
 
-              {/* Thanh reaction */}
               {showReactionPicker && (
                 <div
                   ref={reactionBarRef}
                   className='absolute z-50 flex gap-1 rounded-full py-2 px-3 bottom-full left-0 mb-0.2 min-w-[180px]'
-                  style={{ 
+                  style={{
                     background: '#F3F4F6',
                     border: '1px solid #D1D5DB'
                   }}

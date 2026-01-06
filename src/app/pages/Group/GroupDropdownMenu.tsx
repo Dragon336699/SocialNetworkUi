@@ -67,87 +67,76 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
-      {/* Join Requests */}
       {isAdmin && (
-        <button
-          onClick={() => handleClick(onPendingRequests)}
-          className='w-full flex items-center justify-between px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
-        >
-          <div className='flex items-center'>
-            <BellOutlined className='text-lg mr-2 text-gray-600' />
-            <span className='text-sm font-medium text-gray-900'>Join Requests</span>
-          </div>
-          {pendingRequestCount > 0 && (
-            <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />
+        <>
+          <button
+            onClick={() => handleClick(onPendingRequests)}
+            className='w-full flex items-center justify-between px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
+          >
+            <div className='flex items-center'>
+              <BellOutlined className='text-lg mr-2 text-gray-600' />
+              <span className='text-sm font-medium text-gray-900'>Join Requests</span>
+            </div>
+            {pendingRequestCount > 0 && (
+              <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />
+            )}
+          </button>
+
+          <button
+            onClick={() => handleClick(onManageMembers)}
+            className='w-full flex items-center px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
+          >
+            <TeamOutlined className='text-lg mr-2 text-gray-600' />
+            <span className='text-sm font-medium text-gray-900'>Manage Members</span>
+          </button>
+
+          {onManagePosts && (
+            <button
+              onClick={() => handleClick(onManagePosts)}
+              className='w-full flex items-center justify-between px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
+            >
+              <div className='flex items-center'>
+                <FileTextOutlined className='text-lg mr-2 text-gray-600' />
+                <span className='text-sm font-medium text-gray-900'>Manage Posts</span>
+              </div>
+              {pendingPostCount > 0 && (
+                <Badge count={pendingPostCount} style={{ backgroundColor: '#fa8c16' }} />
+              )}
+            </button>
           )}
-        </button>
-      )}
 
-      {/* Manage Members */}
-      {isAdmin && (
-        <button
-          onClick={() => handleClick(onManageMembers)}
-          className='w-full flex items-center px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
-        >
-          <TeamOutlined className='text-lg mr-2 text-gray-600' />
-          <span className='text-sm font-medium text-gray-900'>Manage Members</span>
-        </button>
-      )}
+          <button
+            onClick={() => handleClick(onEditGroup)}
+            className='w-full flex items-center px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
+          >
+            <EditOutlined className='text-lg mr-2 text-gray-600' />
+            <span className='text-sm font-medium text-gray-900'>Edit Group</span>
+          </button>
 
-      {/* Manage Posts - Only for Admin/SuperAdmin */}
-      {isAdmin && onManagePosts && (
-        <button
-          onClick={() => handleClick(onManagePosts)}
-          className='w-full flex items-center justify-between px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
-        >
-          <div className='flex items-center'>
-            <FileTextOutlined className='text-lg mr-2 text-gray-600' />
-            <span className='text-sm font-medium text-gray-900'>Manage Posts</span>
-          </div>
-          {pendingPostCount > 0 && (
-            <Badge count={pendingPostCount} style={{ backgroundColor: '#fa8c16' }} />
+          {isSuperAdmin ? (
+            <button
+              onClick={() => handleClick(onDeleteGroup)}
+              className='w-full flex items-center px-4 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
+            >
+              <DeleteOutlined className='text-lg mr-2 text-red-500' />
+              <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete Group</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => handleClick(onLeaveGroup)}
+              className='w-full flex items-center px-4 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
+            >
+              <DeleteOutlined className='text-lg mr-2 text-red-500' />
+              <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Leave Group</span>
+            </button>
           )}
-        </button>
-      )}
-
-      {/* Edit Group */}
-      {isAdmin && (
-        <button
-          onClick={() => handleClick(onEditGroup)}
-          className='w-full flex items-center px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
-        >
-          <EditOutlined className='text-lg mr-2 text-gray-600' />
-          <span className='text-sm font-medium text-gray-900'>Edit Group</span>
-        </button>
-      )}
-
-      {/* Leave Group */}
-      {!isSuperAdmin && (
-        <button
-          onClick={() => handleClick(onLeaveGroup)}
-          className='w-full flex items-center px-3 py-1.5 hover:bg-red-100 text-left border-0 bg-transparent group'
-        >
-          <DeleteOutlined className='text-sm mr-1.5 text-red-500' />
-          <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Leave Group</span>
-        </button>
-      )}
-
-      {/* Delete Group */}
-      {isSuperAdmin && (
-        <button
-          onClick={() => handleClick(onDeleteGroup)}
-          className='w-full flex items-center px-4 py-2 hover:bg-red-100 text-left border-0 bg-transparent group'
-        >
-          <DeleteOutlined className='text-lg mr-2 text-red-500' />
-          <span className='text-sm font-medium text-red-500 group-hover:text-red-700'>Delete Group</span>
-        </button>
+        </>
       )}
     </div>
   )
 }
-
 
 interface PendingDropdownMenuProps {
   isOpen: boolean
@@ -188,7 +177,7 @@ export const PendingDropdownMenu: React.FC<PendingDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-auto bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-1 w-auto bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
       <button
         onClick={() => handleClick(onCancelRequest)}
@@ -201,7 +190,6 @@ export const PendingDropdownMenu: React.FC<PendingDropdownMenuProps> = ({
   )
 }
 
-// Dropdown menu cho người dùng đã tham gia
 interface JoinedDropdownMenuProps {
   isOpen: boolean
   onClose: () => void
@@ -245,9 +233,8 @@ export const JoinedDropdownMenu: React.FC<JoinedDropdownMenuProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
+      className='absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden'
     >
-      {/* My Pending Posts */}
       {onMyPendingPosts && (
         <button
           onClick={() => handleClick(onMyPendingPosts)}

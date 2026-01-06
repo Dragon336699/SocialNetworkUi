@@ -121,21 +121,21 @@ const CreateGroupModal = ({ isModalOpen, handleCancel, onCreateGroupSuccess }: C
       closable={false}
       centered={false}
       maskClosable={false}
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'visible',
         padding: 0,
         top: 50
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
         },
-        body: { 
+        body: {
           padding: '0 24px 24px 24px',
           overflow: 'visible'
         },
@@ -221,7 +221,7 @@ const CreateGroupModal = ({ isModalOpen, handleCancel, onCreateGroupSuccess }: C
               <PictureOutlined />
               <span>{imageFile ? 'Change Image' : 'Select Image'}</span>
             </button>
-            
+
             <div ref={emojiWrapperRef} className='relative inline-block'>
               <button
                 type='button'
@@ -246,7 +246,7 @@ const CreateGroupModal = ({ isModalOpen, handleCancel, onCreateGroupSuccess }: C
               )}
             </div>
           </div>
-          
+
           <button
             type='button'
             onClick={() => form.submit()}

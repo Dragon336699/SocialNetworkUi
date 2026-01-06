@@ -138,7 +138,7 @@ const GroupDetail = () => {
             setIsInvited(false)
           }
 
-          if (response.group.posts) {         
+          if (response.group.posts) {
             const approvedPosts = (response.group.posts as unknown as PostData[]).filter(
               (post) => post.postPrivacy !== 'PendingApproval'
             )
@@ -210,7 +210,7 @@ const GroupDetail = () => {
           setIsInvited(false)
         }
 
-        if (response.group.posts) {         
+        if (response.group.posts) {
           const approvedPosts = (response.group.posts as unknown as PostData[]).filter(
             (post) => post.postPrivacy !== 'PendingApproval'
           )
@@ -223,7 +223,7 @@ const GroupDetail = () => {
         ) {
           const pendingCount = response.group.groupUsers?.filter((gu) => gu.roleName === GroupRole.Pending).length || 0
           setPendingRequestCount(pendingCount)
-    
+
           try {
             const pendingPostsResponse = await postService.getPendingPosts(groupId, 0, 100)
             setPendingPostCount(pendingPostsResponse.posts?.length || 0)
@@ -231,7 +231,7 @@ const GroupDetail = () => {
             setPendingPostCount(0)
           }
         }
-    
+
         if (userStatus && userStatus.roleName !== GroupRole.Pending && userStatus.roleName !== GroupRole.Inviting) {
           try {
             const myPendingPostsResponse = await postService.getMyPendingPosts(groupId, 0, 100)
@@ -457,11 +457,11 @@ const GroupDetail = () => {
         </div>
 
         <Space direction='vertical' size='small' className='w-full'>
-          <div className='flex justify-between items-center'>
-            <Title level={2} className='mb-0'>
+          <div className='flex justify-between items-center gap-4'>
+            <Title level={2} className='mb-0 flex-shrink-0 max-w-xs break-words'>
               {group.name}
             </Title>
-            <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-4 flex-shrink-0'>
               <Tag
                 icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
                 color={group.isPublic ? 'blue' : 'orange'}
@@ -543,7 +543,7 @@ const GroupDetail = () => {
             </div>
           </div>
         )}
-     
+
         {isInvited && (
           <div className='mt-4 flex justify-end gap-3'>
             <Button

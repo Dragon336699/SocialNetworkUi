@@ -29,7 +29,8 @@ export const GroupMembersTab = ({ group }: GroupMembersTabProps) => {
     return null
   }
 
-  const members = group.groupUsers?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting) || []
+  const members =
+    group.groupUsers?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting) || []
 
   return (
     <Card className='border-2 border-gray-200 rounded-lg'>

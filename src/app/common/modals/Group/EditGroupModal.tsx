@@ -137,21 +137,21 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
       closable={false}
       centered={false}
       maskClosable={false}
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'visible',
         padding: 0,
         top: 50
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
         },
-        body: { 
+        body: {
           padding: '0 24px 24px 24px',
           overflow: 'visible'
         },
@@ -241,9 +241,15 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
               className='rounded-full border border-gray-300 bg-gray-100 hover:bg-gray-200 transition-colors h-10 flex items-center px-3 gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed'
             >
               <PictureOutlined />
-              <span>{imageFile ? 'Change Image' : previewImage && previewImage !== 'default-group-image.jpg' && !removeImage ? 'Change Image' : 'Select Image'}</span>
+              <span>
+                {imageFile
+                  ? 'Change Image'
+                  : previewImage && previewImage !== 'default-group-image.jpg' && !removeImage
+                    ? 'Change Image'
+                    : 'Select Image'}
+              </span>
             </button>
-            
+
             <div ref={emojiWrapperRef} className='relative inline-block'>
               <button
                 type='button'
@@ -268,7 +274,7 @@ const EditGroupModal = ({ isModalOpen, handleCancel, onEditGroupSuccess, group }
               )}
             </div>
           </div>
-          
+
           <button
             type='button'
             onClick={() => form.submit()}

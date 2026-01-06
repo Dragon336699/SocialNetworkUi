@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react'
 import { Modal, Button, Input, Avatar, Flex, Typography, Divider, message } from 'antd'
-import {
-  PictureOutlined,
-  CloseOutlined,
-  SmileOutlined
-} from '@ant-design/icons'
+import { PictureOutlined, CloseOutlined, SmileOutlined } from '@ant-design/icons'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { postService } from '@/app/services/post.service'
 import { PostData, PostImage } from '@/app/types/Post/Post'
 import { UserDto } from '@/app/types/User/user.dto'
+import { useCallback } from 'react'
 
 const { TextArea } = Input
 const { Text } = Typography
@@ -39,13 +36,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
 
   const fullName = `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || ''
 
-  useEffect(() => {
-    if (isOpen && postId) {
-      fetchPostData()
-    }
-  }, [isOpen, postId])
-
-  const fetchPostData = async () => {
+  const fetchPostData = useCallback(async () => {
     setFetchingPost(true)
     try {
       const response = await postService.getPostById(postId)
@@ -62,7 +53,13 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ isOpen, onClose, postId, 
     } finally {
       setFetchingPost(false)
     }
-  }
+  }, [postId])
+
+  useEffect(() => {
+    if (isOpen && postId) {
+      fetchPostData()
+    }
+  }, [fetchPostData, isOpen, postId])
 
   const renderPrivacyIcon = () => {
     const iconClass = 'w-4 h-4 text-gray-500'

@@ -67,7 +67,7 @@ const PostDetail: React.FC = () => {
       if (response.data) {
         setPost(response.data)
       }
-    } catch (error) {
+    } catch {
       message.error('Failed to react to post')
     }
   }
