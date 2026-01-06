@@ -14,7 +14,8 @@ export const chatService = {
   async start(
     onPrivateMessage?: (msg: MessageDto) => void,
     onNotification?: (noti: NotificationDto) => void,
-    onUpdateUser?: (user: UserDto) => void
+    onUpdateUser?: (user: UserDto) => void,
+    onUpdateMessage?: (msg: MessageDto) => void
   ) {
     if (connection) return connection
     connection = new HubConnectionBuilder()
@@ -34,6 +35,14 @@ export const chatService = {
 
       if (onNotification) {
         connection.on('SendPrivateNoti', onNotification)
+      }
+
+      if (onUpdateUser) {
+        connection.on('UpdateUser', onUpdateUser)
+      }
+
+      if (onUpdateMessage) {
+        connection.on('UpdatedMessage', onUpdateMessage)
       }
       await connection.start()
       console.log('SinalR connected')
