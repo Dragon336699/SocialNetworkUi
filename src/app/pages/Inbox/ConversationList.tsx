@@ -42,7 +42,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     }
   }, [conversations])
   return (
-    <div className='w-[15%] min-w-[280px] p-[20px] border-r border-gray-100'>
+    <div className='md:w-[15%] min-w-[280px] p-[20px] border-r border-gray-100'>
       <div className='flex justify-between items-center mb-4'>
         <h2 className='text-2xl font-semibold'>Chats</h2>
         <FontAwesomeIcon

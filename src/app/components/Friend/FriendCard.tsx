@@ -1,11 +1,14 @@
 import React from 'react'
-import { Dropdown, Button, MenuProps, Avatar } from 'antd'
+import { Dropdown, Button, MenuProps, Avatar, message } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEllipsisVertical, faComment, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsisVertical, faComment, faUserXmark } from '@fortawesome/free-solid-svg-icons'
 import { ActionType } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
 import { UserDto } from '@/app/types/User/user.dto'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
+import { conversationService } from '@/app/services/conversation.service'
+import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
+import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 
 interface FriendCardProps {
   friend: UserDto
@@ -20,12 +23,27 @@ const statusColor: { [key: string]: string } = {
 
 const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
   const navigate = useNavigate()
+  const handleContactClick = async (friendId: string) => {
+    try {
+      const response = await conversationService.createConversation([friendId], 'Personal')
+      if (response.status === 400) {
+        const res = response.data as BaseResponse
+        message.error(res.message)
+      } else if (response.status === 200) {
+        const res = response.data as ResponseHasData<string>
+        navigate(`/Inbox/${res.data}`)
+      }
+    } catch (err) {
+      console.log('Error: ', err)
+      message.error('Cannot open conversation')
+    }
+  }
   const menuItems: MenuProps['items'] = [
     {
       key: 'message',
       icon: <FontAwesomeIcon icon={faComment} />,
       label: `Message`,
-      onClick: () => console.log('Chat with:', friend.id)
+      onClick: () => handleContactClick(friend.id)
     },
     { type: 'divider' },
     {
@@ -34,14 +52,14 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
       label: 'Unfriend',
       danger: true,
       onClick: () => onAction('unfriend', friend)
-    },
-    {
-      key: 'block',
-      icon: <FontAwesomeIcon icon={faBan} />,
-      label: 'Block',
-      danger: true,
-      onClick: () => onAction('block', friend)
     }
+    // {
+    //   key: 'block',
+    //   icon: <FontAwesomeIcon icon={faBan} />,
+    //   label: 'Block',
+    //   danger: true,
+    //   onClick: () => onAction('block', friend)
+    // }
   ]
 
   return (

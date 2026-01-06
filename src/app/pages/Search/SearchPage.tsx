@@ -477,125 +477,43 @@ const SearchPage: React.FC = () => {
     <>
       <style>
         {`
-          .main-content-scroll::-webkit-scrollbar {
-            width: 8px;
-          }
-          .main-content-scroll::-webkit-scrollbar-track {
-            background: #f9fafb;
-          }
-          .main-content-scroll::-webkit-scrollbar-thumb {
-            background-color: #d1d5db;
-            border-radius: 4px;
-          }
-          .main-content-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #9ca3af;
-          }
-
-          .sidebar-scroll::-webkit-scrollbar {
-            width: 6px;
-          }
-          .sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .sidebar-scroll::-webkit-scrollbar-thumb {
-            background-color: #d1d5db;
-            border-radius: 4px;
-          }
-          .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #9ca3af;
-          }
-        `}
+        .main-content-scroll::-webkit-scrollbar { width: 8px; }
+        .main-content-scroll::-webkit-scrollbar-track { background: #f9fafb; }
+        .main-content-scroll::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
+        
+        /* Ẩn scrollbar cho thanh menu ngang trên mobile */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}
       </style>
 
-      {/* Edit Post Modal */}
-      {editingPost && (
-        <EditPostModal
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          postId={editingPost.id}
-          onSave={handleEditSuccess}
-          currentUser={currentUser}
-        />
-      )}
-
-      {/* Delete Post Modal */}
-      {deletingPostId && (
-        <DeletePostModal
-          isOpen={isDeleteModalOpen}
-          onClose={handleCloseDeleteModal}
-          onDeleteSuccess={handleDeleteSuccess}
-          postId={deletingPostId}
-        />
-      )}
-
-      <div className='flex min-h-screen bg-gray-50'>
-        {/* Main Content */}
-        <div
-          className='flex-1 min-w-0 overflow-y-auto main-content-scroll'
-          style={{
-            maxHeight: '100vh',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d1d5db #f9fafb'
-          }}
-        >
-          <div className='max-w-6xl mx-auto py-6 px-4'>
-            {/* Page Title */}
-            <div className='mb-6'>
-              <Title level={2} className='mb-0' style={{ fontSize: '28px', fontWeight: 700 }}>
-                {getPageTitle()}
-              </Title>
-            </div>
-
-            {/* Results */}
-            {isSearching ? (
-              <div className='flex items-center justify-center h-64'>
-                <Spin size='large' />
-              </div>
-            ) : (
-              renderMainContent()
-            )}
-          </div>
-        </div>
-
-        {/* Right Sidebar - Menu */}
-        <div
-          className='w-80 bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0'
-          style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d1d5db transparent'
-          }}
-        >
+      <div className='flex flex-col lg:flex-row min-h-screen bg-gray-50'>
+        <div className='w-full lg:w-80 bg-white border-b lg:border-b-0 lg:border-l border-gray-200 lg:sticky lg:top-0 lg:h-screen overflow-y-auto sidebar-scroll z-10 order-first lg:order-last'>
           <div className='p-4'>
-            {/* Title */}
-            <div className='mb-4'>
+            <div className='mb-4 hidden lg:block'>
               <Text strong className='text-xl'>
                 Search
               </Text>
+              <div className='border-t-2 border-gray-200 mt-4'></div>
             </div>
 
-            {/* Divider */}
-            <div className='border-t-2 border-gray-200 mb-4'></div>
-
-            {/* Menu Items */}
-            <div className='space-y-1'>
+            <div className='flex flex-row lg:flex-col gap-2 overflow-x-auto hide-scrollbar pb-2 lg:pb-0'>
               <div
                 onClick={() => setActiveTab('users')}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors flex-shrink-0 min-w-[140px] lg:min-w-0 ${
                   activeTab === 'users' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activeTab === 'users' ? 'bg-blue-500' : 'bg-gray-200'
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activeTab === 'users' ? 'bg-blue-500' : 'bg-gray-200'}`}
                 >
                   <UserOutlined className={`text-lg ${activeTab === 'users' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>
+                  <Text strong className='block text-sm lg:text-base'>
                     Users
                   </Text>
-                  <Text type='secondary' className='text-xs'>
+                  <Text type='secondary' className='text-[10px] lg:text-xs leading-none'>
                     {searchResults?.totalUsersCount || 0} results
                   </Text>
                 </div>
@@ -603,22 +521,20 @@ const SearchPage: React.FC = () => {
 
               <div
                 onClick={() => setActiveTab('groups')}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors flex-shrink-0 min-w-[140px] lg:min-w-0 ${
                   activeTab === 'groups' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activeTab === 'groups' ? 'bg-blue-500' : 'bg-gray-200'
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activeTab === 'groups' ? 'bg-blue-500' : 'bg-gray-200'}`}
                 >
                   <TeamOutlined className={`text-lg ${activeTab === 'groups' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>
+                  <Text strong className='block text-sm lg:text-base'>
                     Groups
                   </Text>
-                  <Text type='secondary' className='text-xs'>
+                  <Text type='secondary' className='text-[10px] lg:text-xs leading-none'>
                     {searchResults?.totalGroupsCount || 0} results
                   </Text>
                 </div>
@@ -626,27 +542,43 @@ const SearchPage: React.FC = () => {
 
               <div
                 onClick={() => setActiveTab('posts')}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors flex-shrink-0 min-w-[140px] lg:min-w-0 ${
                   activeTab === 'posts' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activeTab === 'posts' ? 'bg-blue-500' : 'bg-gray-200'
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activeTab === 'posts' ? 'bg-blue-500' : 'bg-gray-200'}`}
                 >
                   <FileTextOutlined className={`text-lg ${activeTab === 'posts' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>
+                  <Text strong className='block text-sm lg:text-base'>
                     Posts
                   </Text>
-                  <Text type='secondary' className='text-xs'>
+                  <Text type='secondary' className='text-[10px] lg:text-xs leading-none'>
                     {searchResults?.totalPostsCount || 0} results
                   </Text>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className='flex-1 min-w-0 overflow-y-auto main-content-scroll' style={{ maxHeight: '100vh' }}>
+          <div className='max-w-6xl mx-auto py-4 lg:py-6 px-4'>
+            <div className='mb-6'>
+              <Title level={2} className='mb-0' style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 700 }}>
+                {getPageTitle()}
+              </Title>
+            </div>
+
+            {isSearching ? (
+              <div className='flex items-center justify-center h-64'>
+                <Spin size='large' />
+              </div>
+            ) : (
+              <div className='w-full overflow-x-hidden'>{renderMainContent()}</div>
+            )}
           </div>
         </div>
       </div>

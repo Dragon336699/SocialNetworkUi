@@ -52,7 +52,7 @@ const GroupHeaderActions = ({
   onMyPendingPosts
 }: GroupHeaderActionsProps) => {
   return (
-    <div className='ml-4 flex items-center gap-2'>
+    <div className='lg:ml-4 flex items-center gap-2 max-lg:mb-3'>
       <Button type='primary' icon={<UserAddOutlined />} onClick={onInviteFriends} className='flex items-center'>
         Invite
       </Button>

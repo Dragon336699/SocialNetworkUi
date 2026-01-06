@@ -29,6 +29,7 @@ import { postService } from '@/app/services/post.service'
 import GroupSidebar from '@/app/components/Group/GroupSidebar'
 import { GroupMembersTab, GroupPhotosTab } from '@/app/components/Group/GroupTabs'
 import ImageViewerModal from '@/app/common/Modals/Group/ImageViewerModal'
+import useDevice from '@/app/hook/useDeivce'
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -45,6 +46,7 @@ const GroupDetail = () => {
   }
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
+  const { isMobile } = useDevice()
 
   const [group, setGroup] = useState<GroupDto | null>(null)
   const [posts, setPosts] = useState<PostData[]>([])
@@ -382,7 +384,7 @@ const GroupDetail = () => {
   }
 
   return (
-    <div className='max-w-4xl mx-auto py-6 px-4'>
+    <div className='max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-4'>
       <CreatePostModal
         isModalOpen={isCreatePostOpen}
         handleCancel={() => setIsCreatePostOpen(false)}
@@ -446,7 +448,7 @@ const GroupDetail = () => {
         <div className='relative -mt-6 -mx-6 mb-4 overflow-hidden rounded-t-lg'>
           {group.imageUrl && group.imageUrl !== 'default-group-image.jpg' ? (
             <div
-              className='w-full h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
+              className='w-full h-48 sm:h-56 lg:h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
               onClick={() => openImageViewer([group.imageUrl!], 0)}
             >
               <img src={group.imageUrl} alt={group.name} className='w-full h-full object-cover block max-w-full' />
@@ -457,51 +459,61 @@ const GroupDetail = () => {
         </div>
 
         <Space direction='vertical' size='small' className='w-full'>
-          <div className='flex justify-between items-center gap-4'>
-            <Title level={2} className='mb-0 flex-shrink-0 max-w-xs break-words'>
+          <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
+            <Title level={2} className='mb-0 text-xl sm:text-2xl'>
               {group.name}
             </Title>
-            <div className='flex items-center gap-4 flex-shrink-0'>
-              <Tag
-                icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
-                color={group.isPublic ? 'blue' : 'orange'}
-              >
-                {group.isPublic ? 'Public Group' : 'Private Group'}
-              </Tag>
-
-              <div className='flex items-center gap-2'>
-                <div className='flex -space-x-2'>
-                  {group.groupUsers
-                    ?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
-                    .slice(0, 10)
-                    .map((member, index) => (
-                      <Avatar
-                        key={member.userId}
-                        size={28}
-                        src={member.user?.avatarUrl}
-                        className='border-2 border-gray-200'
-                        style={{ zIndex: 10 - index }}
-                      >
-                        {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
-                      </Avatar>
-                    ))}
-                </div>
-                <Text type='secondary' className='text-sm'>
-                  {group.memberCount} members
-                </Text>
+            <div className='flex md:justify-end flex-col md:flex-row lg:items-center gap-4 w-full'>
+              <div className='flex-shrink-0'>
+                <Tag
+                  icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
+                  color={group.isPublic ? 'blue' : 'orange'}
+                  className='m-0'
+                >
+                  {group.isPublic ? 'Public Group' : 'Private Group'}
+                </Tag>
               </div>
 
-              <div className='flex gap-4'>
-                <Space size='small'>
-                  <UserOutlined className='text-gray-500' />
-                  <Text strong>{group.memberCount}</Text>
-                  <Text type='secondary'>members</Text>
-                </Space>
-                <Space size='small'>
-                  <FileTextOutlined className='text-gray-500' />
-                  <Text strong>{group.postCount}</Text>
-                  <Text type='secondary'>posts</Text>
-                </Space>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
+                <div className='flex items-center gap-2'>
+                  <div className='flex -space-x-2'>
+                    {group.groupUsers
+                      ?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
+                      .slice(0, 5)
+                      .map((member, index) => (
+                        <Avatar
+                          key={member.userId}
+                          size={28}
+                          src={member.user?.avatarUrl}
+                          className='border-2 border-white dark:border-gray-800'
+                          style={{ zIndex: 10 - index }}
+                        >
+                          {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
+                        </Avatar>
+                      ))}
+                  </div>
+                  <Text type='secondary' className='text-sm whitespace-nowrap'>
+                    {group.memberCount} members
+                  </Text>
+                </div>
+
+                <div className='flex items-center gap-4 border-l-0 sm:border-l sm:pl-4 border-gray-200'>
+                  <Space size='small' className='whitespace-nowrap'>
+                    <UserOutlined className='text-gray-400' />
+                    <Text strong>{group.memberCount}</Text>
+                    <Text type='secondary' className='hidden xs:inline'>
+                      members
+                    </Text>
+                  </Space>
+
+                  <Space size='small' className='whitespace-nowrap'>
+                    <FileTextOutlined className='text-gray-400' />
+                    <Text strong>{group.postCount}</Text>
+                    <Text type='secondary' className='hidden xs:inline'>
+                      posts
+                    </Text>
+                  </Space>
+                </div>
               </div>
             </div>
           </div>
@@ -509,7 +521,7 @@ const GroupDetail = () => {
 
         {isJoined && !isPending && (
           <div className='-mx-6 -mb-6 mt-3'>
-            <div className='flex justify-between items-center px-6'>
+            <div className='flex flex-col lg:flex-row lg:justify-between lg:items-center px-6 lg:gap-4'>
               <Tabs activeKey={activeTab} onChange={setActiveTab} size='large' className='font-semibold flex-1'>
                 <TabPane tab='Discussion' key='posts' />
                 <TabPane tab='Members' key='members' />
@@ -579,7 +591,7 @@ const GroupDetail = () => {
         )}
 
         {isPending && (
-          <div className='mt-4 flex justify-end relative'>
+          <div className='mt-4 flex justify-center sm:justify-end relative'>
             <button
               onClick={() => setShowPendingDropdown(!showPendingDropdown)}
               className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
@@ -640,12 +652,14 @@ const GroupDetail = () => {
               </div>
 
               {/* Right Column - Sticky Sidebar */}
-              <GroupSidebar
-                group={group}
-                posts={posts}
-                onViewAllPhotos={() => setActiveTab('photos')}
-                onImageClick={openImageViewer}
-              />
+              {!isMobile && (
+                <GroupSidebar
+                  group={group}
+                  posts={posts}
+                  onViewAllPhotos={() => setActiveTab('photos')}
+                  onImageClick={openImageViewer}
+                />
+              )}
             </div>
           )}
 

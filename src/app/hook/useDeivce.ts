@@ -10,7 +10,7 @@ type Device = {
   isTablet: boolean
 }
 
-function useDevice(breakpoints: Breakpoints = { mobile: 768, tablet: 1024 }): Device {
+function useDevice(breakpoints: Breakpoints = { mobile: 767, tablet: 1024 }): Device {
   const [device, setDevice] = useState<Device>(() => {
     if (typeof window === 'undefined') {
       return { isMobile: false, isTablet: false }
