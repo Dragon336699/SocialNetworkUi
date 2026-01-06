@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUnread } from '../Contexts/UnreadContext'
 import { NavbarProps } from '../Interfaces/NavbarProps'
-import SearchComponent from '@/app/components/Search/SearchComponent'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -48,7 +47,10 @@ function getItem(label: React.ReactNode, key: React.Key, icon?: React.ReactNode,
   } as MenuItem
 }
 
-const Navbar: React.FC<NavbarProps> = () => {
+const Navbar: React.FC<NavbarProps & { onMenuClick?: () => void; isDrawer?: boolean }> = ({
+  onMenuClick,
+  isDrawer
+}) => {
   const navigate = useNavigate()
   const { unreadMessages } = useUnread()
   const [showSearch, setShowSearch] = useState(false)
@@ -72,10 +74,9 @@ const Navbar: React.FC<NavbarProps> = () => {
   const path = location.pathname.split('/')[1] || 'Home'
 
   const handleNavigate = (e: any) => {
+    if (onMenuClick) onMenuClick()
     if (e.key === 'Inbox') window.location.href = '/Inbox'
-    else if (e.key === 'more') {
-      return
-    } else navigate(`/${e.key}`)
+    else navigate(`/${e.key}`)
   }
 
   const handleCollapseNavbar = () => setCollapsed(true)
@@ -109,10 +110,12 @@ const Navbar: React.FC<NavbarProps> = () => {
     >
       <Sider
         className='h-screen top-0 bottom-0 pt-3 !border-r-2'
-        style={{ position: 'sticky' }}
-        width={280}
-        collapsible
-        collapsed={collapsed}
+        // style={{ position: 'sticky' }}
+        width={isDrawer ? '100%' : 280}
+        collapsible={!isDrawer}
+        collapsed={isDrawer ? false : collapsed}
+        trigger={isDrawer ? null : undefined}
+        breakpoint='lg'
         onCollapse={(value) => setCollapsed(value)}
       >
         <Menu
@@ -123,24 +126,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           onClick={handleNavigate}
           className='border-none'
         />
-
-        <div className='absolute bottom-10 left-0 right-0 px-2'>
-          <Dropdown menu={{ items: baseItems }} trigger={['click']}>
-            <div
-              className={`flex items-center py-2 px-3 cursor-pointer hover:bg-[#E4E6EB] rounded-lg transition-colors text-[#050505] ${
-                collapsed ? 'justify-center' : ''
-              }`}
-            >
-              <div className='w-8 h-8 rounded-full bg-[#E4E6EB] flex items-center justify-center min-w-[32px]'>
-                <FontAwesomeIcon icon={faBars} style={{ fontSize: '14px' }} />
-              </div>
-              {!collapsed && <span className='ml-3 font-semibold text-[15px]'>See More</span>}
-            </div>
-          </Dropdown>
-        </div>
       </Sider>
-
-      {/* <SearchComponent show={showSearch} onClose={() => setShowSearch(false)} onCollapseNavbar={handleCollapseNavbar} /> */}
     </ConfigProvider>
   )
 }

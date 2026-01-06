@@ -20,6 +20,7 @@ import EditPostModal from '../Post/EditPostModal'
 import DeletePostModal from '../Post/DeletePostModal'
 import { PostData } from '@/app/types/Post/Post'
 import { getTimeAgo } from '@/app/helper'
+import useDevice from '@/app/hook/useDeivce'
 
 interface PostCommentModalProps {
   isOpen: boolean
@@ -86,6 +87,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   const [currentPostContent, setCurrentPostContent] = useState(postContent)
   const [currentPostImages, setCurrentPostImages] = useState(postImages)
   const [currentPostPrivacy, setCurrentPostPrivacy] = useState(postPrivacy)
+  const { isMobile } = useDevice()
 
   const [comments, setComments] = useState<CommentDto[]>([])
   const [loading, setLoading] = useState(false)
@@ -465,10 +467,10 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     }
 
     return (
-      <>
+      <div className='flex'>
         {hasReactions && (
-          <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10'>
-            <div className='flex items-center -space-x-1'>
+          <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 min-w-0 max-w-full'>
+            <div className='flex items-center -space-x-1 flex-shrink-0'>
               {uniqueReactions.slice(0, 3).map((reactionEmoji, index) => (
                 <div
                   key={index}
@@ -480,16 +482,17 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                 </div>
               ))}
             </div>
-            <span className='whitespace-nowrap'>{getReactionDisplayText()}</span>
+
+            <span className='truncate'>{getReactionDisplayText()}</span>
           </div>
         )}
 
-        {hasComments && (
-          <button className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap'>
+        {hasComments && !isMobile && (
+          <button className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap flex-shrink-0'>
             {totalComment} Comment{totalComment > 1 ? 's' : ''}
           </button>
         )}
-      </>
+      </div>
     )
   }
 
@@ -553,7 +556,9 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
             </div>
 
             <div className='px-4 pb-3'>
-              <p className='text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium'>{currentPostContent}</p>
+              <p className='text-sm text-gray-900 whitespace-pre-wrap leading-relaxed font-medium'>
+                {currentPostContent}
+              </p>
             </div>
 
             {currentPostImages && currentPostImages.length > 0 && (
@@ -578,8 +583,8 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                     <div className='relative'>
                       <div
                         className={`rounded-full transition-colors h-10 flex items-center border ${
-                          userReaction 
-                            ? 'bg-gray-100 border-gray-300' 
+                          userReaction
+                            ? 'bg-gray-100 border-gray-300'
                             : 'border-transparent hover:bg-gray-100 hover:border-gray-300'
                         }`}
                         onMouseEnter={handleMouseEnterReaction}
@@ -658,12 +663,14 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
                     <button className='flex items-center space-x-2 px-3 rounded-full text-sm transition-colors h-10 font-semibold border border-transparent text-gray-900 hover:bg-gray-100 hover:border-gray-300'>
                       <MessageOutlined style={{ fontSize: '18px' }} />
-                      <span>Comment</span>
+                      <span className='max-xs:hidden'>Comment</span>
                     </button>
                   </div>
 
                   {/* Reactions Info - Bên phải */}
-                  <div className='flex items-center gap-2'>{renderReactionsInfo()}</div>
+                  <div className='flex items-center gap-2 overflow-hidden min-w-0'>
+                    <div className='truncate text-[13px] sm:text-[15px]'>{renderReactionsInfo()}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -740,9 +747,9 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
 
             <div className='flex gap-2 items-center'>
               <div className='flex-shrink-0 rounded-full border-2 border-black'>
-                <Avatar 
-                  src={currentUser.avatarUrl} 
-                  size={32} 
+                <Avatar
+                  src={currentUser.avatarUrl}
+                  size={32}
                   className='rounded-full object-cover w-8 h-8 min-w-8 min-h-8'
                 >
                   {currentUser.firstName?.[0] || ''}
@@ -795,7 +802,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
                       <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
                         <path
                           fillRule='evenodd'
-                          d='M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z' 
+                          d='M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z'
                           clipRule='evenodd'
                         />
                       </svg>
@@ -829,7 +836,6 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
               )}
             </div>
           </div>
-
         </div>
       </div>
 
