@@ -108,15 +108,18 @@ const Header: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications()
+  }, [])
+
+  useEffect(() => {
     chatService.updateNotification((newNoti: NotificationDto) => {
+      console.log(newNoti)
       setNotifications((prev) => {
         const exists = prev.some((noti) => noti.id === newNoti.id)
         setUnreadNotis((p: number) => p + 1)
         return exists ? prev.map((n) => (n.id === newNoti.id ? newNoti : n)) : [newNoti, ...prev]
       })
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  })
 
   useEffect(() => {
     const fetchCurrentUserId = async () => {
