@@ -119,6 +119,10 @@ const Header: React.FC = () => {
         return exists ? prev.map((n) => (n.id === newNoti.id ? newNoti : n)) : [newNoti, ...prev]
       })
     })
+
+    return () => {
+      chatService.offUpdateNotification()
+    }
   })
 
   useEffect(() => {

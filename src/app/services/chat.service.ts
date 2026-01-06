@@ -118,6 +118,14 @@ export const chatService = {
     connection.on('SendPrivateNoti', callback)
   },
 
+  offUpdateNotification() {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection?.off('SendPrivateNoti')
+  },
+
   async askChatbot(question: string): Promise<{ data: ResponseHasData<string>; status: number }> {
     const response = await apiAIClient.post<ResponseHasData<string>>(
       'chatbot/qa',
