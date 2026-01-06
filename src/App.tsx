@@ -19,6 +19,7 @@ import GroupsDiscover from './app/pages/Group/GroupsDiscover'
 import MyGroupsPage from './app/pages/Group/MyGroupsPage'
 import GroupDetail from './app/pages/Group/GroupDetail'
 import SearchPage from './app/pages/Search/SearchPage'
+import { useUnread } from './app/common/Contexts/UnreadContext'
 
 const PrivateRoute = () => {
   const { isLoggedIn, isChecked } = useUserStore()
@@ -34,10 +35,20 @@ const PublicRoute = () => {
 
 function App() {
   const { isLoggedIn, user } = useUserStore()
+  const { setUnreadMessages } = useUnread()
+  const { setUnreadNotis } = useUnread()
 
   useEffect(() => {
     useUserStore.getState().fetchUser()
-    if (isLoggedIn) chatService.start()
+    if (isLoggedIn)
+      chatService.start(
+        () => {
+          setUnreadMessages((prev: number) => prev + 1)
+        },
+        () => {
+          setUnreadNotis((prev: number) => prev + 1)
+        }
+      )
   }, [isLoggedIn])
 
   return (
