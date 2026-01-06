@@ -10,11 +10,13 @@ import CreateGroupModal from '@/app/common/Modals/Group/CreateGroupModal'
 import MyGroupsPage from './MyGroupsPage'
 import GroupsFeed from './GroupsFeed'
 import GroupsDiscover from './GroupsDiscover'
+import useDevice from '@/app/hook/useDeivce'
 
 const { Title, Text } = Typography
 
 const Groups = () => {
   const navigate = useNavigate()
+  const { isMobile, isTablet } = useDevice()
   const location = useLocation()
   const [myGroups, setMyGroups] = useState<GroupDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -82,8 +84,8 @@ const Groups = () => {
       setLoading(true)
       const response = await groupService.getMyGroups(0, 50)
 
-      const approvedGroups = (response.groups || []).filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+      const approvedGroups = (response.groups || []).filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
         return userStatus && userStatus.roleName !== GroupRole.Pending
       })
 
@@ -102,8 +104,8 @@ const Groups = () => {
       setSearchLoading(true)
       const response = await groupService.searchMyGroups(term, 0, 50)
 
-      const approvedGroups = (response.groups || []).filter(group => {
-        const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+      const approvedGroups = (response.groups || []).filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
         return userStatus && userStatus.roleName !== GroupRole.Pending
       })
 
@@ -166,247 +168,243 @@ const Groups = () => {
     <>
       <style>
         {`
-          /* Webkit scrollbar cho main content */
-          .main-content-scroll::-webkit-scrollbar {
-            width: 8px;
-          }
-          .main-content-scroll::-webkit-scrollbar-track {
-            background: #f9fafb;
-          }
-          .main-content-scroll::-webkit-scrollbar-thumb {
-            background-color: #d1d5db;
-            border-radius: 4px;
-          }
-          .main-content-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #9ca3af;
-          }
+        /* Webkit scrollbar cho main content */
+        .main-content-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .main-content-scroll::-webkit-scrollbar-track {
+          background: #f9fafb;
+        }
+        .main-content-scroll::-webkit-scrollbar-thumb {
+          background-color: #d1d5db;
+          border-radius: 4px;
+        }
+        .main-content-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af;
+        }
 
-          /* Webkit scrollbar cho sidebar */
-          .sidebar-scroll::-webkit-scrollbar {
-            width: 6px;
-          }
-          .sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .sidebar-scroll::-webkit-scrollbar-thumb {
-            background-color: #d1d5db;
-            border-radius: 4px;
-          }
-          .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #9ca3af;
-          }
-        `}
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+          background-color: #d1d5db;
+          border-radius: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}
       </style>
-      
+
       <CreateGroupModal
         isModalOpen={isCreateModalOpen}
         handleCancel={() => setIsCreateModalOpen(false)}
         onCreateGroupSuccess={handleCreateGroupSuccess}
       />
 
-      <div className='flex min-h-screen bg-gray-50'>
-        {/* Main Content - LEFT SIDE */}
-        <div 
-          className='flex-1 min-w-0 overflow-y-auto main-content-scroll' 
-          style={{ 
-            maxHeight: '100vh',
+      <div className={`flex min-h-screen bg-gray-50 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+        {isMobile && (
+          <div className='bg-white border-b border-gray-200 sticky top-0 z-[10] p-3 shadow-sm'>
+            <div className='flex items-center justify-between mb-3'>
+              <Title level={4} className='!mb-0'>
+                Groups
+              </Title>
+              <Button
+                type='primary'
+                shape='circle'
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalOpen(true)}
+              />
+            </div>
+
+            <div className='flex gap-2 overflow-x-auto no-scrollbar pb-1'>
+              {[
+                { id: 'feed', label: 'Feed', icon: <ProfileOutlined /> },
+                { id: 'discover', label: 'Discover', icon: <CompassOutlined /> },
+                { id: 'my-groups', label: 'Your Groups', icon: <UsergroupAddOutlined /> }
+              ].map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleMenuClick(item.id as 'feed' | 'discover' | 'my-groups')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full whitespace-nowrap border transition-all ${
+                    activeView === item.id
+                      ? 'bg-blue-500 border-blue-500 text-white'
+                      : 'bg-white border-gray-300 text-gray-700'
+                  }`}
+                >
+                  {item.icon}
+                  <span className='text-xs font-bold'>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div
+          className={`flex-1 min-w-0 overflow-y-auto main-content-scroll ${isMobile ? '' : 'h-screen'}`}
+          style={{
+            maxHeight: isMobile ? 'none' : '100vh',
             scrollbarWidth: 'thin',
             scrollbarColor: '#d1d5db #f9fafb'
           }}
         >
-          {renderMainContent()}
+          <div className={isMobile ? 'p-2' : 'p-0'}>{renderMainContent()}</div>
         </div>
 
-        {/* Right Sidebar - Groups List - Reduced Width */}
-        <div 
-          className='w-72 bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0'
-          style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d1d5db transparent'
-          }}
-        >
-          <div className='p-3'>
-            {/* Header */}
-            <div className='mb-3 flex justify-end'>
-              <Title level={4} className='mb-0'>
-                Groups
-              </Title>
-            </div>
-
-            {/* Search */}
-            <Input
-              placeholder='Search groups'
-              prefix={<SearchOutlined className='text-gray-400' />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className='mb-3 bg-gray-50 border-2 border-gray-300'
-              allowClear
-            />
-
-            {/* Divider 1 */}
-            <div className='border-t-2 border-gray-200 mb-3'></div>
-
-            {/* Menu Items */}
-            <div className='space-y-1 mb-3'>
-              <div
-                onClick={() => handleMenuClick('feed')}
-                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'feed' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'feed' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
-                  <ProfileOutlined className={`text-lg ${activeView === 'feed' ? 'text-white' : 'text-gray-700'}`} />
-                </div>
-                <Text strong className='text-sm'>Your Feed</Text>
+        {!isMobile && !isTablet && (
+          <div
+            className={`${
+              isTablet ? 'w-64' : 'w-72'
+            } bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0`}
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#d1d5db transparent'
+            }}
+          >
+            <div className='p-3'>
+              <div className='mb-3 flex justify-end'>
+                <Title level={4} className='mb-0'>
+                  Groups
+                </Title>
               </div>
 
-              <div
-                onClick={() => handleMenuClick('discover')}
-                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'discover' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'discover' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
-                  <CompassOutlined className={`text-lg ${activeView === 'discover' ? 'text-white' : 'text-gray-700'}`} />
-                </div>
-                <Text strong className='text-sm'>Discover</Text>
-              </div>
+              <Input
+                placeholder='Search groups'
+                prefix={<SearchOutlined className='text-gray-400' />}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className='mb-3 bg-gray-50 border-2 border-gray-300'
+                allowClear
+              />
 
-              <div
-                onClick={() => handleMenuClick('my-groups')}
-                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeView === 'my-groups' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeView === 'my-groups' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
-                  <UsergroupAddOutlined className={`text-lg ${activeView === 'my-groups' ? 'text-white' : 'text-gray-700'}`} />
-                </div>
-                <Text strong className='text-sm'>Your Groups</Text>
-              </div>
-            </div>
+              <div className='border-t-2 border-gray-200 mb-3'></div>
 
-            {/* Create Group Button */}
-            <Button
-              type='primary'
-              icon={<PlusOutlined />}
-              onClick={() => setIsCreateModalOpen(true)}
-              block
-              size='large'
-              className='mb-4'
-            >
-              Create New Group
-            </Button>
-
-            {/* Divider 2 */}
-            <div className='border-t-2 border-gray-200 mb-3'></div>
-
-            {/* My Groups List */}
-            <div className='pt-3'>
-              <div className='flex items-center justify-between mb-2'>
-                <Text strong className='text-gray-700 text-sm'>
-                  Groups You've Joined
-                </Text>
-                <button
-                  onClick={() => handleMenuClick('my-groups')}
-                  className='text-blue-600 hover:text-blue-700 text-xs font-medium transition-colors'
-                >
-                  See all
-                </button>
-              </div>
-
-              {loading || searchLoading ? (
-                <div className='text-center py-6'>
-                  <Spin size='small' />
-                </div>
-              ) : myGroups.length > 0 ? (
-                <>
-                  <div className='space-y-1'>
-                    {displayedGroups.map((group) => (
-                      <div
-                        key={group.id}
-                        onClick={() => navigate(`/groups/${group.id}`)}
-                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                          currentGroupId === group.id 
-                            ? 'bg-gray-200' 
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className='rounded-full border-2 border-gray-200 flex-shrink-0'>
-                          <Avatar
-                            size={32}
-                            src={group.imageUrl}
-                            style={{ backgroundColor: '#E2E5E9' }}
-                            className='rounded-full'
-                          >
-                            {group.name[0].toUpperCase()}
-                          </Avatar>
-                        </div>
-                        <div className='flex-1 min-w-0'>
-                          <Text strong className='block truncate text-sm'>
-                            {group.name}
-                          </Text>
-                          <Text type='secondary' className='text-xs block truncate'>
-                            {group.memberCount} members
-                          </Text>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Nút Xem thêm */}
-                  {!searchTerm && hasMoreGroups && (
-                    <button
-                      onClick={() => setShowAllGroups(!showAllGroups)}
-                      className='w-full mt-2 py-2 flex items-center justify-center gap-1 hover:bg-gray-100 rounded-lg transition-colors'
+              <div className='space-y-1 mb-3'>
+                {[
+                  { id: 'feed', label: 'Your Feed', icon: <ProfileOutlined /> },
+                  { id: 'discover', label: 'Discover', icon: <CompassOutlined /> },
+                  { id: 'my-groups', label: 'Your Groups', icon: <UsergroupAddOutlined /> }
+                ].map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleMenuClick(item.id as 'feed' | 'discover' | 'my-groups')}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                      activeView === item.id ? 'bg-blue-50' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        activeView === item.id ? 'bg-blue-500' : 'bg-gray-200'
+                      }`}
                     >
-                      <Text className='text-sm text-gray-800 font-medium'>
-                        {showAllGroups ? 'Show Less' : `Show ${myGroups.length - 5} More`}
-                      </Text>
-                      {showAllGroups ? (
-                        <svg className='w-4 h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 15l7-7 7 7' />
-                        </svg>
-                      ) : (
-                        <svg className='w-4 h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-                        </svg>
-                      )}
+                      <span
+                        className={`text-lg flex items-center ${activeView === item.id ? 'text-white' : 'text-gray-700'}`}
+                      >
+                        {item.icon}
+                      </span>
+                    </div>
+                    <Text strong className='text-sm'>
+                      {item.label}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type='primary'
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalOpen(true)}
+                block
+                size='large'
+                className='mb-4'
+              >
+                Create New Group
+              </Button>
+
+              <div className='border-t-2 border-gray-200 mb-3'></div>
+
+              <div className='pt-3'>
+                <div className='flex items-center justify-between mb-2'>
+                  <Text strong className='text-gray-700 text-sm'>
+                    Groups You've Joined
+                  </Text>
+                  {!isTablet && (
+                    <button
+                      onClick={() => handleMenuClick('my-groups')}
+                      className='text-blue-600 hover:text-blue-700 text-xs font-medium transition-colors'
+                    >
+                      See all
                     </button>
                   )}
-                </>
-              ) : (
-                <div className='text-center py-6'>
-                  {searchTerm ? (
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description={
-                        <Text type='secondary' className='text-xs'>
-                          No groups found for "{searchTerm}"
-                        </Text>
-                      }
-                    />
-                  ) : (
-                    <Text type='secondary' className='text-xs'>
-                      You haven't joined any groups yet
-                    </Text>
-                  )}
                 </div>
-              )}
+
+                {loading || searchLoading ? (
+                  <div className='text-center py-6'>
+                    <Spin size='small' />
+                  </div>
+                ) : myGroups.length > 0 ? (
+                  <>
+                    <div className='space-y-1'>
+                      {displayedGroups.map((group) => (
+                        <div
+                          key={group.id}
+                          onClick={() => navigate(`/groups/${group.id}`)}
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                            currentGroupId === group.id ? 'bg-gray-200' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className='rounded-full border border-gray-200 flex-shrink-0'>
+                            <Avatar
+                              size={isTablet ? 28 : 32}
+                              src={group.imageUrl}
+                              style={{ backgroundColor: '#E2E5E9' }}
+                            >
+                              {group.name[0].toUpperCase()}
+                            </Avatar>
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <Text strong className='block truncate text-sm'>
+                              {group.name}
+                            </Text>
+                            {!isTablet && (
+                              <Text type='secondary' className='text-xs block truncate'>
+                                {group.memberCount} members
+                              </Text>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {!searchTerm && hasMoreGroups && (
+                      <button
+                        onClick={() => setShowAllGroups(!showAllGroups)}
+                        className='w-full mt-2 py-2 flex items-center justify-center gap-1 hover:bg-gray-100 rounded-lg transition-colors'
+                      >
+                        <Text className='text-sm text-gray-800 font-medium'>
+                          {showAllGroups ? 'Show Less' : `More`}
+                        </Text>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className='text-center py-6 text-xs text-gray-400'>No groups found</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   )

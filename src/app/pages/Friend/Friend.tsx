@@ -17,10 +17,12 @@ import { UserDto } from '@/app/types/User/user.dto'
 import { SentFriendRequestData, SuggestUsers } from '@/app/types/UserRelation/userRelation'
 import { DEFAULT_AVATAR_URL } from '@/app/common/Assests/CommonVariable'
 import useDebounce from '@/app/hook/useDebounce'
+import { useNavigate } from 'react-router-dom'
 
 const { Title, Text } = Typography
 
 const FriendsList: React.FC = () => {
+  const navigate = useNavigate()
   const [friends, setFriends] = useState<UserDto[]>([])
   const [requestedSuggestIds, setRequestedSuggestIds] = useState<string[]>([])
   const [sentRequests, setSentRequests] = useState<SentFriendRequestData[]>([])
@@ -216,7 +218,7 @@ const FriendsList: React.FC = () => {
       children: (
         <div className='mt-2'>
           {renderSearchBar('Search received requests...')}
-          <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+          <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4'>
             {receivedRequests.map((req) => (
               <RequestCard
                 key={req.senderId}
@@ -282,7 +284,10 @@ const FriendsList: React.FC = () => {
                 const isRequested = requestedSuggestIds.includes(req.user.id)
                 return (
                   <div key={req.user.id} className='flex items-center justify-between group px-2'>
-                    <div className='flex gap-3 items-center overflow-hidden'>
+                    <div
+                      className='flex gap-3 items-center overflow-hidden'
+                      onClick={() => navigate(`/profile/${req.user.userName}`)}
+                    >
                       <Avatar size={40} src={req.user.avatarUrl || DEFAULT_AVATAR_URL} />
                       <div className='overflow-hidden'>
                         <h4 className='font-semibold text-[15px] truncate m-0'>

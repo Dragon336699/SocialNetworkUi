@@ -546,17 +546,19 @@ const Post: React.FC<PostProps> = ({
             {/* Row 2: Avatar + Comment input and Send button */}
             <div className='flex items-center space-x-3'>
               {/* Avatar người dùng */}
-              <div className='flex-shrink-0'>
-                <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
-                  <Avatar
-                    src={currentUser.avatarUrl}
-                    size={40}
-                    className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
-                  >
-                    {currentUser.firstName?.[0] || currentUser.lastName?.[0] || ''}
-                  </Avatar>
+              {!isMobile && (
+                <div className='flex-shrink-0'>
+                  <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
+                    <Avatar
+                      src={currentUser.avatarUrl}
+                      size={40}
+                      className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
+                    >
+                      {currentUser.firstName?.[0] || currentUser.lastName?.[0] || ''}
+                    </Avatar>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Comment input and Send button */}
               <div className='flex items-center space-x-2 flex-1'>

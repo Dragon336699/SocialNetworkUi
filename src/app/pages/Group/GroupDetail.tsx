@@ -333,7 +333,7 @@ const GroupDetail = () => {
   }
 
   return (
-    <div className='max-w-4xl mx-auto py-6 px-4'>
+    <div className='max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-4'>
       <CreatePostModal
         isModalOpen={isCreatePostOpen}
         handleCancel={() => setIsCreatePostOpen(false)}
@@ -419,7 +419,7 @@ const GroupDetail = () => {
         <div className='relative -mt-6 -mx-6 mb-4'>
           {group.imageUrl && (
             <div
-              className='w-full h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
+              className='w-full h-48 sm:h-56 lg:h-64 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity'
               onClick={() => openImageViewer([group.imageUrl!], 0)}
             >
               <img
@@ -432,15 +432,15 @@ const GroupDetail = () => {
         </div>
 
         <Space direction='vertical' size='small' className='w-full'>
-          <div className='flex justify-between items-center'>
-            <Title level={2} className='mb-0'>
+          <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
+            <Title level={2} className='mb-0 text-xl sm:text-2xl'>
               {group.name}
             </Title>
-            <div className='flex items-center gap-4'>
-
+            <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
               <Tag
                 icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
                 color={group.isPublic ? 'blue' : 'orange'}
+                className='self-start'
               >
                 {group.isPublic ? 'Public Group' : 'Private Group'}
               </Tag>
@@ -467,7 +467,7 @@ const GroupDetail = () => {
                 </Text>
               </div>
 
-              <div className='flex gap-4'>
+              <div className='flex flex-col sm:flex-row gap-2 sm:gap-4'>
                 <Space size='small'>
                   <UserOutlined className='text-gray-500' />
                   <Text strong>{group.memberCount}</Text>
@@ -485,20 +485,21 @@ const GroupDetail = () => {
 
         {(isJoined && !isPending) && (
           <div className='-mx-6 -mb-6 mt-3'>
-            <div className='flex justify-between items-center px-6'>
+            <div className='flex flex-col lg:flex-row lg:justify-between lg:items-center px-6 gap-4'>
               <Tabs activeKey={activeTab} onChange={setActiveTab} size='large' className='font-semibold flex-1'>
                 <TabPane tab='Discussion' key='posts' />
                 <TabPane tab='Members' key='members' />
                 <TabPane tab='Photos' key='photos' />
               </Tabs>
 
-              <div className='ml-4 flex items-center gap-2'>
+              <div className='flex items-center gap-2 justify-end lg:justify-start max-lg:pb-3'>
                 <Button
                   icon={<UserAddOutlined />}
                   onClick={() => setIsInviteFriendsOpen(true)}
                   className='flex items-center'
+                  size='small'
                 >
-                  Invite
+                  <span className='hidden sm:inline'>Invite</span>
                 </Button>
 
                 <div className='relative'>
@@ -533,7 +534,7 @@ const GroupDetail = () => {
                         className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
                       >
                         <CheckOutlined />
-                        <span>Joined</span>
+                        <span className='hidden sm:inline'>Joined</span>
                       </button>
                       <JoinedDropdownMenu
                         isOpen={showJoinedDropdown}
@@ -549,7 +550,7 @@ const GroupDetail = () => {
         )}
         
         {!isJoined && !isPending && (
-          <div className='mt-4 flex justify-end'>
+          <div className='mt-4 flex justify-center sm:justify-end'>
             <Button type='primary' size='large' icon={<UserOutlined />} onClick={handleJoinGroup}>
               Join Group
             </Button>
@@ -557,7 +558,7 @@ const GroupDetail = () => {
         )}
 
         {isPending && (
-          <div className='mt-4 flex justify-end relative'>
+          <div className='mt-4 flex justify-center sm:justify-end relative'>
             <button
               onClick={() => setShowPendingDropdown(!showPendingDropdown)}
               className='flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition-colors'
@@ -617,7 +618,7 @@ const GroupDetail = () => {
               </div>
 
               {/* Right Column - Sticky Sidebar */}
-              <div className='w-80 flex-shrink-0'>
+              <div className='w-80 flex-shrink-0 hidden sm:block'>
                 <div className='sticky top-6 space-y-4'>
                   {/* About Section */}
                   <div className='bg-white rounded-lg p-4 shadow-sm border-2 border-gray-200'>

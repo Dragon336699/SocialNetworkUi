@@ -404,73 +404,84 @@ const Inbox: React.FC<InboxProps> = () => {
 
   return (
     <div className='h-[calc(100vh-64px)] bg-[#F0F2F5] overflow-hidden'>
-      <div className='flex h-full bg-white m-[8px]'>
-        <ConversationList
-          conversations={conversations}
-          userInfo={userInfo}
-          conversationId={conversationId}
-          onNewMessageClick={() => setIsModalNewMessageOpen(true)}
-          onConversationClick={navigateToInbox}
-        />
+      {/* Bỏ margin 8px trên mobile để tối ưu không gian, chỉ giữ trên desktop */}
+      <div className='flex h-full bg-white md:m-[8px] shadow-sm overflow-hidden md:rounded-lg'>
+        {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN */}
+        <div
+          className={`
+        ${conversationId ? 'hidden md:block' : 'block'} 
+        w-full md:w-[300px] lg:w-[360px] border-r border-gray-200 flex-shrink-0
+      `}
+        >
+          <ConversationList
+            conversations={conversations}
+            userInfo={userInfo}
+            conversationId={conversationId}
+            onNewMessageClick={() => setIsModalNewMessageOpen(true)}
+            onConversationClick={navigateToInbox}
+          />
+        </div>
 
-        <ChatArea
-          conversation={conversation}
-          conversationUsers={conversationUsers}
-          conversationId={conversationId}
-          userInfo={userInfo}
-          receivers={receivers}
-          messages={messages}
-          text={text}
-          setText={setText}
-          repliedMessagePreview={repliedMessagePreview}
-          setRepliedMessagePreview={setRepliedMessagePreview}
-          imageFiles={imageFiles}
-          setImageFiles={setImageFiles}
-          imagesPreview={imagesPreview}
-          setImagesPreview={setImagesPreview}
-          audioUrl={audioUrl}
-          setAudioUrl={setAudioUrl}
-          audioBlob={audioBlob}
-          setAudioBlob={setAudioBlob}
-          isRecording={isRecording}
-          setIsRecording={setIsRecording}
-          isChatFocused={isChatFocused}
-          setIsChatFocused={setIsChatFocused}
-          isInputFocused={isInputFocused}
-          setIsInputFocused={setIsInputFocused}
-          firstMessageRef={firstMessageRef}
-          newestMessageRef={newestMessageRef}
-          messageEndRef={messageEndRef}
-          recorderRef={recorderRef}
-          streamRef={streamRef}
-          loadMoreMessage={loadMoreMessage}
-          handleSendMessage={handleSendMessage}
-          handleSendReaction={handleSendReaction}
-          onConversationDeleted={() => {
-            navigate('/Inbox')
-            fetchAllConversations() // Refresh lại danh sách
-          }}
-          onNicknameChanged={(userId: string, newNickname: string) => {
-            setConversationUsers(prev => 
-              prev.map(cu => 
-                cu.userId === userId 
-                  ? { ...cu, nickName: newNickname } 
-                  : cu
+        {/* CỘT 2: KHU VỰC CHAT CHÍNH */}
+        <div
+          className={`
+        ${conversationId ? 'flex' : 'hidden md:flex'} 
+        flex-1 flex-col h-full min-w-0
+      `}
+        >
+          <ChatArea
+            conversation={conversation}
+            conversationUsers={conversationUsers}
+            conversationId={conversationId}
+            userInfo={userInfo}
+            receivers={receivers}
+            messages={messages}
+            text={text}
+            setText={setText}
+            repliedMessagePreview={repliedMessagePreview}
+            setRepliedMessagePreview={setRepliedMessagePreview}
+            imageFiles={imageFiles}
+            setImageFiles={setImageFiles}
+            imagesPreview={imagesPreview}
+            setImagesPreview={setImagesPreview}
+            audioUrl={audioUrl}
+            setAudioUrl={setAudioUrl}
+            audioBlob={audioBlob}
+            setAudioBlob={setAudioBlob}
+            isRecording={isRecording}
+            setIsRecording={setIsRecording}
+            isChatFocused={isChatFocused}
+            setIsChatFocused={setIsChatFocused}
+            isInputFocused={isInputFocused}
+            setIsInputFocused={setIsInputFocused}
+            firstMessageRef={firstMessageRef}
+            newestMessageRef={newestMessageRef}
+            messageEndRef={messageEndRef}
+            recorderRef={recorderRef}
+            streamRef={streamRef}
+            loadMoreMessage={loadMoreMessage}
+            handleSendMessage={handleSendMessage}
+            handleSendReaction={handleSendReaction}
+            onConversationDeleted={() => {
+              navigate('/Inbox')
+              fetchAllConversations()
+            }}
+            onNicknameChanged={(userId, newNickname) => {
+              setConversationUsers((prev) =>
+                prev.map((cu) => (cu.userId === userId ? { ...cu, nickName: newNickname } : cu))
               )
-            )
-          }}
-          // Callback để cập nhật group name
-          onGroupNameChanged={(newName: string) => {
-            setConversation(prev => 
-              prev ? { ...prev, conversationName: newName } : null
-            )
-          }}
-        />
+            }}
+            onGroupNameChanged={(newName) => {
+              setConversation((prev) => (prev ? { ...prev, conversationName: newName } : null))
+            }}
+          />
+        </div>
 
-        <ChatDetails
-          conversation={conversation}
-          messages={messages}
-        />
+        {/* CỘT 3: CHI TIẾT CUỘC TRÒ CHUYỆN */}
+        {/* Chỉ hiển thị trên màn hình lớn (Laptop trở lên) */}
+        <div className='hidden lg:block w-[300px] border-l border-gray-200 flex-shrink-0'>
+          <ChatDetails conversation={conversation} messages={messages} />
+        </div>
 
         <ModalNewMessage isModalOpen={isModalNewMessageOpen} onClose={() => setIsModalNewMessageOpen(false)} />
       </div>

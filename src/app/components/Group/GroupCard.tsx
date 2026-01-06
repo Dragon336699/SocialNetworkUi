@@ -4,6 +4,7 @@ import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useDevice from '@/app/hook/useDeivce'
 
 const { Title, Text } = Typography
 
@@ -101,128 +102,115 @@ const GroupCard = ({
   }
 
   return (
-    <div 
-      className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer h-48'
+    <div
+      className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer flex flex-col lg:flex-row overflow-hidden h-full'
       onClick={handleViewGroup}
     >
-      <div className='flex h-full'>
-        {/* Image Section - Left */}
-        <div className='w-36 sm:w-40 flex-shrink-0 bg-gray-200 overflow-hidden'>
-          {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
-            <img 
-              src={currentGroup.imageUrl} 
-              alt={currentGroup.name} 
-              className='w-full h-full object-cover' 
-            />
-          ) : (
-            <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
-              <Avatar
-                size={60}
-                style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-                className='text-white text-2xl font-bold'
-              >
-                {currentGroup.name[0]?.toUpperCase() || 'G'}
-              </Avatar>
-            </div>
-          )}
+      <div className='w-full h-32 lg:w-40 lg:h-auto flex-shrink-0 bg-gray-200 overflow-hidden'>
+        {currentGroup.imageUrl && currentGroup.imageUrl !== 'default-group-image.jpg' ? (
+          <img src={currentGroup.imageUrl} alt={currentGroup.name} className='w-full h-full object-cover' />
+        ) : (
+          <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
+            <Avatar
+              size={40}
+              style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
+              className='text-white text-xl font-bold'
+            >
+              {currentGroup.name[0]?.toUpperCase() || 'G'}
+            </Avatar>
+          </div>
+        )}
+      </div>
+
+      <div className='flex-1 p-3 lg:p-4 flex flex-col min-w-0' onClick={(e) => e.stopPropagation()}>
+        <div className='flex flex-col border-b border-gray-100 pb-2 mb-2'>
+          <Title
+            level={5}
+            className='mb-0 truncate'
+            style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              lineHeight: '1.4'
+            }}
+            title={currentGroup.name}
+          >
+            {currentGroup.name}
+          </Title>
         </div>
 
-        {/* Content Section - Right */}
-        <div className='flex-1 p-4 flex flex-col' onClick={(e) => e.stopPropagation()}>
-          {/* Header - Fixed height area */}
-          <div className='flex flex-col' style={{ minHeight: '60px', maxHeight: '60px' }}>
-            <Title 
-              level={5} 
-              className='mb-0 line-clamp-2 overflow-hidden' 
-              style={{ 
-                fontSize: '15px', 
-                fontWeight: 600,
-                lineHeight: '1.4'
-              }}
-            >
-              {currentGroup.name}
-            </Title>
-            <div className='border-b-2 border-gray-200 mt-auto'></div>
-          </div>
-          
-          {/* Stats & Actions - Remaining space */}
-          <div className='flex-1 flex flex-col justify-between pt-3'>
-            {/* Stats */}
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center gap-2'>
-                <UserOutlined className='text-black text-sm' />
-                <Text className='text-sm text-black font-medium'>
-                  {currentGroup.memberCount} {currentGroup.memberCount === 1 ? 'user' : 'users'}
-                </Text>
-              </div>
-              <div className='flex items-center gap-2'>
-                <FileTextOutlined className='text-black text-sm' />
-                <Text className='text-sm text-black font-medium'>
-                  {currentGroup.postCount} {currentGroup.postCount === 1 ? 'post' : 'posts'}
-                </Text>
-              </div>
+        <div className='flex-1 flex flex-col justify-between gap-3'>
+          <div className='flex flex-row lg:flex-col flex-wrap gap-x-4 gap-y-1'>
+            <div className='flex items-center gap-1.5'>
+              <UserOutlined className='text-gray-500 text-[12px]' />
+              <Text className='text-[12px] text-gray-700 font-medium whitespace-nowrap'>
+                {currentGroup.memberCount} user
+              </Text>
             </div>
-
-            {/* Actions */}
-            {showActions && (
-              <div className='flex gap-2 mt-3 relative'>
-                {!joined && !pending ? (
-                  <Button 
-                    type='primary' 
-                    onClick={handleJoinGroup} 
-                    loading={loading} 
-                    block
-                    size='small'
-                  >
-                    Join
-                  </Button>
-                ) : pending ? (
-                  <div ref={dropdownRef} className='w-full relative'>
-                    <Button
-                      icon={<ClockCircleOutlined />}
-                      onClick={handlePendingClick}
-                      type='default'
-                      loading={loading}
-                      block
-                      size='small'
-                    >
-                      Pending
-                    </Button>
-                    
-                    {/* Custom Dropdown Menu */}
-                    {showPendingDropdown && (
-                      <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleCancelJoinRequest()
-                          }}
-                          className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
-                        >
-                          <CloseOutlined className='text-xs text-red-500' />
-                          <span className='text-xs font-medium text-red-500'>
-                            Cancel
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Button
-                    icon={<EyeOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleViewGroup()
-                    }}
-                    block
-                    size='small'
-                  >
-                    View
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className='flex items-center gap-1.5'>
+              <FileTextOutlined className='text-gray-500 text-[12px]' />
+              <Text className='text-[12px] text-gray-700 font-medium whitespace-nowrap'>
+                {currentGroup.postCount} post
+              </Text>
+            </div>
           </div>
+
+          {showActions && (
+            <div className='mt-auto relative'>
+              {!joined && !pending ? (
+                <Button
+                  type='primary'
+                  onClick={handleJoinGroup}
+                  loading={loading}
+                  block
+                  size='small'
+                  className='text-[12px] h-8'
+                >
+                  Join
+                </Button>
+              ) : pending ? (
+                <div ref={dropdownRef} className='w-full relative'>
+                  <Button
+                    icon={<ClockCircleOutlined />}
+                    onClick={handlePendingClick}
+                    type='default'
+                    loading={loading}
+                    block
+                    size='small'
+                    className='text-[12px] h-8'
+                  >
+                    Pending
+                  </Button>
+                  {showPendingDropdown && (
+                    <div className='absolute left-0 bottom-full mb-1 w-full bg-white rounded shadow-xl border border-gray-200 z-50'>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCancelJoinRequest()
+                        }}
+                        className='w-full flex items-center justify-center gap-2 p-2 hover:bg-red-50 text-red-500 border-0 bg-transparent transition-colors'
+                      >
+                        <CloseOutlined className='text-xs' />
+                        <span className='text-xs font-bold'>Cancel Request</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  icon={<EyeOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleViewGroup()
+                  }}
+                  block
+                  size='small'
+                  className='text-[12px] h-8'
+                >
+                  View
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

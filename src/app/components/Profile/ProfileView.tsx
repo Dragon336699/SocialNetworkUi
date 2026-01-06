@@ -35,6 +35,7 @@ import { interactionService } from '@/app/services/interaction.service'
 import { conversationService } from '@/app/services/conversation.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import useDevice from '@/app/hook/useDeivce'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -80,6 +81,7 @@ const ProfileView = ({
   onPostDeleted: (postId: string) => void
 }) => {
   const { user, fetchUser } = useUserStore()
+  const { isMobile, isTablet } = useDevice()
   const { userName } = useParams()
   const isMe = user?.userName === userName
   const navigate = useNavigate()
@@ -499,7 +501,7 @@ const ProfileView = ({
                 {isMe && (
                   <Col>
                     <Button onClick={onEdit} type='primary' size='large' className='px-6 font-medium'>
-                      Edit Profile
+                      {isMobile ? ' Edit' : 'Edit Profile'}
                     </Button>
                   </Col>
                 )}
@@ -507,7 +509,9 @@ const ProfileView = ({
 
               <p className='text-lg text-gray-700 mb-6'>{userInfo.description}</p>
 
-              <div className='flex flex-wrap items-center gap-20 text-gray-800 text-base'>
+              <div
+                className={`flex flex-wrap items-center gap-20 text-gray-800 text-base ${isMobile ? 'grid grid-cols-2 gap-y-3 gap-x-4 ' : ''} `}
+              >
                 {stats.map((item) => (
                   <span key={item.label}>
                     <span
@@ -554,14 +558,12 @@ const ProfileView = ({
           {!isMe && (
             <div className='mt-6 pt-6 border-t border-blue-200'>
               <Row gutter={[12, 12]}>
-                {/* Friend */}
                 <Col xs={24} sm={isFriend ? 12 : 8}>
                   <Button block size='large' icon={friendButtonConfig[relation].icon} onClick={handleFriend}>
                     {friendButtonConfig[relation].text}
                   </Button>
                 </Col>
 
-                {/* Follow – chỉ hiện khi CHƯA là bạn */}
                 {!isFriend && (
                   <Col xs={24} sm={8}>
                     <Button
@@ -581,7 +583,6 @@ const ProfileView = ({
                   </Col>
                 )}
 
-                {/* Message */}
                 <Col xs={24} sm={isFriend ? 12 : 8}>
                   <Button
                     block
@@ -597,28 +598,27 @@ const ProfileView = ({
           )}
         </div>
 
-        <div className='mb-6'>
-          <div className='flex gap-2 flex-wrap'>
-            <button onClick={() => setActiveTab('posts')} className={getTabButtonClass('posts')}>
-              <FileTextOutlined className='mr-2' />
-              Posts
-            </button>
-            <button onClick={() => setActiveTab('followers')} className={getTabButtonClass('followers')}>
-              <UserOutlined className='mr-2' />
-              Followers
-            </button>
-            <button onClick={() => setActiveTab('following')} className={getTabButtonClass('following')}>
-              <UserOutlined className='mr-2' />
-              Following
-            </button>
-            <button onClick={() => setActiveTab('friends')} className={getTabButtonClass('friends')}>
-              <UserOutlined className='mr-2' />
-              Friends
-            </button>
+        <div className='mb-6 overflow-x-auto no-scrollbar'>
+          <div className='flex gap-2 min-w-max pb-2'>
+            {[
+              { id: 'posts', label: 'Posts', icon: <FileTextOutlined /> },
+              { id: 'followers', label: 'Followers', icon: <UserOutlined /> },
+              { id: 'following', label: 'Following', icon: <UserOutlined /> },
+              { id: 'friends', label: 'Friends', icon: <UserOutlined /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`${getTabButtonClass(tab.id as TabType)} flex items-center px-4 py-2 rounded-full transition-all text-sm font-medium whitespace-nowrap`}
+              >
+                <span className='mr-2'>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>{renderTabContent()}</div>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6'>{renderTabContent()}</div>
       </div>
     </>
   )
