@@ -571,9 +571,7 @@ const Inbox: React.FC<InboxProps> = () => {
   }, [messageUnseen])
   return (
     <div className='h-[calc(100vh-64px)] bg-[#F0F2F5] overflow-hidden'>
-      {/* Bỏ margin 8px trên mobile để tối ưu không gian, chỉ giữ trên desktop */}
       <div className='flex h-full bg-white md:m-[8px] shadow-sm overflow-hidden md:rounded-lg'>
-        {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN */}
         <div
           className={`
         ${conversationId ? 'hidden md:block' : 'block'} 
@@ -589,7 +587,6 @@ const Inbox: React.FC<InboxProps> = () => {
           />
         </div>
 
-        {/* CỘT 2: KHU VỰC CHAT CHÍNH */}
         <div
           className={`
         ${conversationId ? 'flex' : 'hidden md:flex'} 
@@ -646,7 +643,9 @@ const Inbox: React.FC<InboxProps> = () => {
           />
         </div>
 
-        <ChatDetails conversation={conversation} conversationId={conversationId} />
+        <div className='hidden lg:block w-[300px] border-l border-gray-200 flex-shrink-0'>
+          <ChatDetails conversation={conversation} conversationId={conversationId} />
+        </div>
 
         <ModalNewMessage isModalOpen={isModalNewMessageOpen} onClose={() => setIsModalNewMessageOpen(false)} />
       </div>

@@ -208,8 +208,8 @@ const Groups = () => {
         onCreateGroupSuccess={handleCreateGroupSuccess}
       />
 
-      <div className={`flex min-h-screen bg-gray-50 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-        {isMobile && (
+      <div className={`flex min-h-screen bg-gray-50 ${isMobile || isTablet ? 'flex-col' : 'flex-row'}`}>
+        {(isMobile || isTablet) && (
           <div className='bg-white border-b border-gray-200 sticky top-0 z-[10] p-3 shadow-sm'>
             <div className='flex items-center justify-between mb-3'>
               <Title level={4} className='!mb-0'>
@@ -406,4 +406,3 @@ const Groups = () => {
 }
 
 export default Groups
-
