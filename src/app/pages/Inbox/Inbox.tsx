@@ -415,12 +415,6 @@ const Inbox: React.FC<InboxProps> = () => {
     if (conversationId) fetchConversation()
     fetchAllConversations()
 
-    chatService.getUpdatedMessage((newestMessage: MessageDto) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((m: MessageDto) => (m.id === newestMessage.id ? newestMessage : m))
-      )
-    })
-
     chatService.updateUser((user: UserDto) => {
       setReceivers((prevReceivers) => prevReceivers.map((u: UserDto) => (u.id === user.id ? user : u)))
     })
@@ -440,6 +434,18 @@ const Inbox: React.FC<InboxProps> = () => {
       textingArea.removeEventListener('blur', handleBlur)
     }
   }, [])
+
+  useEffect(() => {
+    chatService.getUpdatedMessage((newestMessage: MessageDto) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((m: MessageDto) => (m.id === newestMessage.id ? newestMessage : m))
+      )
+    })
+
+    return () => {
+      chatService.offUpdatedMessage()
+    }
+  })
 
   // Scroll event để load thêm tin nhắn cũ khi kéo lên đầu
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
+import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { CHAT_HUB_URL } from '../environments/environment'
 import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 import { SendMessageResponse } from '../types/Message/Responses/messageResponses'
@@ -19,7 +19,11 @@ export const chatService = {
   ) {
     if (connection) return connection
     connection = new HubConnectionBuilder()
-      .withUrl(CHAT_HUB_URL, { withCredentials: true })
+      .withUrl(CHAT_HUB_URL, {
+        withCredentials: true,
+        transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
+        skipNegotiation: false
+      })
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect()
       .build()
@@ -96,6 +100,14 @@ export const chatService = {
       return
     }
     connection.on('UpdatedMessage', callback)
+  },
+
+  offUpdatedMessage() {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection?.off('UpdatedMessage')
   },
 
   updateUser(callback: (user: UserDto) => void) {
