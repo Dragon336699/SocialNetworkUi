@@ -11,7 +11,7 @@ import { apiAIClient } from '../environments/axiosClient'
 let connection: HubConnection | null = null
 
 export const chatService = {
-  async start() {
+  async start(onPrivateMessage?: (msg: MessageDto) => void, onNotification?: (noti: NotificationDto) => void) {
     if (connection) return connection
     connection = new HubConnectionBuilder()
       .withUrl(CHAT_HUB_URL, {
@@ -24,6 +24,13 @@ export const chatService = {
       .build()
 
     try {
+      if (onPrivateMessage) {
+        connection.on('ReceivePrivateMessage', onPrivateMessage)
+      }
+
+      if (onNotification) {
+        connection.on('SendPrivateNoti', onNotification)
+      }
       await connection.start()
       console.log('SinalR connected')
     } catch (err) {

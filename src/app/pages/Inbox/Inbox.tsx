@@ -72,32 +72,32 @@ const Inbox: React.FC<InboxProps> = () => {
 
   const loadMoreMessage = useCallback(async () => {
     if (isLoadingMore || !hasMore || !conversationId) return
-    
+
     setIsLoadingMore(true)
-    
+
     try {
       const scrollableDiv = document.getElementById('scrollableDiv')
       const oldScrollHeight = scrollableDiv?.scrollHeight || 0
-      
+
       // Tính skip mới để lấy tin nhắn cũ hơn
       const newSkip = skipMessages + takeMessages
-      
+
       const response = await messageService.getMessages(conversationId, newSkip, takeMessages)
       if (response.status === 200) {
         const dataResponse = response.data as ResponseHasData<MessageDto[]>
         const newMessages = dataResponse.data as MessageDto[]
-        
+
         // Kiểm tra nếu không còn tin nhắn nào
         if (newMessages.length < takeMessages) {
           setHasMore(false)
         }
-        
+
         // Load more: thêm tin nhắn cũ vào ĐẦU mảng
         setMessages((prevMessages) => [...newMessages, ...prevMessages])
-        
+
         // Cập nhật skip để lần sau load tiếp
         setSkipMessages(newSkip)
-        
+
         // Giữ vị trí scroll sau khi thêm tin nhắn cũ
         requestAnimationFrame(() => {
           if (scrollableDiv) {
@@ -272,7 +272,7 @@ const Inbox: React.FC<InboxProps> = () => {
     try {
       const scrollableDiv = document.getElementById('scrollableDiv')
       const oldScrollHeight = scrollableDiv?.scrollHeight || 0
-      
+
       const response = await messageService.getMessages(conversationId || '', skipMessages, takeMessages)
       if (response.status === 400) {
         const base = response.data as BaseResponse
@@ -280,12 +280,12 @@ const Inbox: React.FC<InboxProps> = () => {
       } else if (response.status === 200) {
         const dataResponse = response.data as ResponseHasData<MessageDto[]>
         const newMessages = dataResponse.data as MessageDto[]
-        
+
         // Kiểm tra nếu không còn tin nhắn nào
         if (newMessages.length < takeMessages) {
           setHasMore(false)
         }
-        
+
         if (firstTime) {
           // Lần đầu load: tin nhắn mới nhất ở cuối mảng (API trả về tin cũ nhất trước)
           setMessages(newMessages)
@@ -293,7 +293,7 @@ const Inbox: React.FC<InboxProps> = () => {
           // Load more: thêm tin nhắn cũ vào ĐẦU mảng
           // Tin nhắn cũ hơn sẽ được hiển thị ở trên
           setMessages((prevMessages) => [...newMessages, ...prevMessages])
-          
+
           // Giữ vị trí scroll sau khi thêm tin nhắn cũ
           requestAnimationFrame(() => {
             if (scrollableDiv) {
@@ -316,7 +316,7 @@ const Inbox: React.FC<InboxProps> = () => {
     if (newConversationId === conversationId) {
       return
     }
-    
+
     setMessages([])
     setSkipMessages(0)
     setIsFirstLoad(true)
@@ -329,12 +329,12 @@ const Inbox: React.FC<InboxProps> = () => {
   const updateItemInConversations = async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
     try {
       setConversations((prev) => {
-        const conversationExists = prev.some((conv) => conv.id === convId)     
+        const conversationExists = prev.some((conv) => conv.id === convId)
         if (!conversationExists && newestMessage) {
           fetchAllConversations()
           return prev
         }
-        
+
         return prev.map((conv) => {
           if (conv.id !== convId) return conv
           const updatedConv = { ...conv }
@@ -388,23 +388,21 @@ const Inbox: React.FC<InboxProps> = () => {
   }, [messages, isChatFocused, isInputFocused])
 
   useEffect(() => {
-    chatService.start().then(() => {
-      chatService.onReceivePrivateMessage(async (newReceivedMessage) => {       
-        updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
-      
-        if (conversationId !== undefined && newReceivedMessage.conversationId === conversationId) {
-          setMessages((prev) => [...prev, newReceivedMessage])     
-          setTimeout(() => {
-            scrollToBottom('smooth')
-          }, 100)
-        }
-        
-        const updateMessageStatus = await chatService.updateMessageStatus({
-          messageId: newReceivedMessage.id,
-          status: 'Delivered'
-        })
-        if (!updateMessageStatus) return
+    chatService.onReceivePrivateMessage(async (newReceivedMessage) => {
+      updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
+
+      if (conversationId !== undefined && newReceivedMessage.conversationId === conversationId) {
+        setMessages((prev) => [...prev, newReceivedMessage])
+        setTimeout(() => {
+          scrollToBottom('smooth')
+        }, 100)
+      }
+
+      const updateMessageStatus = await chatService.updateMessageStatus({
+        messageId: newReceivedMessage.id,
+        status: 'Delivered'
       })
+      if (!updateMessageStatus) return
     })
 
     return () => {
@@ -515,7 +513,7 @@ const Inbox: React.FC<InboxProps> = () => {
       // Multiple attempts to ensure scroll works with InfiniteScroll inverse
       const scrollAttempts = [100, 200, 300]
       const timers: NodeJS.Timeout[] = []
-      
+
       scrollAttempts.forEach((delay) => {
         const timer = setTimeout(() => {
           const scrollableDiv = document.getElementById('scrollableDiv')
@@ -526,15 +524,15 @@ const Inbox: React.FC<InboxProps> = () => {
         }, delay)
         timers.push(timer)
       })
-      
+
       // Set isFirstLoad to false after last attempt
       const finalTimer = setTimeout(() => {
         setIsFirstLoad(false)
       }, 350)
       timers.push(finalTimer)
-      
+
       return () => {
-        timers.forEach(timer => clearTimeout(timer))
+        timers.forEach((timer) => clearTimeout(timer))
       }
     }
   }, [messages, isFirstLoad, skipMessages])
@@ -625,25 +623,16 @@ const Inbox: React.FC<InboxProps> = () => {
             window.location.href = '/Inbox'
           }}
           onNicknameChanged={(userId: string, newNickname: string) => {
-            setConversationUsers(prev => 
-              prev.map(cu => 
-                cu.userId === userId 
-                  ? { ...cu, nickName: newNickname } 
-                  : cu
-              )
+            setConversationUsers((prev) =>
+              prev.map((cu) => (cu.userId === userId ? { ...cu, nickName: newNickname } : cu))
             )
           }}
           onGroupNameChanged={(newName: string) => {
-            setConversation(prev => 
-              prev ? { ...prev, conversationName: newName } : null
-            )
+            setConversation((prev) => (prev ? { ...prev, conversationName: newName } : null))
           }}
         />
 
-        <ChatDetails
-          conversation={conversation}
-          conversationId={conversationId}
-        />
+        <ChatDetails conversation={conversation} conversationId={conversationId} />
 
         <ModalNewMessage isModalOpen={isModalNewMessageOpen} onClose={() => setIsModalNewMessageOpen(false)} />
       </div>
