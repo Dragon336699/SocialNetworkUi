@@ -106,10 +106,15 @@ const Home = () => {
   })
 
   const handleAddFriend = async (userId: string) => {
-    const res = await relationService.addFriend(userId)
-    if (res.status === 200) {
-      message.success('Friend request sent')
-      setRequestedSuggestIds((prev) => [...prev, userId])
+    try {
+      const res = await relationService.addFriend(userId)
+      if (res.status === 200) {
+        message.success('Friend request sent')
+        setRequestedSuggestIds((prev) => [...prev, userId])
+      }
+    } catch (err) {
+      console.log('Error: ', err)
+      message.error('Error when sent request')
     }
   }
 
@@ -209,152 +214,162 @@ const Home = () => {
         onCreatePostSuccess={handleCreatePostSuccess}
         currentUser={userInfo}
       />
-      <div className='pt-6 max-xs:pt-4 px-0 sm:px-4 lg:pl-12 lg:pr-4 flex justify-center items-start gap-8'>
-        <div className='w-full max-w-[680px] flex-shrink-0'>
-          <div className='bg-white sm:rounded-lg p-4 mb-4 shadow-sm border border-gray-200 mx-auto'>
-            <div className='flex items-center gap-3 mb-3'>
-              <Avatar size={40} src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
-              <div
-                onClick={() => setIsOpenCreatePost(true)}
-                className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2.5 text-[#65676B] text-[17px] cursor-pointer transition-colors'
-              >
-                What's on your mind, {userInfo?.firstName}?
-              </div>
-            </div>
-            <Divider className='my-0' />
-          </div>
-
-          <div className='space-y-4 pb-10'>
-            {posts.length > 0 ? (
-              <>
-                {posts.map((feed) => (
-                  <Post
-                    key={feed.feedId}
-                    {...feed.post}
-                    feedId={feed.feedId}
-                    feedCreatedAt={feed.createdAt}
-                    currentUserId={userInfo?.id || ''}
-                    onPostUpdated={handlePostUpdated}
-                    onPostDeleted={handlePostDeleted}
-                    onSeen={addSeen}
-                    currentUser={userInfo}
-                  />
-                ))}
-
-                {loading && (
-                  <div className='text-center py-6'>
-                    <Spin />
-                    <div className='mt-2'>
-                      <Text type='secondary'>Loading more posts...</Text>
-                    </div>
-                  </div>
-                )}
-
-                {!loading && hasMore && (
-                  <div className='text-center py-6'>
-                    <Button onClick={loadMore} type='default' size='large' className='rounded-md'>
-                      Load more posts
-                    </Button>
-                  </div>
-                )}
-
-                {!hasMore && (
-                  <div className='text-center py-8'>
-                    <Text type='secondary'>🎉 You’ve reached the end of all posts!</Text>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
-                <Empty
-                  description={
-                    <div>
-                      <Title level={4} type='secondary'>
-                        No posts yet
-                      </Title>
-                      <Text type='secondary'>Be the first to share something interesting!</Text>
-                    </div>
-                  }
+      <div className='pt-6 max-xs:pt-4 px-2 sm:px-4 lg:pl-8 lg:pr-0 flex justify-center lg:justify-between items-start'>
+        <div className='w-full lg:flex-1 flex justify-center'>
+          <div className='w-full max-w-[680px]'>
+            <div className='bg-white sm:rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
+              <div className='flex items-center gap-3 mb-3'>
+                <Avatar
+                  size={40}
+                  src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
+                  className='border-2 border-gray-200'
+                />
+                <div
+                  onClick={() => setIsOpenCreatePost(true)}
+                  className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2.5 text-[#65676B] text-[17px] cursor-pointer transition-colors'
                 >
-                  <Button type='primary' onClick={() => setIsOpenCreatePost(true)} className='mt-4'>
-                    Create post
-                  </Button>
-                </Empty>
+                  What's on your mind, {userInfo?.firstName}?
+                </div>
               </div>
-            )}
+              <Divider className='my-0' />
+            </div>
+
+            <div className='space-y-4 pb-10'>
+              {posts.length > 0 ? (
+                <>
+                  {posts.map((feed) => (
+                    <Post
+                      key={feed.feedId}
+                      {...feed.post}
+                      feedId={feed.feedId}
+                      feedCreatedAt={feed.createdAt}
+                      currentUserId={userInfo?.id || ''}
+                      onPostUpdated={handlePostUpdated}
+                      onPostDeleted={handlePostDeleted}
+                      onSeen={addSeen}
+                      currentUser={userInfo}
+                    />
+                  ))}
+
+                  {loading && (
+                    <div className='text-center py-6'>
+                      <Spin />
+                      <div className='mt-2'>
+                        <Text type='secondary'>Loading more posts...</Text>
+                      </div>
+                    </div>
+                  )}
+
+                  {!loading && hasMore && (
+                    <div className='text-center py-6'>
+                      <Button onClick={loadMore} type='default' size='large' className='rounded-md'>
+                        Load more posts
+                      </Button>
+                    </div>
+                  )}
+
+                  {!hasMore && (
+                    <div className='text-center py-8'>
+                      <Text type='secondary'>🎉 You’ve reached the end of all posts!</Text>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
+                  <Empty
+                    description={
+                      <div>
+                        <Title level={4} type='secondary'>
+                          No posts yet
+                        </Title>
+                        <Text type='secondary'>Be the first to share something interesting!</Text>
+                      </div>
+                    }
+                  >
+                    <Button type='primary' onClick={() => setIsOpenCreatePost(true)} className='mt-4'>
+                      Create post
+                    </Button>
+                  </Empty>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className='hidden lg:block w-[320px] sticky top-[12px] self-start'>
-          <div className='px-2 ml-16'>
-            <div className='flex justify-between items-center mb-4 px-2'>
-              <Text className='font-semibold text-[#65676B] text-[17px]'>Contacts</Text>
-            </div>
+        <div className='hidden lg:block w-[320px] sticky top-[12px] self-start pr-4'>
+          <div className='flex flex-col h-[calc(100vh-20px)]'>
+            <div className='px-2'>
+              <div className='flex justify-between items-center mb-4 px-2'>
+                <Text className='font-semibold text-[#65676B] text-[17px]'>Contacts</Text>
+              </div>
 
-            <div className='space-y-1 max-h-[40vh] overflow-y-auto custom-scrollbar'>
-              {friendsList.map((friend) => (
-                <div
-                  key={friend.id}
-                  className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
-                  onClick={() => handleContactClick(friend.id)}
-                >
-                  <Badge dot status={friend.status === 'online' ? 'success' : 'default'} offset={[-4, 28]}>
-                    <Avatar
-                      size={36}
-                      src={friend.avatarUrl || DEFAULT_AVATAR_URL}
-                      className='border-2 border-gray-200'
-                    />
-                  </Badge>
-                  <span className='font-semibold text-[15px] text-[#050505]'>
-                    {friend.lastName} {friend.firstName}
-                  </span>
-                </div>
-              ))}
-              {friendsList.length === 0 && <Empty description='No friends' image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-            </div>
-
-            <Divider className='my-4' />
-
-            <div className='flex justify-between items-center mb-4 px-2'>
-              <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
-            </div>
-
-            <div className='space-y-4'>
-              {suggestUsers.map((req) => {
-                const isRequested = requestedSuggestIds.includes(req.user.id)
-                return (
-                  <div key={req.user.id} className='flex items-center justify-between group px-2'>
-                    <div
-                      className='flex gap-3 items-center overflow-hidden cursor-pointer'
-                      onClick={() => navigate(`/profile/${req.user.userName}`)}
-                    >
+              <div className='space-y-1 flex-1 overflow-y-auto h-[calc(100vh-420px)] custom-scrollbar px-2'>
+                {friendsList.map((friend) => (
+                  <div
+                    key={friend.id}
+                    className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
+                    onClick={() => handleContactClick(friend.id)}
+                  >
+                    <Badge dot status={friend.status === 'online' ? 'success' : 'default'} offset={[-4, 28]}>
                       <Avatar
-                        size={40}
-                        src={req.user.avatarUrl || DEFAULT_AVATAR_URL}
-                        className='border-2 border-gray-200 flex-shrink-0'
+                        size={36}
+                        src={friend.avatarUrl || DEFAULT_AVATAR_URL}
+                        className='border-2 border-gray-200'
                       />
-                      <div className='overflow-hidden'>
-                        <h4 className='font-semibold text-[15px] truncate m-0'>
-                          {req.user.lastName + ' ' + req.user.firstName}
-                        </h4>
-                        <Text type='secondary' className='text-[12px] block truncate'>
-                          {req.mutualFriendCount} mutual friends
-                        </Text>
-                      </div>
-                    </div>
-                    <Button
-                      type={isRequested ? 'default' : 'primary'}
-                      shape='circle'
-                      size='small'
-                      icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
-                      disabled={isRequested}
-                      onClick={() => handleAddFriend(req.user.id)}
-                      className={isRequested ? 'bg-green-50 text-green-600' : ''}
-                    />
+                    </Badge>
+                    <span className='font-semibold text-[15px] text-[#050505]'>
+                      {friend.lastName} {friend.firstName}
+                    </span>
                   </div>
-                )
-              })}
-              {suggestUsers.length === 0 && <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+                ))}
+                {friendsList.length === 0 && <Empty description='No friends' image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+              </div>
+
+              <Divider className='my-4 mx-2' />
+
+              <div className='flex justify-between items-center mb-4 px-2'>
+                <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
+              </div>
+
+              <div className='space-y-4 flex-1 overflow-y-auto h-[calc(100vh-480px)] custom-scrollbar px-2'>
+                {suggestUsers.map((req) => {
+                  const isRequested = requestedSuggestIds.includes(req.user.id)
+                  return (
+                    <div key={req.user.id} className='flex items-center justify-between group'>
+                      <div
+                        className='flex gap-3 items-center overflow-hidden cursor-pointer'
+                        onClick={() => navigate(`/profile/${req.user.userName}`)}
+                      >
+                        <Avatar
+                          size={40}
+                          src={req.user.avatarUrl || DEFAULT_AVATAR_URL}
+                          className='border-2 border-gray-200 flex-shrink-0'
+                        />
+                        <div className='overflow-hidden'>
+                          <h4 className='font-semibold text-[15px] truncate m-0'>
+                            {req.user.lastName + ' ' + req.user.firstName}
+                          </h4>
+                          <Text type='secondary' className='text-[12px] block truncate'>
+                            {req.mutualFriendCount} mutual friends
+                          </Text>
+                        </div>
+                      </div>
+                      <Button
+                        type={isRequested ? 'default' : 'primary'}
+                        shape='circle'
+                        size='small'
+                        icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
+                        disabled={isRequested}
+                        onClick={() => handleAddFriend(req.user.id)}
+                        className={isRequested ? 'bg-green-50 text-green-600' : ''}
+                      />
+                    </div>
+                  )
+                })}
+                {suggestUsers.length === 0 && (
+                  <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                )}
+              </div>
             </div>
           </div>
         </div>
