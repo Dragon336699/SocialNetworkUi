@@ -47,7 +47,9 @@ function App() {
         },
         () => {
           setUnreadNotis((prev: number) => prev + 1)
-        }
+        },
+        () => {},
+        () => {}
       )
   }, [isLoggedIn])
 
