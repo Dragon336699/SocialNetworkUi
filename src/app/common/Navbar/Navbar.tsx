@@ -1,4 +1,4 @@
-import { faComment, faHouse, faUsers, faUserFriends, faSearch, faBars } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faHouse, faUsers, faUserFriends, faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Badge, ConfigProvider, Menu, MenuProps, Dropdown } from 'antd'
 import Sider from 'antd/es/layout/Sider'
@@ -53,7 +53,6 @@ const Navbar: React.FC<NavbarProps & { onMenuClick?: () => void; isDrawer?: bool
 }) => {
   const navigate = useNavigate()
   const { unreadMessages } = useUnread()
-  const [showSearch, setShowSearch] = useState(false)
   const [items, setItems] = useState<MenuItem[]>([])
   // const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -78,8 +77,6 @@ const Navbar: React.FC<NavbarProps & { onMenuClick?: () => void; isDrawer?: bool
     if (e.key === 'Inbox') window.location.href = '/Inbox'
     else navigate(`/${e.key}`)
   }
-
-  const handleCollapseNavbar = () => setCollapsed(true)
 
   useEffect(() => {
     setItems((prev) => {

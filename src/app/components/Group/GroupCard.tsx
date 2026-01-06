@@ -1,6 +1,6 @@
-import { Button, Typography, Space, message, Avatar } from 'antd'
+import { Button, Typography, message, Avatar } from 'antd'
 import { UserOutlined, FileTextOutlined, EyeOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
-import { GroupDto, GroupRole } from '@/app/types/Group/group.dto'
+import { GroupDto } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -19,16 +19,7 @@ interface GroupCardProps {
   currentUserId?: string
 }
 
-const GroupCard = ({
-  group,
-  onGroupDeleted,
-  onGroupUpdated,
-  showActions = true,
-  isJoined = false,
-  isPending = false,
-  onJoinSuccess,
-  currentUserId = ''
-}: GroupCardProps) => {
+const GroupCard = ({ group, showActions = true, isJoined = false, isPending = false }: GroupCardProps) => {
   const [loading, setLoading] = useState(false)
   const [joined, setJoined] = useState(isJoined)
   const [pending, setPending] = useState(isPending)
@@ -37,7 +28,6 @@ const GroupCard = ({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -62,7 +52,6 @@ const GroupCard = ({
       message.success('Join request sent! Waiting for approval.')
       setPending(true)
       setJoined(false)
-      if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to send join request'
       message.error(errorMessage)
@@ -79,7 +68,6 @@ const GroupCard = ({
       setPending(false)
       setJoined(false)
       setShowPendingDropdown(false)
-      if (onJoinSuccess) onJoinSuccess()
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Unable to cancel request'
       message.error(errorMessage)

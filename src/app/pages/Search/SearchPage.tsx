@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Input, Spin, Empty, message, Avatar, Row, Col, Typography } from 'antd'
-import { SearchOutlined, UserOutlined, TeamOutlined, FileTextOutlined } from '@ant-design/icons'
+import { Spin, Empty, message, Avatar, Row, Col, Typography } from 'antd'
+import { UserOutlined, TeamOutlined, FileTextOutlined } from '@ant-design/icons'
 import { searchService } from '@/app/services/search.service'
 import { SearchType, SearchResultDto } from '@/app/types/Search/SearchType'
 import { userService } from '@/app/services/user.service'
@@ -44,8 +44,8 @@ const SearchPage: React.FC = () => {
   const [pendingGroupIds, setPendingGroupIds] = useState<string[]>([])
   const [friendIds, setFriendIds] = useState<string[]>([])
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([])
-  const [dropdownStates, setDropdownStates] = useState<{[key: string]: boolean}>({})
-  
+  const [dropdownStates, setDropdownStates] = useState<{ [key: string]: boolean }>({})
+
   // States cho Edit và Delete Post
   const [editingPost, setEditingPost] = useState<PostData | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -148,19 +148,6 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const handleSearchSubmit = async () => {
-    if (searchValue.trim()) {
-      try {
-        await searchService.saveSearchHistory(searchValue.trim(), undefined, undefined)
-      } catch (error) {
-        console.error('Error saving search history:', error)
-      }
-
-      setSearchParams({ q: searchValue.trim() })
-      handleSearch(searchValue.trim(), false)
-    }
-  }
-
   const handlePostUserClick = (e: React.MouseEvent, userName: string) => {
     e.stopPropagation()
     navigate(`/profile/${userName}`)
@@ -184,9 +171,7 @@ const SearchPage: React.FC = () => {
       return {
         ...prevResults,
         posts: prevResults.posts.map((post) =>
-          post.id === updatedPost.id 
-            ? { ...post, ...updatedPost, group: post.group } 
-            : post
+          post.id === updatedPost.id ? { ...post, ...updatedPost, group: post.group } : post
         )
       }
     })
@@ -339,7 +324,7 @@ const SearchPage: React.FC = () => {
     return (
       <Row gutter={[16, 16]}>
         {groups.map((group) => {
-          const userStatus = group.groupUsers?.find(gu => gu.userId === currentUser?.id)
+          const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
           const isJoined = userStatus && userStatus.roleName !== GroupRole.Pending
           const isPending = userStatus?.roleName === GroupRole.Pending
 
@@ -361,6 +346,7 @@ const SearchPage: React.FC = () => {
   }
 
   const renderPosts = () => {
+    // Backend already filters: private groups, pending approval posts, and private posts from others' profiles
     const posts = searchResults?.posts || []
 
     if (posts.length === 0) {
@@ -544,9 +530,9 @@ const SearchPage: React.FC = () => {
 
       <div className='flex min-h-screen bg-gray-50'>
         {/* Main Content */}
-        <div 
-          className='flex-1 min-w-0 overflow-y-auto main-content-scroll' 
-          style={{ 
+        <div
+          className='flex-1 min-w-0 overflow-y-auto main-content-scroll'
+          style={{
             maxHeight: '100vh',
             scrollbarWidth: 'thin',
             scrollbarColor: '#d1d5db #f9fafb'
@@ -572,7 +558,7 @@ const SearchPage: React.FC = () => {
         </div>
 
         {/* Right Sidebar - Menu */}
-        <div 
+        <div
           className='w-80 bg-white border-l border-gray-200 sticky top-0 h-screen overflow-y-auto sidebar-scroll z-[5] transition-all duration-300 flex-shrink-0'
           style={{
             scrollbarWidth: 'thin',
@@ -582,7 +568,9 @@ const SearchPage: React.FC = () => {
           <div className='p-4'>
             {/* Title */}
             <div className='mb-4'>
-              <Text strong className='text-xl'>Search</Text>
+              <Text strong className='text-xl'>
+                Search
+              </Text>
             </div>
 
             {/* Divider */}
@@ -593,18 +581,20 @@ const SearchPage: React.FC = () => {
               <div
                 onClick={() => setActiveTab('users')}
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeTab === 'users' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeTab === 'users' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeTab === 'users' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeTab === 'users' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
                   <UserOutlined className={`text-lg ${activeTab === 'users' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>Users</Text>
+                  <Text strong className='block'>
+                    Users
+                  </Text>
                   <Text type='secondary' className='text-xs'>
                     {searchResults?.totalUsersCount || 0} results
                   </Text>
@@ -614,18 +604,20 @@ const SearchPage: React.FC = () => {
               <div
                 onClick={() => setActiveTab('groups')}
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeTab === 'groups' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeTab === 'groups' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeTab === 'groups' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeTab === 'groups' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
                   <TeamOutlined className={`text-lg ${activeTab === 'groups' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>Groups</Text>
+                  <Text strong className='block'>
+                    Groups
+                  </Text>
                   <Text type='secondary' className='text-xs'>
                     {searchResults?.totalGroupsCount || 0} results
                   </Text>
@@ -635,18 +627,20 @@ const SearchPage: React.FC = () => {
               <div
                 onClick={() => setActiveTab('posts')}
                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeTab === 'posts' 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  activeTab === 'posts' ? 'bg-blue-50' : 'hover:bg-gray-100'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activeTab === 'posts' ? 'bg-blue-500' : 'bg-gray-200'
-                }`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activeTab === 'posts' ? 'bg-blue-500' : 'bg-gray-200'
+                  }`}
+                >
                   <FileTextOutlined className={`text-lg ${activeTab === 'posts' ? 'text-white' : 'text-gray-700'}`} />
                 </div>
                 <div className='flex-1'>
-                  <Text strong className='block'>Posts</Text>
+                  <Text strong className='block'>
+                    Posts
+                  </Text>
                   <Text type='secondary' className='text-xs'>
                     {searchResults?.totalPostsCount || 0} results
                   </Text>

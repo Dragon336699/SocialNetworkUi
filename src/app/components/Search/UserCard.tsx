@@ -1,8 +1,8 @@
 import { Button, Typography, Avatar, message } from 'antd'
-import { UserOutlined, UserAddOutlined, CheckOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import { UserOutlined, UserAddOutlined, CheckOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { UserDto } from '@/app/types/User/user.dto'
 import { relationService } from '@/app/services/relation.service'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const { Title, Text } = Typography
@@ -15,35 +15,76 @@ interface UserCardProps {
   onStatusChange?: () => void
 }
 
-const UserCard = ({
-  user,
-  currentUserId = '',
-  isFriend = false,
-  isPending = false,
-  onStatusChange
-}: UserCardProps) => {
+const UserCard = ({ user, currentUserId = '', isFriend = false, isPending = false }: UserCardProps) => {
   const [loading, setLoading] = useState(false)
   const [friendStatus, setFriendStatus] = useState(isFriend)
   const [pendingStatus, setPendingStatus] = useState(isPending)
+  const [showPendingDropdown, setShowPendingDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+
+  // Sync props with state when props change
+  useEffect(() => {
+    setFriendStatus(isFriend)
+  }, [isFriend])
+
+  useEffect(() => {
+    setPendingStatus(isPending)
+  }, [isPending])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPendingDropdown(false)
+      }
+    }
+
+    if (showPendingDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPendingDropdown])
 
   const handleAddFriend = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     try {
       setLoading(true)
-      const response = await relationService.addFriend(user.id)
-      if (response.status === 200) {
-        message.success('Friend request sent!')
-        setPendingStatus(true)
-        setFriendStatus(false)
-        if (onStatusChange) onStatusChange()
-      }
+      await relationService.addFriend(user.id)
+      message.success('Friend request sent!')
+      setPendingStatus(true)
+      setFriendStatus(false)
+      // Don't call onStatusChange here - state is already updated locally
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || 'Failed to send friend request'
       message.error(errorMessage)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCancelFriendRequest = async () => {
+    try {
+      setLoading(true)
+      await relationService.cancelFriendRequest(user.id)
+      message.success('Friend request cancelled!')
+      setPendingStatus(false)
+      setShowPendingDropdown(false)
+      // Don't call onStatusChange here - state is already updated locally
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to cancel friend request'
+      message.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePendingClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowPendingDropdown(!showPendingDropdown)
   }
 
   const handleViewProfile = () => {
@@ -57,12 +98,13 @@ const UserCard = ({
 
     if (friendStatus) {
       return (
-        <Button 
-          type='default' 
-          icon={<CheckOutlined />} 
-          disabled 
+        <Button
+          type='default'
+          icon={<CheckOutlined />}
+          disabled
           className='bg-gray-100 text-gray-600 border-gray-300'
           block
+          size='small'
         >
           Friends
         </Button>
@@ -71,52 +113,62 @@ const UserCard = ({
 
     if (pendingStatus) {
       return (
-        <Button
-          type='default'
-          icon={<ClockCircleOutlined />}
-          disabled
-          className='bg-blue-50 text-blue-600 border-blue-300'
-          block
-        >
-          Pending
-        </Button>
+        <div ref={dropdownRef} className='w-full relative'>
+          <Button
+            icon={<ClockCircleOutlined />}
+            onClick={handlePendingClick}
+            type='default'
+            loading={loading}
+            block
+            size='small'
+            className='bg-blue-50 text-blue-600 border-blue-300'
+          >
+            Pending
+          </Button>
+
+          {/* Custom Dropdown Menu */}
+          {showPendingDropdown && (
+            <div className='absolute left-0 top-full mt-1 w-full bg-white rounded shadow-md border border-gray-300 z-50'>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCancelFriendRequest()
+                }}
+                className='w-full flex items-center justify-center gap-1 px-2 py-1.5 hover:bg-red-50 text-left border-0 bg-transparent transition-colors'
+              >
+                <CloseOutlined className='text-xs text-red-500' />
+                <span className='text-xs font-medium text-red-500'>Cancel</span>
+              </button>
+            </div>
+          )}
+        </div>
       )
     }
 
     return (
-      <Button
-        type='primary'
-        icon={<UserAddOutlined />}
-        loading={loading}
-        onClick={handleAddFriend}
-        block
-      >
+      <Button type='primary' icon={<UserAddOutlined />} loading={loading} onClick={handleAddFriend} block size='small'>
         Add Friend
       </Button>
     )
   }
 
   return (
-    <div 
-      className='bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all cursor-pointer overflow-hidden'
+    <div
+      className='bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer'
       onClick={handleViewProfile}
-      style={{ height: '320px' }}
+      style={{ height: '220px' }}
     >
       <div className='flex flex-col h-full'>
         {/* Avatar Section - Top */}
-        <div className='h-40 flex-shrink-0 bg-gray-200'>
+        <div className='h-20 flex-shrink-0 bg-gray-200 overflow-hidden rounded-t-lg'>
           {user.avatarUrl ? (
-            <img 
-              src={user.avatarUrl} 
-              alt={user.userName} 
-              className='w-full h-full object-cover' 
-            />
+            <img src={user.avatarUrl} alt={user.userName} className='w-full h-full object-cover' />
           ) : (
             <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600'>
               <Avatar
-                size={80}
+                size={40}
                 style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-                className='text-white text-3xl font-bold'
+                className='text-white text-lg font-bold'
                 icon={<UserOutlined />}
               >
                 {user.userName[0]?.toUpperCase() || user.firstName?.[0]?.toUpperCase() || 'U'}
@@ -126,49 +178,36 @@ const UserCard = ({
         </div>
 
         {/* Content Section - Bottom */}
-        <div className='flex-1 p-4 flex flex-col' onClick={(e) => e.stopPropagation()}>
+        <div className='flex-1 p-2.5 flex flex-col overflow-visible' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className='mb-3'>
-            <Title 
-              level={5} 
-              className='mb-1 line-clamp-1 overflow-hidden' 
-              style={{ 
-                fontSize: '16px', 
+          <div className='mb-1.5'>
+            <Title
+              level={5}
+              className='mb-0.5 line-clamp-1 overflow-hidden'
+              style={{
+                fontSize: '13px',
                 fontWeight: 600
               }}
             >
               {user.userName}
             </Title>
-            <div className='border-b-2 border-gray-200'></div>
+            <div className='border-b border-gray-200'></div>
           </div>
-          
+
           {/* Info & Actions */}
           <div className='flex-1 flex flex-col justify-between'>
             {/* User Info */}
-            <div className='flex flex-col gap-2 mb-3'>
-              <div className='flex items-center gap-2'>
-                <UserOutlined className='text-black text-sm flex-shrink-0' />
-                <Text className='text-sm text-black font-medium line-clamp-1'>
+            <div className='flex flex-col gap-1 mb-1.5'>
+              <div className='flex items-center gap-1.5'>
+                <UserOutlined className='text-gray-600 text-xs flex-shrink-0' />
+                <Text className='text-xs text-gray-700 font-medium line-clamp-1'>
                   {`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'No name'}
                 </Text>
               </div>
-              {user.email && (
-                <div className='flex items-center gap-2'>
-                  <svg className='w-4 h-4 text-black flex-shrink-0' fill='currentColor' viewBox='0 0 20 20'>
-                    <path d='M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z' />
-                    <path d='M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z' />
-                  </svg>
-                  <Text className='text-sm text-black font-medium line-clamp-1'>
-                    {user.email}
-                  </Text>
-                </div>
-              )}
             </div>
 
             {/* Action Button */}
-            <div>
-              {renderActionButton()}
-            </div>
+            <div>{renderActionButton()}</div>
           </div>
         </div>
       </div>

@@ -1,5 +1,12 @@
 import { Modal, List, Avatar, Tag, Button, message, Popconfirm, Tooltip } from 'antd'
-import { CrownOutlined, UserOutlined, StarOutlined, DeleteOutlined, UserDeleteOutlined, CloseOutlined } from '@ant-design/icons'
+import {
+  CrownOutlined,
+  UserOutlined,
+  StarOutlined,
+  DeleteOutlined,
+  UserDeleteOutlined,
+  CloseOutlined
+} from '@ant-design/icons'
 import { GroupDto, GroupUserDto } from '@/app/types/Group/group.dto'
 import { groupService } from '@/app/services/group.service'
 import { useState } from 'react'
@@ -21,12 +28,13 @@ const ManageMembersModal = ({
 }: ManageMembersModalProps) => {
   const [loading, setLoading] = useState<string>('')
 
-  const currentUserRole = group.groupUsers?.find(gu => gu.userId === currentUserId)?.roleName || ''
+  const currentUserRole = group.groupUsers?.find((gu) => gu.userId === currentUserId)?.roleName || ''
   const isSuperAdmin = currentUserRole === 'SuperAdministrator'
   const isAdmin = currentUserRole === 'Administrator'
 
   const adminCount =
-    group.groupUsers?.filter(gu => gu.roleName === 'Administrator' || gu.roleName === 'SuperAdministrator').length || 0
+    group.groupUsers?.filter((gu) => gu.roleName === 'Administrator' || gu.roleName === 'SuperAdministrator').length ||
+    0
 
   const handlePromote = async (targetUserId: string) => {
     try {
@@ -125,7 +133,7 @@ const ManageMembersModal = ({
         if (adminCount >= 10) {
           actions.push(
             <Tooltip key='promote' title='Maximum 10 admins reached'>
-              <button 
+              <button
                 className='px-3 h-8 text-sm rounded border border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
                 disabled
               >
@@ -143,7 +151,7 @@ const ManageMembersModal = ({
               okText='Yes'
               cancelText='No'
             >
-              <button 
+              <button
                 className='px-3 h-8 text-sm font-semibold rounded border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50'
                 disabled={loading === member.userId}
               >
@@ -168,7 +176,7 @@ const ManageMembersModal = ({
             okText='Yes'
             cancelText='No'
           >
-            <button 
+            <button
               className='px-3 h-8 text-sm font-semibold rounded text-red-600 border-2 border-transparent hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center gap-1'
               disabled={loading === member.userId}
             >
@@ -195,9 +203,7 @@ const ManageMembersModal = ({
           description={
             <div className='flex flex-col gap-1'>
               <span>{kickReason}</span>
-              <span className='text-xs text-gray-500'>
-                {memberName} will be removed from the group.
-              </span>
+              <span className='text-xs text-gray-500'>{memberName} will be removed from the group.</span>
             </div>
           }
           onConfirm={() => handleKick(member.userId, memberName)}
@@ -205,7 +211,7 @@ const ManageMembersModal = ({
           cancelText='Cancel'
           okButtonProps={{ danger: true }}
         >
-          <button 
+          <button
             className='px-3 h-8 text-sm font-semibold rounded border-2 border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 transition-colors disabled:opacity-50 flex items-center gap-1'
             disabled={loading === member.userId}
           >
@@ -248,7 +254,7 @@ const ManageMembersModal = ({
   }
 
   const sortedMembers = [...(group.groupUsers || [])].sort((a, b) => {
-    const roleOrder = { 'SuperAdministrator': 0, 'Administrator': 1, 'User': 2 }
+    const roleOrder = { SuperAdministrator: 0, Administrator: 1, User: 2 }
     const roleA = roleOrder[a.roleName as keyof typeof roleOrder] ?? 3
     const roleB = roleOrder[b.roleName as keyof typeof roleOrder] ?? 3
     return roleA - roleB
@@ -261,9 +267,7 @@ const ManageMembersModal = ({
           <div className='flex flex-col gap-1'>
             <span className='text-lg font-semibold'>Manage Members</span>
             {!isSuperAdmin && !isAdmin && (
-              <span className='text-sm text-gray-500 font-normal'>
-                Only admins can manage members
-              </span>
+              <span className='text-sm text-gray-500 font-normal'>Only admins can manage members</span>
             )}
           </div>
           <Button
@@ -280,21 +284,21 @@ const ManageMembersModal = ({
       closable={false}
       centered={false}
       maskClosable={false}
-      style={{ 
-        borderRadius: '8px', 
+      style={{
+        borderRadius: '8px',
         overflow: 'visible',
         padding: 0,
         top: 50
       }}
       styles={{
-        content: { 
+        content: {
           padding: 0,
           border: '2px solid #E5E7EB',
           borderRadius: '8px',
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
           overflow: 'visible'
         },
-        body: { 
+        body: {
           padding: '0 24px 24px 24px',
           overflow: 'visible'
         },
@@ -310,7 +314,8 @@ const ManageMembersModal = ({
         </span>
         <span className='text-gray-400'>|</span>
         <span className='text-gray-600'>
-          Admins: <span className={`font-bold ${adminCount >= 10 ? 'text-red-500' : 'text-black'}`}>{adminCount}/10</span>
+          Admins:{' '}
+          <span className={`font-bold ${adminCount >= 10 ? 'text-red-500' : 'text-black'}`}>{adminCount}/10</span>
         </span>
       </div>
 
@@ -324,9 +329,7 @@ const ManageMembersModal = ({
 
       {!isSuperAdmin && !isAdmin && (
         <div className='mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200'>
-          <span className='text-sm text-blue-700'>
-            💡 Only the group owner and admins can manage members.
-          </span>
+          <span className='text-sm text-blue-700'>💡 Only the group owner and admins can manage members.</span>
         </div>
       )}
 
@@ -352,9 +355,7 @@ const ManageMembersModal = ({
               }
               description={
                 <div className='flex flex-col'>
-                  <span className='text-xs text-gray-600 font-medium'>
-                    {member.user?.email || 'No email'}
-                  </span>
+                  <span className='text-xs text-gray-600 font-medium'>{member.user?.email || 'No email'}</span>
                   <span className='text-xs text-gray-600'>
                     Joined: {new Date(member.joinedAt).toLocaleDateString('en-US')}
                   </span>

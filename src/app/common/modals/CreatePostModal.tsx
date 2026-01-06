@@ -6,7 +6,7 @@ import Picker from '@emoji-mart/react'
 import { TextAreaRef } from 'antd/es/input/TextArea'
 import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
-import { useUserStore } from '@/app/stores/auth'
+
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import useDevice from '@/app/hook/useDeivce'
 
@@ -14,7 +14,6 @@ const { TextArea } = Input
 const { Text } = Typography
 
 const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
-  const { user } = useUserStore()
   const { isMobile, isTablet } = useDevice()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')

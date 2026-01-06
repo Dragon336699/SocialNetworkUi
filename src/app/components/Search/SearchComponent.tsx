@@ -75,11 +75,11 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
       try {
         const response = await groupService.getMyGroups(0, 100)
         const approvedGroupIds = (response.groups || [])
-          .filter(group => {
-            const userStatus = group.groupUsers?.find(gu => gu.userId === currentUserId)
+          .filter((group) => {
+            const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUserId)
             return userStatus && userStatus.roleName !== GroupRole.Pending
           })
-          .map(group => group.id)
+          .map((group) => group.id)
         setMyGroupIds(approvedGroupIds)
       } catch (error) {
         console.error('Error fetching my groups:', error)
@@ -161,7 +161,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
     e.stopPropagation()
     try {
       await searchService.deleteSearchHistory(historyId)
-      setSearchHistory(prev => prev.filter(item => item.id !== historyId))
+      setSearchHistory((prev) => prev.filter((item) => item.id !== historyId))
       message.success('History cleared.')
     } catch (error) {
       console.error('Error deleting history:', error)
@@ -245,34 +245,36 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
       return (
         <div className='overflow-y-auto max-h-[400px]'>
           {/* Users */}
-          {users && users.map(user => (
-            <div
-              key={user.id}
-              className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
-              onClick={() => handleResultClick('user', user)}
-            >
-              <Avatar src={user.avatarUrl} size={36} icon={<UserOutlined />} className='border-2 border-gray-200' />
-              <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm truncate'>{user.userName}</div>
-                <div className='text-xs text-gray-500 truncate'>{user.firstName}</div>
+          {users &&
+            users.map((user) => (
+              <div
+                key={user.id}
+                className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
+                onClick={() => handleResultClick('user', user)}
+              >
+                <Avatar src={user.avatarUrl} size={36} icon={<UserOutlined />} className='border-2 border-gray-200' />
+                <div className='ml-3 flex-1 min-w-0'>
+                  <div className='font-semibold text-gray-900 text-sm truncate'>{user.userName}</div>
+                  <div className='text-xs text-gray-500 truncate'>{user.firstName}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
           {/* Groups */}
-          {groups && groups.map(group => (
-            <div
-              key={group.id}
-              className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
-              onClick={() => handleResultClick('group', group)}
-            >
-              <Avatar src={group.imageUrl} size={36} icon={<TeamOutlined />} className='border-2 border-gray-200' />
-              <div className='ml-3 flex-1 min-w-0'>
-                <div className='font-semibold text-gray-900 text-sm truncate'>{group.name}</div>
-                <div className='text-xs text-gray-500 truncate'>{group.isPublic ? 'Public' : 'Private'} Group</div>
+          {groups &&
+            groups.map((group) => (
+              <div
+                key={group.id}
+                className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors'
+                onClick={() => handleResultClick('group', group)}
+              >
+                <Avatar src={group.imageUrl} size={36} icon={<TeamOutlined />} className='border-2 border-gray-200' />
+                <div className='ml-3 flex-1 min-w-0'>
+                  <div className='font-semibold text-gray-900 text-sm truncate'>{group.name}</div>
+                  <div className='text-xs text-gray-500 truncate'>{group.isPublic ? 'Public' : 'Private'} Group</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       )
     }
@@ -297,7 +299,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
           </div>
         ) : (
           <div className='overflow-y-auto max-h-[400px]'>
-            {searchHistory.map(history => (
+            {searchHistory.map((history) => (
               <div
                 key={history.id}
                 className='flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors group'

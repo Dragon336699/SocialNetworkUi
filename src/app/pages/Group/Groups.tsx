@@ -11,6 +11,7 @@ import MyGroupsPage from './MyGroupsPage'
 import GroupsFeed from './GroupsFeed'
 import GroupsDiscover from './GroupsDiscover'
 import useDevice from '@/app/hook/useDeivce'
+import { useCallback } from 'react'
 
 const { Title, Text } = Typography
 
@@ -27,17 +28,71 @@ const Groups = () => {
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
   const [showAllGroups, setShowAllGroups] = useState(false)
 
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const response = await userService.getUserInfoByToken()
+      if (response.status === 200 && response.data && 'id' in response.data) {
+        setCurrentUser(response.data as UserDto)
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }, [])
+
+  const fetchMyGroups = useCallback(async () => {
+    if (!currentUser?.id) return
+    try {
+      setLoading(true)
+      const response = await groupService.getMyGroups(0, 50)
+
+      const approvedGroups = (response.groups || []).filter((group) => {
+        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser.id)
+        return userStatus && userStatus.roleName !== GroupRole.Pending
+      })
+
+      setMyGroups(approvedGroups)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Failed to fetch your groups'
+      message.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentUser?.id])
+
+  const handleSearch = useCallback(
+    async (term: string) => {
+      if (!currentUser?.id) return
+      try {
+        setSearchLoading(true)
+        const response = await groupService.searchMyGroups(term, 0, 50)
+
+        const approvedGroups = (response.groups || []).filter((group) => {
+          const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser.id)
+          return userStatus && userStatus.roleName !== GroupRole.Pending
+        })
+
+        setMyGroups(approvedGroups)
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || 'Failed to search groups'
+        message.error(errorMessage)
+        setMyGroups([])
+      } finally {
+        setSearchLoading(false)
+      }
+    },
+    [currentUser?.id]
+  )
+
   useEffect(() => {
     fetchCurrentUser()
-  }, [])
+  }, [fetchCurrentUser])
 
   useEffect(() => {
     if (currentUser?.id) {
       fetchMyGroups()
     }
-  }, [currentUser])
+  }, [currentUser?.id, fetchMyGroups])
 
-  // Phát hiện chế độ xem hiện tại từ URL
   useEffect(() => {
     if (location.pathname === '/groups') {
       setActiveView('feed')
@@ -46,12 +101,10 @@ const Groups = () => {
     } else if (location.pathname === '/groups/my-groups') {
       setActiveView('my-groups')
     } else if (location.pathname.startsWith('/groups/')) {
-      // Khi vào trang chi tiết nhóm, bỏ highlight tất cả menu items
       setActiveView(null)
     }
   }, [location.pathname])
 
-  // Debounce search term
   useEffect(() => {
     if (!currentUser?.id) return
 
@@ -64,62 +117,8 @@ const Groups = () => {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchTerm, currentUser])
+  }, [searchTerm, currentUser?.id, fetchMyGroups, handleSearch])
 
-  // Lấy thông tin người dùng hiện tại
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await userService.getUserInfoByToken()
-      if (response.status === 200 && response.data && 'id' in response.data) {
-        setCurrentUser(response.data as UserDto)
-      }
-    } catch (error) {
-      console.error('Error fetching current user:', error)
-    }
-  }
-
-  // Lấy danh sách nhóm của người dùng
-  const fetchMyGroups = async () => {
-    try {
-      setLoading(true)
-      const response = await groupService.getMyGroups(0, 50)
-
-      const approvedGroups = (response.groups || []).filter((group) => {
-        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
-        return userStatus && userStatus.roleName !== GroupRole.Pending
-      })
-
-      setMyGroups(approvedGroups)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to fetch your groups'
-      message.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Tìm kiếm nhóm
-  const handleSearch = async (term: string) => {
-    try {
-      setSearchLoading(true)
-      const response = await groupService.searchMyGroups(term, 0, 50)
-
-      const approvedGroups = (response.groups || []).filter((group) => {
-        const userStatus = group.groupUsers?.find((gu) => gu.userId === currentUser?.id)
-        return userStatus && userStatus.roleName !== GroupRole.Pending
-      })
-
-      setMyGroups(approvedGroups)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to search groups'
-      message.error(errorMessage)
-      setMyGroups([])
-    } finally {
-      setSearchLoading(false)
-    }
-  }
-
-  // Xử lý khi tạo nhóm thành công
   const handleCreateGroupSuccess = () => {
     setIsCreateModalOpen(false)
     setSearchTerm('')
@@ -127,14 +126,12 @@ const Groups = () => {
     fetchMyGroups()
   }
 
-  // Lấy danh sách hiển thị (5 nhóm đầu hoặc tất cả)
   const displayedGroups = showAllGroups || searchTerm.trim() ? myGroups : myGroups.slice(0, 5)
   const hasMoreGroups = myGroups.length > 5
 
   const isGroupDetailPage = location.pathname.startsWith('/groups/') && location.pathname.split('/').length === 3
   const currentGroupId = isGroupDetailPage ? location.pathname.split('/groups/')[1] : null
 
-  // Xử lý click menu
   const handleMenuClick = (view: 'feed' | 'discover' | 'my-groups') => {
     setActiveView(view)
     if (view === 'feed') {
@@ -146,7 +143,6 @@ const Groups = () => {
     }
   }
 
-  // Render nội dung chính
   const renderMainContent = () => {
     if (isGroupDetailPage) {
       return <Outlet />
@@ -206,7 +202,6 @@ const Groups = () => {
         }
       `}
       </style>
-
       <CreateGroupModal
         isModalOpen={isCreateModalOpen}
         handleCancel={() => setIsCreateModalOpen(false)}
@@ -411,3 +406,4 @@ const Groups = () => {
 }
 
 export default Groups
+

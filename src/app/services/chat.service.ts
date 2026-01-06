@@ -1,4 +1,4 @@
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
+import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { CHAT_HUB_URL } from '../environments/environment'
 import { SendMessageRequest } from '../types/Message/Requests/MessageReq'
 import { SendMessageResponse } from '../types/Message/Responses/messageResponses'
@@ -11,20 +11,48 @@ import { apiAIClient } from '../environments/axiosClient'
 let connection: HubConnection | null = null
 
 export const chatService = {
-  async start() {
+  async start(
+    onPrivateMessage?: (msg: MessageDto) => void,
+    onNotification?: (noti: NotificationDto) => void,
+    onUpdateUser?: (user: UserDto) => void,
+    onUpdateMessage?: (msg: MessageDto) => void
+  ) {
     if (connection) return connection
     connection = new HubConnectionBuilder()
-      .withUrl(CHAT_HUB_URL, { withCredentials: true })
+      .withUrl(CHAT_HUB_URL, {
+        withCredentials: true,
+        transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
+        skipNegotiation: false
+      })
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect()
       .build()
 
     try {
+      if (onPrivateMessage) {
+        connection.on('ReceivePrivateMessage', onPrivateMessage)
+      }
+
+      if (onNotification) {
+        connection.on('SendPrivateNoti', onNotification)
+      }
+
+      if (onUpdateUser) {
+        connection.on('UpdateUser', onUpdateUser)
+      }
+
+      if (onUpdateMessage) {
+        connection.on('UpdatedMessage', onUpdateMessage)
+      }
       await connection.start()
-      console.log('SinalR connected')
+      connection.on('ReceivePrivateMessage', (message: MessageDto) => {
+        window.dispatchEvent(new CustomEvent('new-private-message', { detail: message }))
+      })
     } catch (err) {
       console.log('SignalR connection failed', err)
     }
+    
+    return connection
   },
 
   onReceivePrivateMessage(callback: (privateResponse: MessageDto) => void) {
@@ -78,6 +106,14 @@ export const chatService = {
     connection.on('UpdatedMessage', callback)
   },
 
+  offUpdatedMessage() {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection?.off('UpdatedMessage')
+  },
+
   updateUser(callback: (user: UserDto) => void) {
     if (!connection) {
       console.log('Connection not ready yet!')
@@ -92,6 +128,14 @@ export const chatService = {
       return
     }
     connection.on('SendPrivateNoti', callback)
+  },
+
+  offUpdateNotification() {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection?.off('SendPrivateNoti')
   },
 
   async askChatbot(question: string): Promise<{ data: ResponseHasData<string>; status: number }> {

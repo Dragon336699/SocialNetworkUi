@@ -29,6 +29,18 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
     }
   }
 
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationService.getUnreadNotifications()
+      if (response.status === 200) {
+        const resData = response.data as ResponseHasData<number>
+        setUnreadNotis(resData.data as number)
+      }
+    } catch (err) {
+      return
+    }
+  }
+
   const formatNotiTime = (time: Date) => {
     const now = dayjs()
     const updated = dayjs(time)
@@ -105,18 +117,15 @@ const NotificationSide: React.FC<{ show: boolean }> = ({ show }) => {
     fetchNotifications()
     chatService.updateNotification((newNoti: NotificationDto) => {
       setNotifications((prevNotis) => {
-        const exists = prevNotis.some((noti) => noti.id === newNoti.id)
+        const existingNoti = prevNotis.find((noti) => noti.id === newNoti.id)
 
-        if (exists) {
-          // Update
-          setUnreadNotis((prev: number) => prev + 1)
+        if (existingNoti) {
           return prevNotis.map((noti) => (noti.id === newNoti.id ? newNoti : noti))
         } else {
-          // Thêm mới
-          setUnreadNotis((prev: number) => prev + 1)
           return [newNoti, ...prevNotis]
         }
       })
+      fetchUnreadCount()
     })
   }, [])
   return (

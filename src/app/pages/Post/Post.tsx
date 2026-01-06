@@ -31,6 +31,7 @@ interface PostProps extends PostData {
   currentUserId?: string
   currentUser: UserDto
   hideHeader?: boolean
+  isGroupAdmin?: boolean
 }
 
 const Post: React.FC<PostProps> = ({
@@ -50,7 +51,8 @@ const Post: React.FC<PostProps> = ({
   onSeen,
   currentUserId = '',
   currentUser,
-  hideHeader = false
+  hideHeader = false,
+  isGroupAdmin = false
 }) => {
   const navigate = useNavigate()
   const { isMobile } = useDevice()
@@ -248,7 +250,6 @@ const Post: React.FC<PostProps> = ({
         setReactions(updatedPost.postReactionUsers)
         setLocalTotalLiked(updatedPost.totalLiked)
 
-        // Gửi interaction nếu user reaction lần đầu
         const currentUserReaction = reactions.find((r) => r.userId === currentUserId)
         if (!currentUserReaction && updatedPost.userId) {
           interactionService.likePostOfUser(updatedPost.userId)
@@ -260,7 +261,7 @@ const Post: React.FC<PostProps> = ({
       } else {
         message.error(response.message || 'Reaction failed')
       }
-    } catch (error) {
+    } catch {
       message.error('An error occurred while reacting')
     }
   }
@@ -446,6 +447,7 @@ const Post: React.FC<PostProps> = ({
                 onClose={() => setShowDropdown(false)}
                 postId={id}
                 isOwner={currentUserId === user.id}
+                isGroupAdmin={isGroupAdmin}
                 {...handleDropdownActions}
               />
             </div>
@@ -475,7 +477,7 @@ const Post: React.FC<PostProps> = ({
         {/* Actions */}
         <div className='border-t border-gray-100 px-4 py-3'>
           <div className='space-y-3'>
-            {/* Row 1: Like, Comment buttons và Reactions Info */}
+            {/*Like, Comment buttons và Reactions Info */}
             <div className='flex items-center justify-between'>
               {/* Like and Comment buttons - Bên trái */}
               <div className='flex items-center space-x-4'>
@@ -543,7 +545,7 @@ const Post: React.FC<PostProps> = ({
               </div>
             </div>
 
-            {/* Row 2: Avatar + Comment input and Send button */}
+            {/* Avatar + Comment input and Send button */}
             <div className='flex items-center space-x-3'>
               {/* Avatar người dùng */}
               {!isMobile && (
@@ -648,7 +650,7 @@ const Post: React.FC<PostProps> = ({
               </div>
             </div>
 
-            {/* Row 3: Image preview */}
+            {/* Image preview */}
             {previewUrls.length > 0 && (
               <div className='flex justify-end pr-12 pl-[52px]'>
                 <div className='relative inline-block'>

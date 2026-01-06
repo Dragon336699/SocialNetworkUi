@@ -28,7 +28,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   return (
     <div>
       <div className='relative bg-gray-100 overflow-hidden'>
-        {/* HIỂN THỊ ẢNH CHÍNH */}
         <div className='relative w-full'>
           <img
             src={postImages[currentImageIndex].imageUrl}
@@ -37,7 +36,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             onClick={() => onImageClick(currentImageIndex)}
           />
 
-          {/* MŨI TÊN ĐIỀU HƯỚNG */}
           {imageCount > 1 && (
             <>
               {currentImageIndex > 0 && (
@@ -65,7 +63,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
           )}
         </div>
 
-        {/* CHẤM THUMBNAIL */}
         {imageCount > 1 && (
           <div className='absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2'>
             {postImages.map((_, index) => (
