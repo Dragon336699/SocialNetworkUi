@@ -102,6 +102,14 @@ export const chatService = {
     connection.on('UpdatedMessage', callback)
   },
 
+  offUpdatedMessage() {
+    if (!connection) {
+      console.log('Connection not ready yet!')
+      return
+    }
+    connection?.off('UpdatedMessage')
+  },
+
   updateUser(callback: (user: UserDto) => void) {
     if (!connection) {
       console.log('Connection not ready yet!')
