@@ -35,16 +35,13 @@ const PublicRoute = () => {
 
 function App() {
   const { isLoggedIn, user } = useUserStore()
-  const { setUnreadMessages } = useUnread()
   const { setUnreadNotis } = useUnread()
 
   useEffect(() => {
     useUserStore.getState().fetchUser()
     if (isLoggedIn)
       chatService.start(
-        () => {
-          setUnreadMessages((prev: number) => prev + 1)
-        },
+        undefined,
         () => {
           setUnreadNotis((prev: number) => prev + 1)
         },

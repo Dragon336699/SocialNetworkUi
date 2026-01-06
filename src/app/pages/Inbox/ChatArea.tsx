@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, Skeleton, Tooltip, Image, message, Dropdown, Modal } from 'antd'
-import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import {
+  PhoneOutlined,
+  SearchOutlined,
+  SendOutlined,
+  PlusOutlined,
+  CloseOutlined,
+  ArrowDownOutlined
+} from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCheck,
@@ -90,11 +97,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   setImagesPreview,
   audioUrl,
   setAudioUrl,
-  audioBlob,
   setAudioBlob,
   isRecording,
   setIsRecording,
-  isInputFocused,
   setIsInputFocused,
   firstMessageRef,
   newestMessageRef,
@@ -103,7 +108,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   streamRef,
   hasMore,
   isLoadingMore,
-  loadMoreMessage,
   handleSendMessage,
   handleSendReaction,
   onConversationDeleted,
@@ -217,33 +221,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   // Menu items
   const menuItems = [
-    ...(conversation?.type === 'Personal' ? [{
-      key: 'nickname',
-      label: (
-        <div className='flex items-center gap-2'>
-          <FontAwesomeIcon icon={faEdit} />
-          <span>Change Nickname</span>
-        </div>
-      ),
-      onClick: () => {
-        const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
-        setNewNickname(otherUser?.nickName || '')
-        setIsNicknameModalVisible(true)
-      }
-    }] : []),
-    ...(conversation?.type === 'Group' ? [{
-      key: 'groupname',
-      label: (
-        <div className='flex items-center gap-2'>
-          <FontAwesomeIcon icon={faSignature} />
-          <span>Change Group Name</span>
-        </div>
-      ),
-      onClick: () => {
-        setNewGroupName(conversation?.conversationName || '')
-        setIsGroupNameModalVisible(true)
-      }
-    }] : []),
+    ...(conversation?.type === 'Personal'
+      ? [
+          {
+            key: 'nickname',
+            label: (
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faEdit} />
+                <span>Change Nickname</span>
+              </div>
+            ),
+            onClick: () => {
+              const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
+              setNewNickname(otherUser?.nickName || '')
+              setIsNicknameModalVisible(true)
+            }
+          }
+        ]
+      : []),
+    ...(conversation?.type === 'Group'
+      ? [
+          {
+            key: 'groupname',
+            label: (
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faSignature} />
+                <span>Change Group Name</span>
+              </div>
+            ),
+            onClick: () => {
+              setNewGroupName(conversation?.conversationName || '')
+              setIsGroupNameModalVisible(true)
+            }
+          }
+        ]
+      : []),
     { type: 'divider' as const },
     {
       key: 'delete',
@@ -271,9 +283,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       setIsRecording(true)
       setRecordingDuration(0)
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1)
+        setRecordingDuration((prev) => prev + 1)
       }, 1000)
-    } catch (error) {
+    } catch {
       message.error('Cannot access microphone')
     }
   }
@@ -318,7 +330,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleFileChange = (e: any) => {
+  const handleFileChange = () => {
     message.info('File attachment coming soon!')
   }
 
@@ -365,13 +377,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       })
     }
   }
- 
+
   useEffect(() => {
     const scrollableDiv = document.getElementById('scrollableDiv')
     if (!scrollableDiv) return
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv     
+      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 300
       setShowScrollToBottom(!isNearBottom)
     }
@@ -392,7 +404,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
-      if (messageReactionBar && reactionBarRef.current && !reactionBarRef.current.contains(target) && !fullyReactionSelection) {
+      if (
+        messageReactionBar &&
+        reactionBarRef.current &&
+        !reactionBarRef.current.contains(target) &&
+        !fullyReactionSelection
+      ) {
         setMessageReactionBar(null)
       }
       if (fullyReactionSelection && pickerEmotionRef.current && !pickerEmotionRef.current.contains(target)) {
@@ -447,14 +464,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     <div className='flex-1 flex flex-col justify-between h-full overflow-hidden'>
       {/* Modals */}
       <Modal
-        title="Change Nickname"
+        title='Change Nickname'
         open={isNicknameModalVisible}
         onOk={handleChangeNickname}
         onCancel={() => setIsNicknameModalVisible(false)}
         confirmLoading={loading}
       >
         <Input
-          placeholder="Enter new nickname"
+          placeholder='Enter new nickname'
           value={newNickname}
           onChange={(e) => setNewNickname(e.target.value)}
           onPressEnter={handleChangeNickname}
@@ -462,14 +479,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       </Modal>
 
       <Modal
-        title="Change Group Name"
+        title='Change Group Name'
         open={isGroupNameModalVisible}
         onOk={handleChangeGroupName}
         onCancel={() => setIsGroupNameModalVisible(false)}
         confirmLoading={loading}
       >
         <Input
-          placeholder="Enter new group name"
+          placeholder='Enter new group name'
           value={newGroupName}
           onChange={(e) => setNewGroupName(e.target.value)}
           onPressEnter={handleChangeGroupName}
@@ -480,15 +497,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <div className='flex justify-between py-4 px-[20px] border-b border-gray-100 flex-shrink-0'>
         <div className='flex items-center gap-3'>
           {conversationUsers.length !== 0 && conversation?.type === 'Personal' && (
-            <div 
+            <div
               className='cursor-pointer hover:opacity-80 transition-opacity'
               onClick={() => {
                 const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
                 if (otherUser) handleAvatarClick(otherUser.user.userName)
               }}
             >
-              <Avatar 
-                size={48} 
+              <Avatar
+                size={48}
                 src={conversationUsers.find((u) => u.userId !== userInfo?.id)?.user.avatarUrl}
                 className='border-2 border-gray-200'
               />
@@ -496,9 +513,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           )}
 
           {conversationUsers.length !== 0 && conversation?.type === 'Group' && (
-            <Avatar.Group maxCount={2} maxStyle={{ backgroundColor: '#6b7280', width: '40px', height: '40px', lineHeight: '40px', border: '2px solid rgb(229, 231, 235)' }}>
+            <Avatar.Group
+              maxCount={2}
+              maxStyle={{
+                backgroundColor: '#6b7280',
+                width: '40px',
+                height: '40px',
+                lineHeight: '40px',
+                border: '2px solid rgb(229, 231, 235)'
+              }}
+            >
               {conversationUsers.map((cu) => (
-                <div key={cu.userId} className='cursor-pointer hover:opacity-80 transition-opacity inline-block' onClick={(e) => { e.stopPropagation(); handleAvatarClick(cu.user.userName) }}>
+                <div
+                  key={cu.userId}
+                  className='cursor-pointer hover:opacity-80 transition-opacity inline-block'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAvatarClick(cu.user.userName)
+                  }}
+                >
                   <Avatar size={40} src={cu.user.avatarUrl} className='border-2 border-gray-200' />
                 </div>
               ))}
@@ -514,7 +547,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   {conversationUsers.find((u) => u.userId !== userInfo?.id)?.nickName}
                 </h3>
                 <div className='text-xs text-gray-500 flex gap-1 items-center'>
-                  <span className={`select-none cursor-default text-xs ${receivers.find((u) => u.id !== userInfo?.id)?.status === 'Online' ? 'text-green-500' : 'text-gray-400'}`}>●</span>
+                  <span
+                    className={`select-none cursor-default text-xs ${receivers.find((u) => u.id !== userInfo?.id)?.status === 'Online' ? 'text-green-500' : 'text-gray-400'}`}
+                  >
+                    ●
+                  </span>
                   <p>{receivers.find((u) => u.id !== userInfo?.id)?.status}</p>
                 </div>
               </>
@@ -539,7 +576,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <SearchOutlined className='text-xl cursor-pointer text-gray-600 hover:text-gray-800' />
             <PhoneOutlined className='text-xl cursor-pointer text-gray-600 hover:text-gray-800' />
             <Dropdown menu={{ items: menuItems }} trigger={['click']} placement='bottomRight'>
-              <FontAwesomeIcon icon={faEllipsisVertical} className='text-xl cursor-pointer text-gray-600 hover:text-gray-800' />
+              <FontAwesomeIcon
+                icon={faEllipsisVertical}
+                className='text-xl cursor-pointer text-gray-600 hover:text-gray-800'
+              />
             </Dropdown>
           </div>
         )}
@@ -548,122 +588,214 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       {/* Body - Messages List */}
       {conversationId && (
         <div className='relative flex-1 overflow-hidden'>
-          <div 
-            id='scrollableDiv' 
-            className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'
-          >
-
-          {/* Loading indicator at top */}
-          {isLoadingMore && (
-            <div className='text-center py-3 text-gray-500'>
-              <div className='inline-flex items-center gap-2'>
-                <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
-                <span className='text-sm'>Loading older messages...</span>
+          <div id='scrollableDiv' className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'>
+            {/* Loading indicator at top */}
+            {isLoadingMore && (
+              <div className='text-center py-3 text-gray-500'>
+                <div className='inline-flex items-center gap-2'>
+                  <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
+                  <span className='text-sm'>Loading older messages...</span>
+                </div>
               </div>
-            </div>
-          )}
-          {!isLoadingMore && hasMore && (
-            <div className='text-center py-2 text-gray-400'>
-              <span className='text-sm'>↑ Scroll up to see older messages</span>
-            </div>
-          )}
-          {!hasMore && messages.length > 0 && (
-            <Divider plain>No more messages 🤐</Divider>
-          )}
-          
-          <List
-            className='w-full'
-            dataSource={messages}
-            renderItem={(item, index) => {
-              const isMe = item.sender?.id == userInfo?.id
-              const isFirst = index === 18
-              return (
-                <div
-                  id={`msg-${item.id}`}
-                  ref={isFirst ? firstMessageRef : null}
-                  className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
-                  key={item.id}
-                >
-                  {!isMe && (
-                    <a href='#' className='mr-2'>
-                      <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
-                    </a>
-                  )}
+            )}
+            {!isLoadingMore && hasMore && (
+              <div className='text-center py-2 text-gray-400'>
+                <span className='text-sm'>↑ Scroll up to see older messages</span>
+              </div>
+            )}
+            {!hasMore && messages.length > 0 && <Divider plain>No more messages 🤐</Divider>}
 
-                  <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
-                    <div className='flex items-center'>
-                      <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
-                        {item.repliedMessage && (
-                          item.repliedMessage.content !== '' ? (
-                            <p className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}>
+            <List
+              className='w-full'
+              dataSource={messages}
+              renderItem={(item, index) => {
+                const isMe = item.sender?.id == userInfo?.id
+                const isFirst = index === 18
+                return (
+                  <div
+                    id={`msg-${item.id}`}
+                    ref={isFirst ? firstMessageRef : null}
+                    className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
+                    key={item.id}
+                  >
+                    {!isMe && (
+                      <a href='#' className='mr-2'>
+                        <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
+                      </a>
+                    )}
+
+                    <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
+                      <div className='flex items-center'>
+                        <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
+                          {item.repliedMessage &&
+                            (item.repliedMessage.content !== '' ? (
+                              <p
+                                className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}
+                              >
                                 {item.repliedMessage.content}
                               </p>
                             ) : item.repliedMessage.messageAttachments[0]?.fileType === 'Image' ? (
                               item.repliedMessage.messageAttachments.map((img, idx) => (
-                                <Image key={idx} className='rounded-[28px]' width={150} height={150} src={img.fileUrl} />
+                                <Image
+                                  key={idx}
+                                  className='rounded-[28px]'
+                                  width={150}
+                                  height={150}
+                                  src={img.fileUrl}
+                                />
                               ))
                             ) : (
-                              <p className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}>Attachment</p>
-                            )
-                          )}
+                              <p
+                                className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}
+                              >
+                                Attachment
+                              </p>
+                            ))}
                           {(item.content !== '' || item.messageAttachments.length !== 0) && (
-                            <div className='flex flex-col items-end gap-2 relative' ref={index === messages.length - 1 ? newestMessageRef : null}>
-                              <ConfigProvider theme={{ components: { Tooltip: { colorBgSpotlight: 'transparent', colorTextLightSolid: '#8f8f8fff', boxShadowSecondary: 'none' }}}}>
-                                <Tooltip placement={isMe ? 'left' : 'right'} title={
-                                  <div className='flex gap-2'>
-                                    <FontAwesomeIcon onClick={() => { setMessageReactionBar(item.id); setfullyReactionSelection(null) }} className='cursor-pointer' icon={faFaceSmile} />
-                                    <FontAwesomeIcon onClick={() => { setRepliedMessagePreview(item); setfullyReactionSelection(null) }} className='cursor-pointer' icon={faReply} />
-                                  </div>
-                                }>
-                                  <div className={`${item.messageAttachments.length !== 0 && item.content != '' ? 'flex flex-col-reverse gap-2' : ''} relative inline-block rounded-[20px] break-all cursor-default`}>
+                            <div
+                              className='flex flex-col items-end gap-2 relative'
+                              ref={index === messages.length - 1 ? newestMessageRef : null}
+                            >
+                              <ConfigProvider
+                                theme={{
+                                  components: {
+                                    Tooltip: {
+                                      colorBgSpotlight: 'transparent',
+                                      colorTextLightSolid: '#8f8f8fff',
+                                      boxShadowSecondary: 'none'
+                                    }
+                                  }
+                                }}
+                              >
+                                <Tooltip
+                                  placement={isMe ? 'left' : 'right'}
+                                  title={
+                                    <div className='flex gap-2'>
+                                      <FontAwesomeIcon
+                                        onClick={() => {
+                                          setMessageReactionBar(item.id)
+                                          setfullyReactionSelection(null)
+                                        }}
+                                        className='cursor-pointer'
+                                        icon={faFaceSmile}
+                                      />
+                                      <FontAwesomeIcon
+                                        onClick={() => {
+                                          setRepliedMessagePreview(item)
+                                          setfullyReactionSelection(null)
+                                        }}
+                                        className='cursor-pointer'
+                                        icon={faReply}
+                                      />
+                                    </div>
+                                  }
+                                >
+                                  <div
+                                    className={`${item.messageAttachments.length !== 0 && item.content != '' ? 'flex flex-col-reverse gap-2' : ''} relative inline-block rounded-[20px] break-all cursor-default`}
+                                  >
                                     {item.content !== '' && (
-                                      <p className={`${isMe ? 'bg-sky-400' : 'bg-gray-300'} p-[12px] rounded-[20px]`}>{item.content}</p>
+                                      <p className={`${isMe ? 'bg-sky-400' : 'bg-gray-300'} p-[12px] rounded-[20px]`}>
+                                        {item.content}
+                                      </p>
                                     )}
                                     {item.messageAttachments.length !== 0 && (
                                       <div className='flex gap-2 flex-wrap mt-2'>
-                                        {item.messageAttachments.map((att, idx) => (
+                                        {item.messageAttachments.map((att, idx) =>
                                           att.fileType === 'Image' ? (
-                                            <Image key={idx} className='rounded-[28px]' width={150} height={150} src={att.fileUrl} />
+                                            <Image
+                                              key={idx}
+                                              className='rounded-[28px]'
+                                              width={150}
+                                              height={150}
+                                              src={att.fileUrl}
+                                            />
                                           ) : att.fileType === 'Voice' ? (
-                                            <div key={idx} className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}>
+                                            <div
+                                              key={idx}
+                                              className={`rounded-3xl ${isMe ? 'bg-sky-300' : 'bg-gray-300'}`}
+                                            >
                                               <VoiceWave url={att.fileUrl} />
                                             </div>
-                                          ) : <p key={idx}>Error</p>
-                                        ))}
+                                          ) : (
+                                            <p key={idx}>Error</p>
+                                          )
+                                        )}
                                       </div>
                                     )}
                                   </div>
                                 </Tooltip>
 
                                 {item.messageReactionUsers.length !== 0 && (
-                                  <div className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'} flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}>
-                                    {[...new Set(item.messageReactionUsers.map((u) => u.reaction))].slice(0, 4).map((emoji) => <div key={emoji}>{emoji}</div>)}
-                                    {item.messageReactionUsers.length > 1 && <p className='text-white'>{item.messageReactionUsers.length}</p>}
+                                  <div
+                                    className={`cursor-pointer absolute ${isMe ? 'left-[0]' : 'right-[0]'} ${index === messages.length - 1 && isMe ? 'bottom-[6px]' : 'bottom-[-12px]'} flex gap-1 text-sm bg-black py-[2px] px-[8px] rounded-[30px]`}
+                                  >
+                                    {[...new Set(item.messageReactionUsers.map((u) => u.reaction))]
+                                      .slice(0, 4)
+                                      .map((emoji) => (
+                                        <div key={emoji}>{emoji}</div>
+                                      ))}
+                                    {item.messageReactionUsers.length > 1 && (
+                                      <p className='text-white'>{item.messageReactionUsers.length}</p>
+                                    )}
                                   </div>
                                 )}
 
                                 {messageReactionBar === item.id && (
-                                  <div ref={reactionBarRef} className={`z-[100] flex gap-2 bg-gray-500 text-white rounded-[20px] py-[8px] px-[14px] absolute ${isMe ? 'left-[-150px]' : 'right-[-160px]'} top-[-50px]`}>
+                                  <div
+                                    ref={reactionBarRef}
+                                    className={`z-[100] flex gap-2 bg-gray-500 text-white rounded-[20px] py-[8px] px-[14px] absolute ${isMe ? 'left-[-150px]' : 'right-[-160px]'} top-[-50px]`}
+                                  >
                                     {reactions.map((r) => (
-                                      <div key={r} onClick={() => handleSendReaction(item.id, r)} className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>{r}</div>
+                                      <div
+                                        key={r}
+                                        onClick={() => handleSendReaction(item.id, r)}
+                                        className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'
+                                      >
+                                        {r}
+                                      </div>
                                     ))}
                                     <div className='text-lg cursor-pointer transition-transform duration-150 hover:-translate-y-1 hover:scale-110'>
-                                      <FontAwesomeIcon onClick={() => { setfullyReactionSelection(item.id); setMessageReactionBar(null) }} icon={faPlus} />
+                                      <FontAwesomeIcon
+                                        onClick={() => {
+                                          setfullyReactionSelection(item.id)
+                                          setMessageReactionBar(null)
+                                        }}
+                                        icon={faPlus}
+                                      />
                                     </div>
                                   </div>
                                 )}
 
                                 {fullyReactionSelection === item.id && (
-                                  <div className={`absolute z-[200] ${isMe ? 'left-[-300px]' : 'right-[-300px]'} top-[-437px]`} ref={pickerEmotionRef}>
-                                    <Picker previewPosition='none' data={data} onEmojiSelect={(emoji: any) => handleSendReaction(item.id, emoji.native)} />
+                                  <div
+                                    className={`absolute z-[200] ${isMe ? 'left-[-300px]' : 'right-[-300px]'} top-[-437px]`}
+                                    ref={pickerEmotionRef}
+                                  >
+                                    <Picker
+                                      previewPosition='none'
+                                      data={data}
+                                      onEmojiSelect={(emoji: any) => handleSendReaction(item.id, emoji.native)}
+                                    />
                                   </div>
                                 )}
 
                                 {isMe && index === messages.length - 1 && (
                                   <>
-                                    {item.status === 'Sent' && <Tooltip placement='left' title={item.status}><FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} /></Tooltip>}
-                                    {item.status === 'Delivered' && <Tooltip placement='left' title={item.status}><FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} /></Tooltip>}
-                                    {item.status === 'Seen' && <Tooltip placement='left' title={item.status}><FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} /></Tooltip>}
+                                    {item.status === 'Sent' && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheck} />
+                                      </Tooltip>
+                                    )}
+                                    {item.status === 'Delivered' && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faCheckDouble} />
+                                      </Tooltip>
+                                    )}
+                                    {item.status === 'Seen' && (
+                                      <Tooltip placement='left' title={item.status}>
+                                        <FontAwesomeIcon className='mr-[8px] opacity-[0.4]' icon={faEye} />
+                                      </Tooltip>
+                                    )}
                                   </>
                                 )}
                               </ConfigProvider>
@@ -684,7 +816,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               }}
             />
           </div>
-          
+
           {/* Scroll to bottom button */}
           {showScrollToBottom && (
             <button
@@ -705,7 +837,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             {imagesPreview.map((image, index) => (
               <div key={index} className='relative inline-block'>
                 <Image className='rounded-[12px] select-none' width={90} height={90} src={image} />
-                <button onClick={() => removePreviewImage(index)} className='absolute -top-2 -right-2 bg-gray-800 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-900'>
+                <button
+                  onClick={() => removePreviewImage(index)}
+                  className='absolute -top-2 -right-2 bg-gray-800 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-900'
+                >
                   <CloseOutlined className='text-xs' />
                 </button>
               </div>
@@ -716,11 +851,20 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         {audioUrl && (
           <div className='mb-[8px]'>
             <div className='p-3 bg-gray-100 rounded-full max-w-md flex items-center gap-3'>
-              <button onClick={togglePreviewRecord} className='w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'>
+              <button
+                onClick={togglePreviewRecord}
+                className='w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'
+              >
                 <FontAwesomeIcon icon={!previewVoicePlaying ? faPlay : faPause} className='text-xs' />
               </button>
               <div ref={waveformRef} className='flex-1'></div>
-              <button onClick={() => { setAudioUrl(null); setAudioBlob(null) }} className='w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200'>
+              <button
+                onClick={() => {
+                  setAudioUrl(null)
+                  setAudioBlob(null)
+                }}
+                className='w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200'
+              >
                 <CloseOutlined className='text-sm' />
               </button>
             </div>
@@ -732,15 +876,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <div className='flex justify-between items-start gap-2'>
               <div className='flex-1 min-w-0'>
                 <p className='text-sm font-bold mb-1'>Replying to {repliedMessagePreview.sender.firstName}</p>
-                {repliedMessagePreview.content === '' && repliedMessagePreview.messageAttachments[0]?.fileType === 'Image' ? (
-                  repliedMessagePreview.messageAttachments.map((img, i) => <Image key={i} className='rounded-[12px]' width={80} height={80} src={img.fileUrl} />)
+                {repliedMessagePreview.content === '' &&
+                repliedMessagePreview.messageAttachments[0]?.fileType === 'Image' ? (
+                  repliedMessagePreview.messageAttachments.map((img, i) => (
+                    <Image key={i} className='rounded-[12px]' width={80} height={80} src={img.fileUrl} />
+                  ))
                 ) : repliedMessagePreview.content === '' ? (
                   <p className='text-xs text-[#000000ab]'>Attachment</p>
                 ) : (
                   <p className='text-xs text-[#000000ab] break-words'>{repliedMessagePreview.content}</p>
                 )}
               </div>
-              <FontAwesomeIcon className='cursor-pointer text-gray-600 hover:text-gray-800' onClick={() => setRepliedMessagePreview(null)} icon={faXmark} />
+              <FontAwesomeIcon
+                className='cursor-pointer text-gray-600 hover:text-gray-800'
+                onClick={() => setRepliedMessagePreview(null)}
+                icon={faXmark}
+              />
             </div>
           </div>
         )}
@@ -753,13 +904,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   <div className='w-3 h-3 bg-red-500 rounded-full animate-pulse'></div>
                   <span className='text-sm font-medium text-gray-700'>{formatDuration(recordingDuration)}</span>
                   <div className='flex-1 h-8 bg-gray-200 rounded-full overflow-hidden relative'>
-                    <div className='h-full bg-blue-500 rounded-full transition-all duration-300' style={{ width: `${Math.min((recordingDuration / 60) * 100, 100)}%` }}></div>
+                    <div
+                      className='h-full bg-blue-500 rounded-full transition-all duration-300'
+                      style={{ width: `${Math.min((recordingDuration / 60) * 100, 100)}%` }}
+                    ></div>
                   </div>
                 </div>
                 <button onClick={cancelRecording} className='text-gray-600 hover:text-gray-800 p-2'>
                   <FontAwesomeIcon icon={faXmark} className='text-lg' />
                 </button>
-                <button onClick={stopRecording} className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'>
+                <button
+                  onClick={stopRecording}
+                  className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'
+                >
                   <FontAwesomeIcon icon={faCircleStop} />
                 </button>
               </div>
@@ -768,14 +925,30 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 {!text.trim() && (
                   <div className='flex items-center gap-2'>
                     <input ref={attachFileInputRef} hidden type='file' onChange={handleFileChange} />
-                    <button onClick={() => attachFileInputRef.current?.click()} className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'>
+                    <button
+                      onClick={() => attachFileInputRef.current?.click()}
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
+                    >
                       <FontAwesomeIcon icon={faPaperclip} className='text-lg' />
                     </button>
-                    <input ref={fileInputRef} hidden type='file' multiple accept='image/*' onChange={handleImagesFileChange} />
-                    <button onClick={() => fileInputRef.current?.click()} className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'>
+                    <input
+                      ref={fileInputRef}
+                      hidden
+                      type='file'
+                      multiple
+                      accept='image/*'
+                      onChange={handleImagesFileChange}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
+                    >
                       <FontAwesomeIcon icon={faImage} className='text-lg' />
                     </button>
-                    <button onClick={startRecording} className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'>
+                    <button
+                      onClick={startRecording}
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
+                    >
                       <FontAwesomeIcon icon={faMicrophone} className='text-lg' />
                     </button>
                   </div>
@@ -783,20 +956,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
                 {text.trim() && (
                   <div className='relative' ref={attachMenuRef}>
-                    <button onClick={() => setShowAttachMenu(!showAttachMenu)} className='w-10 h-10 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-50'>
+                    <button
+                      onClick={() => setShowAttachMenu(!showAttachMenu)}
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-50'
+                    >
                       <PlusOutlined className='text-lg' />
                     </button>
                     {showAttachMenu && (
                       <div className='absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden w-40 z-50'>
-                        <button onClick={() => { document.getElementById('attachFileInputMenu')?.click(); setShowAttachMenu(false) }} className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'>
+                        <button
+                          onClick={() => {
+                            document.getElementById('attachFileInputMenu')?.click()
+                            setShowAttachMenu(false)
+                          }}
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                        >
                           <FontAwesomeIcon icon={faPaperclip} className='w-4' />
                           <span>File</span>
                         </button>
-                        <button onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false) }} className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'>
+                        <button
+                          onClick={() => {
+                            fileInputRef.current?.click()
+                            setShowAttachMenu(false)
+                          }}
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                        >
                           <FontAwesomeIcon icon={faImage} className='w-4' />
                           <span>Image</span>
                         </button>
-                        <button onClick={() => { startRecording(); setShowAttachMenu(false) }} className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'>
+                        <button
+                          onClick={() => {
+                            startRecording()
+                            setShowAttachMenu(false)
+                          }}
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                        >
                           <FontAwesomeIcon icon={faMicrophone} className='w-4' />
                           <span>Voice</span>
                         </button>
@@ -815,23 +1009,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                       onBlur={() => setIsInputFocused(false)}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() }}}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
                       rows={1}
                     />
                     <div className='flex-shrink-0 ml-2' ref={emojiPickerRef}>
-                      <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className='text-gray-600 hover:text-gray-800 p-1'>
+                      <button
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className='text-gray-600 hover:text-gray-800 p-1'
+                      >
                         <FontAwesomeIcon icon={faFaceSmile} className='text-base' />
                       </button>
                       {showEmojiPicker && (
                         <div className='absolute bottom-full right-0 mb-2 z-50'>
-                          <Picker data={data} onEmojiSelect={handleEmojiSelect} previewPosition='none' theme='light' perLine={8} emojiSize={20} />
+                          <Picker
+                            data={data}
+                            onEmojiSelect={handleEmojiSelect}
+                            previewPosition='none'
+                            theme='light'
+                            perLine={8}
+                            emojiSize={20}
+                          />
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <button onClick={handleSendMessage} className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'>
+                <button
+                  onClick={handleSendMessage}
+                  className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'
+                >
                   <SendOutlined className='text-lg' />
                 </button>
               </>

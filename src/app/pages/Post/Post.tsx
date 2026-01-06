@@ -6,6 +6,7 @@ import ImageModal from './ImageModal'
 import EditPostModal from './EditPostModal'
 import DeletePostModal from './DeletePostModal'
 import PostReaction from './PostReaction'
+import ReactionUsersModal from '@/app/common/Modals/ReactionUsersModal'
 import { Button, message } from 'antd'
 import { postService } from '@/app/services/post.service'
 import { commentService } from '@/app/services/comment.service'
@@ -75,6 +76,7 @@ const Post: React.FC<PostProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [showReactionUsersModal, setShowReactionUsersModal] = useState(false)
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
@@ -511,7 +513,10 @@ const Post: React.FC<PostProps> = ({
               {/* Reactions Info - Bên phải */}
               <div className='flex items-center gap-2'>
                 {postReactionUsers && postReactionUsers.length > 0 && (
-                  <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10'>
+                  <div 
+                    className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 cursor-pointer hover:bg-gray-200 transition-colors'
+                    onClick={() => setShowReactionUsersModal(true)}
+                  >
                     <div className='flex items-center -space-x-1'>
                       {Array.from(new Set(postReactionUsers.map((r) => r.reaction)))
                         .slice(0, 3)
@@ -704,6 +709,13 @@ const Post: React.FC<PostProps> = ({
           onPostDeleted={onPostDeleted}
         />
       )}
+
+      <ReactionUsersModal
+        isOpen={showReactionUsersModal}
+        onClose={() => setShowReactionUsersModal(false)}
+        reactions={reactions}
+        totalLiked={localTotalLiked}
+      />
     </>
   )
 }

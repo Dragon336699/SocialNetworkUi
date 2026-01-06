@@ -32,7 +32,6 @@ const Inbox: React.FC<InboxProps> = () => {
   const messageEndRef = useRef<HTMLDivElement | null>(null)
   const recorderRef = useRef<RecordRTC | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const scrollableDivRef = useRef<HTMLDivElement | null>(null)
 
   const [conversation, setConversation] = useState<ConversationDto | null>(null)
   const [conversationUsers, setConversationUsers] = useState<ConversationUserDto[]>([])
@@ -79,7 +78,6 @@ const Inbox: React.FC<InboxProps> = () => {
       const scrollableDiv = document.getElementById('scrollableDiv')
       const oldScrollHeight = scrollableDiv?.scrollHeight || 0
 
-      // Tính skip mới để lấy tin nhắn cũ hơn
       const newSkip = skipMessages + takeMessages
 
       const response = await messageService.getMessages(conversationId, newSkip, takeMessages)
@@ -87,18 +85,11 @@ const Inbox: React.FC<InboxProps> = () => {
         const dataResponse = response.data as ResponseHasData<MessageDto[]>
         const newMessages = dataResponse.data as MessageDto[]
 
-        // Kiểm tra nếu không còn tin nhắn nào
         if (newMessages.length < takeMessages) {
           setHasMore(false)
         }
-
-        // Load more: thêm tin nhắn cũ vào ĐẦU mảng
         setMessages((prevMessages) => [...newMessages, ...prevMessages])
-
-        // Cập nhật skip để lần sau load tiếp
         setSkipMessages(newSkip)
-
-        // Giữ vị trí scroll sau khi thêm tin nhắn cũ
         requestAnimationFrame(() => {
           if (scrollableDiv) {
             const newScrollHeight = scrollableDiv.scrollHeight
@@ -120,18 +111,14 @@ const Inbox: React.FC<InboxProps> = () => {
     formData.append('conversationId', conversationId || '')
     if (repliedMessagePreview !== null) formData.append('repliedMessageId', repliedMessagePreview.id)
 
-    // Ưu tiên gửi voice nếu đang có voice recording
     if (audioUrl !== null && audioBlob !== null) {
-      // Gửi voice, KHÔNG gửi text (giữ lại text)
-      formData.append('content', '') // Không gửi text
+      formData.append('content', '')
       formData.append('files', new File([audioBlob], `${userInfo?.id}_${Date.now()}_voice.wav`, { type: 'audio/wav' }))
       formData.append('fileType', 'Voice')
       setAudioBlob(null)
       setAudioUrl(null)
       onSendMessage(formData)
-    }
-    // Gửi ảnh và text
-    else if (imageFiles.length !== 0 && audioUrl === null) {
+    } else if (imageFiles.length !== 0 && audioUrl === null) {
       formData.append('content', text)
       imageFiles.forEach((file) => {
         formData.append('files', file)
@@ -143,9 +130,7 @@ const Inbox: React.FC<InboxProps> = () => {
       }
       setImageFiles([])
       setImagesPreview([])
-    }
-    // Chỉ gửi text
-    else if (imageFiles.length === 0 && audioUrl === null) {
+    } else if (imageFiles.length === 0 && audioUrl === null) {
       if (text.trim() !== '') {
         formData.append('content', text)
         onSendMessage(formData)
@@ -204,7 +189,7 @@ const Inbox: React.FC<InboxProps> = () => {
     }
   }
 
-  const fetchConversation = async () => {
+  const fetchConversation = useCallback(async () => {
     try {
       const response = await conversationService.getConversation(conversationId || '')
       if (response.status === 400) {
@@ -217,7 +202,7 @@ const Inbox: React.FC<InboxProps> = () => {
     } catch (err) {
       return
     }
-  }
+  }, [conversationId])
 
   const fetchAllConversations = async () => {
     try {
@@ -234,7 +219,7 @@ const Inbox: React.FC<InboxProps> = () => {
     }
   }
 
-  const fetchConversationUsers = async () => {
+  const fetchConversationUsers = useCallback(async () => {
     try {
       const response = await conversationUserService.getConversationUser({
         senderId: userInfo?.id || '',
@@ -251,9 +236,9 @@ const Inbox: React.FC<InboxProps> = () => {
     } catch (err) {
       return
     }
-  }
+  }, [conversationId, conversation?.type, userInfo?.id])
 
-  const fetchReceiversInfo = async () => {
+  const fetchReceiversInfo = useCallback(async () => {
     try {
       let userIds: string[] = []
       if (conversation?.type === 'Personal') {
@@ -266,53 +251,49 @@ const Inbox: React.FC<InboxProps> = () => {
     } catch (err) {
       message.error('Error while getting receiver information!')
     }
-  }
+  }, [conversation, conversationUsers, userInfo?.id])
 
-  const getMessages = async (firstTime: boolean) => {
-    try {
-      const scrollableDiv = document.getElementById('scrollableDiv')
-      const oldScrollHeight = scrollableDiv?.scrollHeight || 0
+  const getMessages = useCallback(async (firstTime: boolean) => {
+      try {
+        const scrollableDiv = document.getElementById('scrollableDiv')
+        const oldScrollHeight = scrollableDiv?.scrollHeight || 0
 
-      const response = await messageService.getMessages(conversationId || '', skipMessages, takeMessages)
-      if (response.status === 400) {
-        const base = response.data as BaseResponse
-        message.error(base.message)
-      } else if (response.status === 200) {
-        const dataResponse = response.data as ResponseHasData<MessageDto[]>
-        const newMessages = dataResponse.data as MessageDto[]
+        const response = await messageService.getMessages(conversationId || '', skipMessages, takeMessages)
+        if (response.status === 400) {
+          const base = response.data as BaseResponse
+          message.error(base.message)
+        } else if (response.status === 200) {
+          const dataResponse = response.data as ResponseHasData<MessageDto[]>
+          const newMessages = dataResponse.data as MessageDto[]
 
-        // Kiểm tra nếu không còn tin nhắn nào
-        if (newMessages.length < takeMessages) {
-          setHasMore(false)
+          if (newMessages.length < takeMessages) {
+            setHasMore(false)
+          }
+
+          if (firstTime) {
+            setMessages(newMessages)
+          } else {
+            setMessages((prevMessages) => [...newMessages, ...prevMessages])
+
+            requestAnimationFrame(() => {
+              if (scrollableDiv) {
+                const newScrollHeight = scrollableDiv.scrollHeight
+                const scrollDiff = newScrollHeight - oldScrollHeight
+                scrollableDiv.scrollTop = scrollDiff
+              }
+            })
+          }
         }
-
-        if (firstTime) {
-          // Lần đầu load: tin nhắn mới nhất ở cuối mảng (API trả về tin cũ nhất trước)
-          setMessages(newMessages)
-        } else {
-          // Load more: thêm tin nhắn cũ vào ĐẦU mảng
-          // Tin nhắn cũ hơn sẽ được hiển thị ở trên
-          setMessages((prevMessages) => [...newMessages, ...prevMessages])
-
-          // Giữ vị trí scroll sau khi thêm tin nhắn cũ
-          requestAnimationFrame(() => {
-            if (scrollableDiv) {
-              const newScrollHeight = scrollableDiv.scrollHeight
-              const scrollDiff = newScrollHeight - oldScrollHeight
-              scrollableDiv.scrollTop = scrollDiff
-            }
-          })
-        }
+      } catch (err) {
+        message.error('Error while getting messages!')
+      } finally {
+        setIsLoadingMore(false)
       }
-    } catch (err) {
-      message.error('Error while getting messages!')
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }
+    },
+    [conversationId, skipMessages, takeMessages]
+  )
 
   const navigateToInbox = (newConversationId: string) => {
-    // Nếu đang ở conversation hiện tại, không làm gì cả
     if (newConversationId === conversationId) {
       return
     }
@@ -326,33 +307,36 @@ const Inbox: React.FC<InboxProps> = () => {
     }, 100)
   }
 
-  const updateItemInConversations = async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
-    try {
-      setConversations((prev) => {
-        const conversationExists = prev.some((conv) => conv.id === convId)
-        if (!conversationExists && newestMessage) {
-          fetchAllConversations()
-          return prev
-        }
-
-        return prev.map((conv) => {
-          if (conv.id !== convId) return conv
-          const updatedConv = { ...conv }
-          if (newestMessage) {
-            updatedConv.newestMessage = newestMessage
-          } else if (status && updatedConv.newestMessage) {
-            updatedConv.newestMessage = {
-              ...updatedConv.newestMessage,
-              status
-            }
+  const updateItemInConversations = useCallback(
+    async (convId: string, newestMessage: MessageDto | null, status: string | null) => {
+      try {
+        setConversations((prev) => {
+          const conversationExists = prev.some((conv) => conv.id === convId)
+          if (!conversationExists && newestMessage) {
+            fetchAllConversations()
+            return prev
           }
-          return updatedConv
+
+          return prev.map((conv) => {
+            if (conv.id !== convId) return conv
+            const updatedConv = { ...conv }
+            if (newestMessage) {
+              updatedConv.newestMessage = newestMessage
+            } else if (status && updatedConv.newestMessage) {
+              updatedConv.newestMessage = {
+                ...updatedConv.newestMessage,
+                status
+              }
+            }
+            return updatedConv
+          })
         })
-      })
-    } catch (err) {
-      return
-    }
-  }
+      } catch (err) {
+        return
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     if (!newestMessageRef.current) return
@@ -385,15 +369,14 @@ const Inbox: React.FC<InboxProps> = () => {
     observer.observe(newestMessageRef.current)
 
     return () => observer.disconnect()
-  }, [messages, isChatFocused, isInputFocused])
+  }, [messages, isChatFocused, isInputFocused, userInfo?.id, messageUnseen, updateItemInConversations, conversationId])
 
   useEffect(() => {
     const handleNewMessage = (event: CustomEvent<MessageDto>) => {
       const newReceivedMessage = event.detail
       updateItemInConversations(newReceivedMessage.conversationId, newReceivedMessage, null)
-    
       if (conversationId !== undefined && newReceivedMessage.conversationId === conversationId) {
-        setMessages((prev) => [...prev, newReceivedMessage])     
+        setMessages((prev) => [...prev, newReceivedMessage])
         setTimeout(() => {
           scrollToBottom('smooth')
         }, 100)
@@ -405,7 +388,7 @@ const Inbox: React.FC<InboxProps> = () => {
     return () => {
       window.removeEventListener('new-private-message', handleNewMessage as EventListener)
     }
-  }, [conversationId])
+  }, [conversationId, updateItemInConversations])
 
   useEffect(() => {
     fetchUserInfo()
@@ -430,7 +413,7 @@ const Inbox: React.FC<InboxProps> = () => {
       textingArea.removeEventListener('focus', handleFocus)
       textingArea.removeEventListener('blur', handleBlur)
     }
-  }, [])
+  }, [conversationId, fetchConversation])
 
   useEffect(() => {
     chatService.getUpdatedMessage((newestMessage: MessageDto) => {
@@ -444,13 +427,11 @@ const Inbox: React.FC<InboxProps> = () => {
     }
   })
 
-  // Scroll event để load thêm tin nhắn cũ khi kéo lên đầu
   useEffect(() => {
     const scrollableDiv = document.getElementById('scrollableDiv')
     if (!scrollableDiv) return
 
     const handleScroll = () => {
-      // Khi scrollTop gần 0 (đầu container), load thêm tin nhắn
       if (scrollableDiv.scrollTop < 100 && hasMore && !isLoadingMore) {
         loadMoreMessage()
       }
@@ -470,25 +451,22 @@ const Inbox: React.FC<InboxProps> = () => {
       setSkipMessages(0)
       setHasMore(true)
     }
-  }, [conversationId])
+  }, [conversationId, fetchConversation])
 
   useEffect(() => {
     if (conversation && userInfo) {
       fetchConversationUsers()
     }
-  }, [conversation])
+  }, [conversation, fetchConversationUsers, userInfo])
 
   useEffect(() => {
     if (userInfo && conversationId) {
-      // Chỉ gọi getMessages khi là lần đầu load (skipMessages = 0)
-      // Các lần load more đã được xử lý trong loadMoreMessage
       if (skipMessages === 0) {
         getMessages(true)
       }
     }
-  }, [userInfo, conversationId, skipMessages])
+  }, [userInfo, conversationId, skipMessages, getMessages])
 
-  // Mark newest message as Seen when opening a conversation
   useEffect(() => {
     if (
       messages.length > 0 &&
@@ -508,12 +486,11 @@ const Inbox: React.FC<InboxProps> = () => {
       }
       markAsSeen()
     }
-  }, [conversationId, messages.length > 0 && messages[messages.length - 1]?.id])
+  }, [conversationId, messages, updateItemInConversations, userInfo])
 
   // Scroll to bottom after messages are loaded for the first time
   useEffect(() => {
     if (messages.length > 0 && isFirstLoad && skipMessages === 0) {
-      // Multiple attempts to ensure scroll works with InfiniteScroll inverse
       const scrollAttempts = [100, 200, 300]
       const timers: NodeJS.Timeout[] = []
 
@@ -521,7 +498,6 @@ const Inbox: React.FC<InboxProps> = () => {
         const timer = setTimeout(() => {
           const scrollableDiv = document.getElementById('scrollableDiv')
           if (scrollableDiv) {
-            // Cuộn xuống cuối để xem tin nhắn mới nhất
             scrollableDiv.scrollTop = scrollableDiv.scrollHeight
           }
         }, delay)
@@ -542,7 +518,7 @@ const Inbox: React.FC<InboxProps> = () => {
 
   useEffect(() => {
     fetchReceiversInfo()
-  }, [conversation, conversationUsers])
+  }, [conversation, conversationUsers, fetchReceiversInfo])
 
   useEffect(() => {
     if (!text) return
@@ -562,7 +538,7 @@ const Inbox: React.FC<InboxProps> = () => {
     })
     setMessageUnseen(count)
     setUnreadMessages(count)
-  }, [conversations])
+  }, [conversations, setUnreadMessages, userInfo?.id])
 
   useEffect(() => {
     const baseTitle = 'FriCon'

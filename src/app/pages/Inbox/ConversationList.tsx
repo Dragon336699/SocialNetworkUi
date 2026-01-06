@@ -26,7 +26,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null
-    
+
     if (conversations.length === 0) {
       timer = setTimeout(() => {
         setShowNoConversation(true)
@@ -34,7 +34,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     } else {
       setShowNoConversation(false)
     }
-    
+
     return () => {
       if (timer) {
         clearTimeout(timer)
@@ -87,8 +87,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         ) : (
           conversations.map((conversation) => {
             const seenByMe =
-              conversation.newestMessage?.senderId !== userInfo?.id &&
-              conversation.newestMessage?.status !== 'Seen'
+              conversation.newestMessage?.senderId !== userInfo?.id && conversation.newestMessage?.status !== 'Seen'
                 ? false
                 : true
 
