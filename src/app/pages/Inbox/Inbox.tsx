@@ -55,6 +55,7 @@ const Inbox: React.FC<InboxProps> = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [showChatDetails, setShowChatDetails] = useState(false)
   const { setUnreadMessages } = useUnread()
   const navigate = useNavigate()
   const { conversationId } = useParams()
@@ -488,7 +489,6 @@ const Inbox: React.FC<InboxProps> = () => {
     }
   }, [conversationId, messages, updateItemInConversations, userInfo])
 
-  // Scroll to bottom after messages are loaded for the first time
   useEffect(() => {
     if (messages.length > 0 && isFirstLoad && skipMessages === 0) {
       const scrollAttempts = [100, 200, 300]
@@ -504,7 +504,6 @@ const Inbox: React.FC<InboxProps> = () => {
         timers.push(timer)
       })
 
-      // Set isFirstLoad to false after last attempt
       const finalTimer = setTimeout(() => {
         setIsFirstLoad(false)
       }, 350)
@@ -602,9 +601,11 @@ const Inbox: React.FC<InboxProps> = () => {
           onGroupNameChanged={(newName: string) => {
             setConversation((prev) => (prev ? { ...prev, conversationName: newName } : null))
           }}
+          showChatDetails={showChatDetails}
+          setShowChatDetails={setShowChatDetails}
         />
 
-        <ChatDetails conversation={conversation} conversationId={conversationId} />
+        {showChatDetails && <ChatDetails conversation={conversation} conversationId={conversationId} />}
 
         <ModalNewMessage isModalOpen={isModalNewMessageOpen} onClose={() => setIsModalNewMessageOpen(false)} />
       </div>

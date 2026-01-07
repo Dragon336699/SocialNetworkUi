@@ -27,7 +27,8 @@ import {
   faXmark,
   faTrash,
   faEdit,
-  faSignature
+  faSignature,
+  faCircleInfo
 } from '@fortawesome/free-solid-svg-icons'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import data from '@emoji-mart/data'
@@ -78,6 +79,8 @@ interface ChatAreaProps {
   onConversationDeleted?: () => void
   onNicknameChanged?: (userId: string, newNickname: string) => void
   onGroupNameChanged?: (newName: string) => void
+  showChatDetails?: boolean
+  setShowChatDetails?: (show: boolean) => void
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
@@ -112,9 +115,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   handleSendReaction,
   onConversationDeleted,
   onNicknameChanged,
-  onGroupNameChanged
+  onGroupNameChanged,
+  showChatDetails,
+  setShowChatDetails
 }) => {
-  // States
   const waveformRef = useRef(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
@@ -135,7 +139,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const navigate = useNavigate()
 
-  // Modal states
   const [isNicknameModalVisible, setIsNicknameModalVisible] = useState(false)
   const [isGroupNameModalVisible, setIsGroupNameModalVisible] = useState(false)
   const [newNickname, setNewNickname] = useState('')
@@ -221,6 +224,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   // Menu items
   const menuItems = [
+    {
+      key: 'chatDetails',
+      label: (
+        <div className='flex items-center gap-2'>
+          <FontAwesomeIcon icon={faCircleInfo} className={showChatDetails ? 'text-sky-500' : ''} />
+          <span>{showChatDetails ? 'Hide Chat Details' : 'Show Chat Details'}</span>
+        </div>
+      ),
+      onClick: () => setShowChatDetails?.(!showChatDetails)
+    },
+    { type: 'divider' as const },
     ...(conversation?.type === 'Personal'
       ? [
           {
