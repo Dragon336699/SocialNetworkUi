@@ -124,28 +124,27 @@ const ProfileUser = () => {
     }
   }, [userName, navigate])
 
-  const handlePostCreated = useCallback(async (newPost?: PostData) => {
-    if (newPost) {
-      setPosts((prevPosts) => [newPost, ...prevPosts])
-    } else {
-      try {
-        const res = await postService.getPostsByUser(userInfo.id)
-        const responseData = res.data as any
-        const postsData = responseData.posts || responseData.post
-        setPosts(Array.isArray(postsData) ? postsData : [])
-      } catch (error) {
-        console.error('Failed to refresh posts:', error)
-        fetchData()
+  const handlePostCreated = useCallback(
+    async (newPost?: PostData) => {
+      if (newPost) {
+        setPosts((prevPosts) => [newPost, ...prevPosts])
+      } else {
+        try {
+          const res = await postService.getPostsByUser(userInfo.id)
+          const responseData = res.data as any
+          const postsData = responseData.posts || responseData.post
+          setPosts(Array.isArray(postsData) ? postsData : [])
+        } catch (error) {
+          console.error('Failed to refresh posts:', error)
+          fetchData()
+        }
       }
-    }
-  }, [userInfo.id, fetchData])
+    },
+    [userInfo.id, fetchData]
+  )
 
   const handlePostUpdated = useCallback((updatedPost: PostData) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === updatedPost.id ? updatedPost : post
-      )
-    )
+    setPosts((prevPosts) => prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post)))
   }, [])
 
   const handlePostDeleted = useCallback((postId: string) => {

@@ -19,6 +19,7 @@ import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { interactionService } from '@/app/services/interaction.service'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import useDevice from '@/app/hook/useDeivce'
 
 interface PostProps extends PostData {
   feedId?: string
@@ -54,6 +55,7 @@ const Post: React.FC<PostProps> = ({
   isGroupAdmin = false
 }) => {
   const navigate = useNavigate()
+  const { isMobile } = useDevice()
   const postRef = useRef<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
@@ -427,9 +429,11 @@ const Post: React.FC<PostProps> = ({
               </div>
             </div>
             <div className='relative'>
-              <Button onClick={summarizePost} disabled={isSummarizing || !!summarizedContent} loading={isSummarizing}>
-                Summarize this post
-              </Button>
+              {!isMobile && (
+                <Button onClick={summarizePost} disabled={isSummarizing || !!summarizedContent} loading={isSummarizing}>
+                  Summarize this post
+                </Button>
+              )}
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className='text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 hover:border hover:border-gray-300 border border-transparent'
@@ -504,15 +508,15 @@ const Post: React.FC<PostProps> = ({
                       d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
                     />
                   </svg>
-                  <span>Comment</span>
+                  <span className='max-xs:hidden'>Comment</span>
                 </button>
               </div>
 
               {/* Reactions Info - Bên phải */}
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-2 min-w-0 w-full overflow-hidden justify-end'>
                 {postReactionUsers && postReactionUsers.length > 0 && (
-                  <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10'>
-                    <div className='flex items-center -space-x-1'>
+                  <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 min-w-0 max-w-full'>
+                    <div className='flex items-center -space-x-1 flex-shrink-0'>
                       {Array.from(new Set(postReactionUsers.map((r) => r.reaction)))
                         .slice(0, 3)
                         .map((reactionEmoji, index) => (
@@ -526,14 +530,14 @@ const Post: React.FC<PostProps> = ({
                           </div>
                         ))}
                     </div>
-                    <span className='whitespace-nowrap'>{getReactionText()}</span>
+                    <span className='truncate'>{getReactionText()}</span>
                   </div>
                 )}
 
-                {localTotalComment > 0 && (
+                {localTotalComment > 0 && !isMobile && (
                   <button
                     onClick={() => setShowComments(true)}
-                    className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap'
+                    className='rounded-full px-3 flex items-center transition-colors font-medium bg-gray-100 border border-gray-300 text-gray-900 hover:bg-gray-200 text-sm h-10 whitespace-nowrap flex-shrink-0'
                   >
                     {localTotalComment} Comment
                   </button>
@@ -544,21 +548,23 @@ const Post: React.FC<PostProps> = ({
             {/* Avatar + Comment input and Send button */}
             <div className='flex items-center space-x-3'>
               {/* Avatar người dùng */}
-              <div className='flex-shrink-0'>
-                <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
-                  <Avatar
-                    src={currentUser.avatarUrl}
-                    size={40}
-                    className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
-                  >
-                    {currentUser.firstName?.[0] || currentUser.lastName?.[0] || ''}
-                  </Avatar>
+              {!isMobile && (
+                <div className='flex-shrink-0'>
+                  <div className='rounded-full flex items-center justify-center border-2 border-gray-200'>
+                    <Avatar
+                      src={currentUser.avatarUrl}
+                      size={40}
+                      className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
+                    >
+                      {currentUser.firstName?.[0] || currentUser.lastName?.[0] || ''}
+                    </Avatar>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Comment input and Send button */}
               <div className='flex items-center space-x-2 flex-1'>
-                <div className='flex-1 flex items-start bg-gray-50 rounded-3xl px-4 py-2.5 border border-gray-300'>
+                <div className='flex-1 flex items-center bg-gray-50 rounded-3xl px-4 py-1 border border-gray-300'>
                   <textarea
                     ref={textareaRef}
                     value={commentText}
@@ -570,8 +576,13 @@ const Post: React.FC<PostProps> = ({
                       }
                     }}
                     placeholder='Write your comment'
-                    className='flex-1 bg-transparent text-sm outline-none placeholder-gray-500 font-medium resize-none overflow-hidden pl-2'
                     rows={1}
+                    className='
+                      flex-1 bg-transparent outline-none resize-none overflow-hidden
+                      font-medium placeholder-gray-500
+                      text-xs leading-4 pl-1
+                      sm:te xt-sm sm:leading-5 sm:pl-2
+                    '
                   />
 
                   <div className='flex items-center gap-1 ml-2 flex-shrink-0'>

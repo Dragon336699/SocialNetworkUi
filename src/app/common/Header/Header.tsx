@@ -8,7 +8,8 @@ import {
   LogoutOutlined,
   CheckCircleOutlined,
   LockOutlined,
-  CloseOutlined
+  CloseOutlined,
+  MenuOutlined
 } from '@ant-design/icons'
 import { useUserStore } from '@/app/stores/auth'
 import { DEFAULT_AVATAR_URL } from '../Assests/CommonVariable'
@@ -26,7 +27,11 @@ import { groupService } from '@/app/services/group.service'
 import { GroupRole } from '@/app/types/Group/group.dto'
 import { interactionService } from '@/app/services/interaction.service'
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenMenu: () => void
+}
+
+const Header: React.FC<HeaderProps> = ({ onOpenMenu }) => {
   const { user } = useUserStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -526,9 +531,17 @@ const Header: React.FC = () => {
   return (
     <>
       <header className='h-16 w-full bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 sticky top-0 z-[100] shadow-sm'>
-        <div className='flex items-center gap-3 w-[200px]'>
-          <div className='w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100'>
-            <span className='text-white font-black text-xl'>FC</span>
+        <div className='flex items-center gap-3 lg:w-[200px] flex-shrink-0'>
+          <div className='flex items-center gap-2'>
+            <Button
+              type='text'
+              icon={<MenuOutlined className='text-lg' />}
+              onClick={onOpenMenu}
+              className='lg:hidden flex items-center justify-center p-0 w-8 h-8'
+            />
+            <div className='w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 max-lg:hidden'>
+              <span className='text-white font-black text-xl'>FC</span>
+            </div>
           </div>
           <span className='text-xl font-black tracking-tighter text-slate-800 hidden lg:block uppercase'>Fricon</span>
         </div>
@@ -547,7 +560,7 @@ const Header: React.FC = () => {
                 <Spin size='small' />
               ) : searchValue ? (
                 <CloseOutlined
-                  className='text-gray-400 cursor-pointer hover:text-gray-600 transition-colors'
+                  className='text-gray-400 cursor-pointer hover:text-gray-600'
                   onClick={handleClearInput}
                 />
               ) : null
@@ -562,7 +575,7 @@ const Header: React.FC = () => {
           )}
         </div>
 
-        <div className='flex items-center gap-4 w-[240px]'>
+        <div className='flex items-center gap-2 md:gap-4 lg:w-[240px] flex-shrink-0 justify-end max-md:pr-5 pr-16'>
           <Dropdown
             dropdownRender={() => (
               <div className='border border-gray-200 rounded-xl shadow-sm bg-white'>{notificationDropdown}</div>
@@ -571,7 +584,7 @@ const Header: React.FC = () => {
             placement='bottom'
             arrow
           >
-            <div className='w-10 h-10 flex items-center justify-center rounded-2xl cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all'>
+            <div className='w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl md:rounded-2xl cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all'>
               <Badge count={unreadNotis} size='small' offset={[2, -2]} color='#4f46e5'>
                 <BellOutlined className='text-lg' />
               </Badge>
@@ -579,11 +592,11 @@ const Header: React.FC = () => {
           </Dropdown>
 
           <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement='bottomRight' arrow>
-            <div className='flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 pl-1 pr-3 rounded-2xl transition-all border border-transparent hover:border-slate-100 items-end'>
+            <div className='flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded-2xl transition-all'>
               <Avatar
                 src={user?.avatarUrl || DEFAULT_AVATAR_URL}
-                className='shadow-sm border-2 border-gray-200'
-                size={36}
+                className='shadow-sm border border-gray-100'
+                size={32}
               />
               <div className='hidden md:block text-left max-w-[160px]'></div>
             </div>

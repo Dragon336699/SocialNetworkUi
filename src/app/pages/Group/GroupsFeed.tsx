@@ -204,7 +204,7 @@ const GroupsFeed = () => {
   }
 
   return (
-    <div className='max-w-4xl mx-auto py-6 px-4'>
+    <div className='max-w-4xl mx-auto py-6 md:px-4'>
       {/* Edit Post Modal */}
       {editingPost && (
         <EditPostModal

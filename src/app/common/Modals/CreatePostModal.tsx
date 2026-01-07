@@ -8,11 +8,13 @@ import { ModalProps } from '@/app/types/Common'
 import { postService } from '@/app/services/post.service'
 
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
+import useDevice from '@/app/hook/useDeivce'
 
 const { TextArea } = Input
 const { Text } = Typography
 
 const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, groupId, currentUser }: ModalProps) => {
+  const { isMobile, isTablet } = useDevice()
   const [privacy, setPrivacy] = useState<'Public' | 'Friends' | 'Private'>('Public')
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
@@ -225,9 +227,11 @@ const CreatePostModal = ({ isModalOpen, handleCancel, onCreatePostSuccess, group
             </Flex>
           </Flex>
           <Flex gap='small' align='flex-start'>
-            <Button onClick={rewriteCaption} disabled={!text || isRewriting} loading={isRewriting}>
-              Rewrite caption
-            </Button>
+            {!isMobile && (
+              <Button onClick={rewriteCaption} disabled={!text || isRewriting} loading={isRewriting}>
+                Rewrite caption
+              </Button>
+            )}
             <Button
               className='flex items-center gap-1 px-2 border border-gray-300 bg-gray-100 hover:bg-gray-200 rounded'
               onClick={handlePrivacyClick}
