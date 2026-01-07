@@ -42,7 +42,7 @@ const Home = () => {
     try {
       const res = await relationService.getFriendsList()
       if (res.status === 200) {
-        const resData = res.data as ResponseHasData<UserDto[]>
+        const resData = res.data as ResponseHasData<UserDto[]>      
         setFriendsList(resData.data as UserDto[])
       }
     } catch {
@@ -216,7 +216,11 @@ const Home = () => {
             <div className='w-full max-w-[680px]'>
               <div className='bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
                 <div className='flex items-center gap-3 mb-3'>
-                  <Avatar size={40} src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
+                  <Avatar
+                    size={40}
+                    src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
+                    className='border-2 border-gray-200'
+                  />
                   <div
                     onClick={() => setIsOpenCreatePost(true)}
                     className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] text-[17px] cursor-pointer transition-colors'
@@ -302,8 +306,12 @@ const Home = () => {
                     className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
                     onClick={() => handleContactClick(friend.id)}
                   >
-                    <Badge dot status={friend.status === 'online' ? 'success' : 'default'} offset={[-4, 28]}>
-                      <Avatar size={36} src={friend.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
+                    <Badge dot status={friend.status === 'Online' ? 'success' : 'default'} offset={[-4, 28]}>
+                      <Avatar
+                        size={36}
+                        src={friend.avatarUrl || DEFAULT_AVATAR_URL}
+                        className='border-2 border-gray-200'
+                      />
                     </Badge>
 
                     <span className='font-semibold text-[15px] text-[#050505]'>
@@ -326,7 +334,11 @@ const Home = () => {
                     return (
                       <div key={req.user.id} className='flex items-center justify-between group px-2'>
                         <div className='flex gap-3 items-center overflow-hidden'>
-                          <Avatar size={40} src={req.user.avatarUrl || DEFAULT_AVATAR_URL} className='border-2 border-gray-200' />
+                          <Avatar
+                            size={40}
+                            src={req.user.avatarUrl || DEFAULT_AVATAR_URL}
+                            className='border-2 border-gray-200'
+                          />
                           <div className='overflow-hidden'>
                             <h4 className='font-semibold text-[15px] truncate m-0'>
                               {req.user.lastName + ' ' + req.user.firstName}

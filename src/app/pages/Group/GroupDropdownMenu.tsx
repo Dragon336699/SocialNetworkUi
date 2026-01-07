@@ -7,7 +7,8 @@ import {
   DeleteOutlined,
   CloseOutlined,
   FileTextOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  StopOutlined
 } from '@ant-design/icons'
 
 interface GroupDropdownMenuProps {
@@ -23,6 +24,7 @@ interface GroupDropdownMenuProps {
   onLeaveGroup: () => void
   onDeleteGroup: () => void
   onManagePosts?: () => void
+  onBannedMembers?: () => void
 }
 
 const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
@@ -37,7 +39,8 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
   onEditGroup,
   onLeaveGroup,
   onDeleteGroup,
-  onManagePosts
+  onManagePosts,
+  onBannedMembers
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -79,9 +82,7 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
               <BellOutlined className='text-lg mr-2 text-gray-600' />
               <span className='text-sm font-medium text-gray-900'>Join Requests</span>
             </div>
-            {pendingRequestCount > 0 && (
-              <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />
-            )}
+            {pendingRequestCount > 0 && <Badge count={pendingRequestCount} style={{ backgroundColor: '#52c41a' }} />}
           </button>
 
           <button
@@ -92,6 +93,16 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
             <span className='text-sm font-medium text-gray-900'>Manage Members</span>
           </button>
 
+          {onBannedMembers && (
+            <button
+              onClick={() => handleClick(onBannedMembers)}
+              className='w-full flex items-center px-4 py-2 hover:bg-gray-200 text-left border-0 bg-transparent'
+            >
+              <StopOutlined className='text-lg mr-2 text-red-500' />
+              <span className='text-sm font-medium text-gray-900'>Banned Members</span>
+            </button>
+          )}
+
           {onManagePosts && (
             <button
               onClick={() => handleClick(onManagePosts)}
@@ -101,9 +112,7 @@ const GroupDropdownMenu: React.FC<GroupDropdownMenuProps> = ({
                 <FileTextOutlined className='text-lg mr-2 text-gray-600' />
                 <span className='text-sm font-medium text-gray-900'>Manage Posts</span>
               </div>
-              {pendingPostCount > 0 && (
-                <Badge count={pendingPostCount} style={{ backgroundColor: '#fa8c16' }} />
-              )}
+              {pendingPostCount > 0 && <Badge count={pendingPostCount} style={{ backgroundColor: '#fa8c16' }} />}
             </button>
           )}
 
@@ -144,11 +153,7 @@ interface PendingDropdownMenuProps {
   onCancelRequest: () => void
 }
 
-export const PendingDropdownMenu: React.FC<PendingDropdownMenuProps> = ({
-  isOpen,
-  onClose,
-  onCancelRequest
-}) => {
+export const PendingDropdownMenu: React.FC<PendingDropdownMenuProps> = ({ isOpen, onClose, onCancelRequest }) => {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -244,9 +249,7 @@ export const JoinedDropdownMenu: React.FC<JoinedDropdownMenuProps> = ({
             <ClockCircleOutlined className='text-lg mr-2 text-gray-600' />
             <span className='text-sm font-medium text-gray-900'>My Pending Posts</span>
           </div>
-          {myPendingPostCount > 0 && (
-            <Badge count={myPendingPostCount} style={{ backgroundColor: '#1890ff' }} />
-          )}
+          {myPendingPostCount > 0 && <Badge count={myPendingPostCount} style={{ backgroundColor: '#1890ff' }} />}
         </button>
       )}
 

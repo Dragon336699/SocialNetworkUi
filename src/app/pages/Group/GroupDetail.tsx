@@ -25,6 +25,7 @@ import GroupHeaderActions from '@/app/components/Group/GroupHeaderActions'
 import InviteFriendsModal from '@/app/common/Modals/Group/InviteFriendsModal'
 import PendingPostsModal from '@/app/common/Modals/Group/PendingPostsModal'
 import MyPendingPostsModal from '@/app/common/Modals/Group/MyPendingPostsModal'
+import BannedMembersModal from '@/app/common/Modals/Group/BannedMembersModal'
 import { postService } from '@/app/services/post.service'
 import GroupSidebar from '@/app/components/Group/GroupSidebar'
 import { GroupMembersTab, GroupPhotosTab } from '@/app/components/Group/GroupTabs'
@@ -71,6 +72,7 @@ const GroupDetail = () => {
   const [rejectingInvite, setRejectingInvite] = useState(false)
   const [isPendingPostsOpen, setIsPendingPostsOpen] = useState(false)
   const [isMyPendingPostsOpen, setIsMyPendingPostsOpen] = useState(false)
+  const [isBannedMembersOpen, setIsBannedMembersOpen] = useState(false)
   const [pendingPostCount, setPendingPostCount] = useState(0)
   const [myPendingPostCount, setMyPendingPostCount] = useState(0)
 
@@ -430,6 +432,12 @@ const GroupDetail = () => {
             groupId={groupId}
             onPostsUpdated={refreshGroupData}
           />
+          <BannedMembersModal
+            isModalOpen={isBannedMembersOpen}
+            handleCancel={() => setIsBannedMembersOpen(false)}
+            groupId={groupId || ''}
+            onMembersUpdated={handleMembersUpdated}
+          />
           <ImageViewerModal
             isOpen={isImageViewerOpen}
             onClose={() => setIsImageViewerOpen(false)}
@@ -472,7 +480,12 @@ const GroupDetail = () => {
               <div className='flex items-center gap-2'>
                 <div className='flex -space-x-2'>
                   {group.groupUsers
-                    ?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
+                    ?.filter(
+                      (gu) =>
+                        gu.roleName !== GroupRole.Pending &&
+                        gu.roleName !== GroupRole.Inviting &&
+                        gu.roleName !== GroupRole.Banned
+                    )
                     .slice(0, 10)
                     .map((member, index) => (
                       <Avatar
@@ -539,6 +552,7 @@ const GroupDetail = () => {
                 onDeleteGroup={handleDeleteGroup}
                 onManagePosts={() => setIsPendingPostsOpen(true)}
                 onMyPendingPosts={() => setIsMyPendingPostsOpen(true)}
+                onBannedMembers={() => setIsBannedMembersOpen(true)}
               />
             </div>
           </div>
@@ -650,7 +664,9 @@ const GroupDetail = () => {
           )}
 
           {/* Members Tab */}
-          {activeTab === 'members' && <GroupMembersTab group={group} />}
+          {activeTab === 'members' && (
+            <GroupMembersTab group={group} currentUserId={currentUser.id} onMembersUpdated={handleMembersUpdated} />
+          )}
 
           {/* Photos Tab */}
           {activeTab === 'photos' && <GroupPhotosTab posts={posts} onImageClick={openImageViewer} />}

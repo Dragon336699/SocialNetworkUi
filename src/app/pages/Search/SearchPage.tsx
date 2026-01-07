@@ -46,7 +46,6 @@ const SearchPage: React.FC = () => {
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([])
   const [dropdownStates, setDropdownStates] = useState<{ [key: string]: boolean }>({})
 
-  // States cho Edit và Delete Post
   const [editingPost, setEditingPost] = useState<PostData | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
@@ -201,14 +200,12 @@ const SearchPage: React.FC = () => {
     }))
   }
 
-  // Handler cho Edit Post
   const handleEditPost = (post: PostData) => {
     setEditingPost(post)
     setIsEditModalOpen(true)
     closeDropdown(post.id)
   }
 
-  // Handler khi edit thành công
   const handleEditSuccess = (updatedPost: PostData) => {
     setIsEditModalOpen(false)
     setEditingPost(null)
@@ -216,20 +213,17 @@ const SearchPage: React.FC = () => {
     handlePostUpdated(updatedPost)
   }
 
-  // Handler khi đóng edit modal
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false)
     setEditingPost(null)
   }
 
-  // Handler cho Delete Post
   const handleDeletePost = (postId: string) => {
     setDeletingPostId(postId)
     setIsDeleteModalOpen(true)
     closeDropdown(postId)
   }
 
-  // Handler khi delete thành công
   const handleDeleteSuccess = () => {
     if (deletingPostId) {
       handlePostDeleted(deletingPostId)
@@ -239,7 +233,6 @@ const SearchPage: React.FC = () => {
     message.success('Post deleted successfully!')
   }
 
-  // Handler khi đóng delete modal
   const handleCloseDeleteModal = () => {
     setIsDeleteModalOpen(false)
     setDeletingPostId(null)
@@ -346,7 +339,6 @@ const SearchPage: React.FC = () => {
   }
 
   const renderPosts = () => {
-    // Backend already filters: private groups, pending approval posts, and private posts from others' profiles
     const posts = searchResults?.posts || []
 
     if (posts.length === 0) {

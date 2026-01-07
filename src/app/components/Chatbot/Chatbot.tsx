@@ -165,7 +165,7 @@ const Chatbot = () => {
   }, [messages])
 
   return (
-    <div className='fixed bottom-4 right-4 z-50'>
+    <div className='fixed bottom-12 right-4 z-50'>
       {isOpen ? (
         <div className='w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col border'>
           <div className='p-3 bg-gray-800 text-white rounded-t-lg flex justify-between items-center shadow-md'>

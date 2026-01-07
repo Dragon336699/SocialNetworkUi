@@ -25,6 +25,7 @@ interface GroupHeaderActionsProps {
   onDeleteGroup: () => void
   onManagePosts: () => void
   onMyPendingPosts: () => void
+  onBannedMembers: () => void
 }
 
 const GroupHeaderActions = ({
@@ -49,7 +50,8 @@ const GroupHeaderActions = ({
   onLeaveGroup,
   onDeleteGroup,
   onManagePosts,
-  onMyPendingPosts
+  onMyPendingPosts,
+  onBannedMembers
 }: GroupHeaderActionsProps) => {
   return (
     <div className='ml-4 flex items-center gap-2'>
@@ -81,6 +83,7 @@ const GroupHeaderActions = ({
             onLeaveGroup={onLeaveGroup}
             onDeleteGroup={onDeleteGroup}
             onManagePosts={onManagePosts}
+            onBannedMembers={onBannedMembers}
           />
         </div>
       ) : (
