@@ -72,20 +72,22 @@ export const usePosts = (): UsePostsReturn => {
   }, [fetchPosts])
 
   // Các function để reload sau khi có thay đổi
-  const handlePostCreated = useCallback(async (newPost?: PostData) => {
-    if (newPost) {
-      // Thêm post mới vào đầu danh sách
-      const newFeed: FeedDto = {
-        feedId: '', // Tạm thời để empty, sẽ được update khi user reload
-        post: newPost,
-        createdAt: new Date().getTime()
+  const handlePostCreated = useCallback(
+    async (newPost?: PostData) => {
+      if (newPost) {
+        // Thêm post mới vào đầu danh sách
+        const newFeed: FeedDto = {
+          post: newPost,
+          createdAt: new Date().getTime()
+        }
+        setPosts((prevPosts) => [newFeed, ...prevPosts])
+      } else {
+        // Nếu không có post object, reload như cũ
+        await refetch()
       }
-      setPosts((prevPosts) => [newFeed, ...prevPosts])
-    } else {
-      // Nếu không có post object, reload như cũ
-      await refetch()
-    }
-  }, [refetch])
+    },
+    [refetch]
+  )
 
   const handlePostUpdated = useCallback((updatedPost: PostData) => {
     setPosts((prevFeeds) =>

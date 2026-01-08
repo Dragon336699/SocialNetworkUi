@@ -7,7 +7,7 @@ export function useSeenPost(flushSeen: (items: SeenPost[]) => Promise<void>) {
   const bufferRef = useRef<Map<string, SeenPost>>(new Map())
   const flushingRef = useRef(false)
 
-  const makeKey = (item: SeenPost) => `${item.createdAt}:${item.feedId}`
+  const makeKey = (item: SeenPost) => `${item.createdAt}:${item.postId}`
 
   const addSeen = useCallback(
     async (item: SeenPost) => {

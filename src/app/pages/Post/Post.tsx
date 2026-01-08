@@ -6,6 +6,7 @@ import ImageModal from './ImageModal'
 import EditPostModal from './EditPostModal'
 import DeletePostModal from './DeletePostModal'
 import PostReaction from './PostReaction'
+import ReactionUsersModal from '@/app/common/Modals/ReactionUsersModal'
 import { Button, message } from 'antd'
 import { postService } from '@/app/services/post.service'
 import { commentService } from '@/app/services/comment.service'
@@ -22,7 +23,6 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import useDevice from '@/app/hook/useDeivce'
 
 interface PostProps extends PostData {
-  feedId?: string
   feedCreatedAt?: number
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
@@ -40,7 +40,6 @@ const Post: React.FC<PostProps> = ({
   totalLiked,
   totalComment,
   createdAt,
-  feedId,
   feedCreatedAt,
   user,
   postImages,
@@ -77,6 +76,7 @@ const Post: React.FC<PostProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [showReactionUsersModal, setShowReactionUsersModal] = useState(false)
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
 
@@ -96,9 +96,8 @@ const Post: React.FC<PostProps> = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!feedId || !feedCreatedAt) return
+          if (!feedCreatedAt) return
           const seenPostObject: SeenPost = {
-            feedId,
             createdAt: feedCreatedAt,
             postId: id
           }
@@ -111,7 +110,7 @@ const Post: React.FC<PostProps> = ({
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [id, onSeen, feedId, feedCreatedAt])
+  }, [id, onSeen, feedCreatedAt])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -515,8 +514,11 @@ const Post: React.FC<PostProps> = ({
               {/* Reactions Info - Bên phải */}
               <div className='flex items-center gap-2 min-w-0 w-full overflow-hidden justify-end'>
                 {postReactionUsers && postReactionUsers.length > 0 && (
-                  <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 min-w-0 max-w-full'>
-                    <div className='flex items-center -space-x-1 flex-shrink-0'>
+                  <div 
+                    className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 cursor-pointer hover:bg-gray-200 transition-colors'
+                    onClick={() => setShowReactionUsersModal(true)}
+                  >
+                    <div className='flex items-center -space-x-1'>
                       {Array.from(new Set(postReactionUsers.map((r) => r.reaction)))
                         .slice(0, 3)
                         .map((reactionEmoji, index) => (
@@ -715,6 +717,13 @@ const Post: React.FC<PostProps> = ({
           onPostDeleted={onPostDeleted}
         />
       )}
+
+      <ReactionUsersModal
+        isOpen={showReactionUsersModal}
+        onClose={() => setShowReactionUsersModal(false)}
+        reactions={reactions}
+        totalLiked={localTotalLiked}
+      />
     </>
   )
 }

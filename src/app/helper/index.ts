@@ -31,9 +31,11 @@ export const getTimeAgo = (dateString: string) => {
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   const diffInHours = Math.floor(diffInMinutes / 60)
   const diffInDays = Math.floor(diffInHours / 24)
-  const diffInWeeks = Math.floor(diffInDays / 7)
-  const diffInMonths = Math.floor(diffInDays / 30)
-  const diffInYears = Math.floor(diffInDays / 365)
+
+  const day = String(postTime.getDate()).padStart(2, '0')
+  const month = String(postTime.getMonth() + 1).padStart(2, '0')
+  const year = postTime.getFullYear()
+  const currentYear = now.getFullYear()
 
   if (diffInSeconds < 60) {
     return 'Just now'
@@ -41,13 +43,11 @@ export const getTimeAgo = (dateString: string) => {
     return `${diffInMinutes} minutes ago`
   } else if (diffInHours < 24) {
     return `${diffInHours} hours ago`
-  } else if (diffInDays < 7) {
+  } else if (diffInDays <= 7) {
     return `${diffInDays} days ago`
-  } else if (diffInWeeks < 4) {
-    return `${diffInWeeks} weeks ago`
-  } else if (diffInMonths < 12) {
-    return `${diffInMonths} months ago`
+  } else if (year === currentYear) {
+    return `${day}/${month}`
   } else {
-    return `${diffInYears} years ago`
+    return `${day}/${month}/${year}`
   }
 }

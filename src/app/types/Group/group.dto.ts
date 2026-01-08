@@ -6,7 +6,8 @@ export enum GroupRole {
   Administrator = 'Administrator',
   SuperAdministrator = 'SuperAdministrator',
   Pending = 'Pending',
-  Inviting = 'Inviting'
+  Inviting = 'Inviting',
+  Banned = 'Banned'
 }
 
 export interface GroupDto {

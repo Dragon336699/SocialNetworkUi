@@ -90,3 +90,19 @@ export interface GetMyGroupInvitationsResponse {
   invitations: GroupInvitationDto[]
   totalCount: number
 }
+
+export interface BanMemberResponse {
+  message: string
+  success: boolean
+}
+
+export interface UnbanMemberResponse {
+  message: string
+  success: boolean
+}
+
+export interface GetBannedMembersResponse {
+  message: string
+  bannedMembers: GroupUserDto[]
+  totalCount: number
+}

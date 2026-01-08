@@ -25,6 +25,7 @@ import GroupHeaderActions from '@/app/components/Group/GroupHeaderActions'
 import InviteFriendsModal from '@/app/common/Modals/Group/InviteFriendsModal'
 import PendingPostsModal from '@/app/common/Modals/Group/PendingPostsModal'
 import MyPendingPostsModal from '@/app/common/Modals/Group/MyPendingPostsModal'
+import BannedMembersModal from '@/app/common/Modals/Group/BannedMembersModal'
 import { postService } from '@/app/services/post.service'
 import GroupSidebar from '@/app/components/Group/GroupSidebar'
 import { GroupMembersTab, GroupPhotosTab } from '@/app/components/Group/GroupTabs'
@@ -73,6 +74,7 @@ const GroupDetail = () => {
   const [rejectingInvite, setRejectingInvite] = useState(false)
   const [isPendingPostsOpen, setIsPendingPostsOpen] = useState(false)
   const [isMyPendingPostsOpen, setIsMyPendingPostsOpen] = useState(false)
+  const [isBannedMembersOpen, setIsBannedMembersOpen] = useState(false)
   const [pendingPostCount, setPendingPostCount] = useState(0)
   const [myPendingPostCount, setMyPendingPostCount] = useState(0)
 
@@ -432,6 +434,12 @@ const GroupDetail = () => {
             groupId={groupId}
             onPostsUpdated={refreshGroupData}
           />
+          <BannedMembersModal
+            isModalOpen={isBannedMembersOpen}
+            handleCancel={() => setIsBannedMembersOpen(false)}
+            groupId={groupId || ''}
+            onMembersUpdated={handleMembersUpdated}
+          />
           <ImageViewerModal
             isOpen={isImageViewerOpen}
             onClose={() => setIsImageViewerOpen(false)}
@@ -463,15 +471,39 @@ const GroupDetail = () => {
             <Title level={2} className='mb-0 text-xl sm:text-2xl'>
               {group.name}
             </Title>
-            <div className='flex md:justify-end flex-col md:flex-row lg:items-center gap-4 w-full'>
-              <div className='flex-shrink-0'>
-                <Tag
-                  icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
-                  color={group.isPublic ? 'blue' : 'orange'}
-                  className='m-0'
-                >
-                  {group.isPublic ? 'Public Group' : 'Private Group'}
-                </Tag>
+            <div className='flex items-center gap-4 flex-shrink-0'>
+              <Tag
+                icon={group.isPublic ? <GlobalOutlined /> : <LockOutlined />}
+                color={group.isPublic ? 'blue' : 'orange'}
+              >
+                {group.isPublic ? 'Public Group' : 'Private Group'}
+              </Tag>
+
+              <div className='flex items-center gap-2'>
+                <div className='flex -space-x-2'>
+                  {group.groupUsers
+                    ?.filter(
+                      (gu) =>
+                        gu.roleName !== GroupRole.Pending &&
+                        gu.roleName !== GroupRole.Inviting &&
+                        gu.roleName !== GroupRole.Banned
+                    )
+                    .slice(0, 10)
+                    .map((member, index) => (
+                      <Avatar
+                        key={member.userId}
+                        size={28}
+                        src={member.user?.avatarUrl}
+                        className='border-2 border-gray-200'
+                        style={{ zIndex: 10 - index }}
+                      >
+                        {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
+                      </Avatar>
+                    ))}
+                </div>
+                <Text type='secondary' className='text-sm'>
+                  {group.memberCount} members
+                </Text>
               </div>
 
               <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
@@ -551,6 +583,7 @@ const GroupDetail = () => {
                 onDeleteGroup={handleDeleteGroup}
                 onManagePosts={() => setIsPendingPostsOpen(true)}
                 onMyPendingPosts={() => setIsMyPendingPostsOpen(true)}
+                onBannedMembers={() => setIsBannedMembersOpen(true)}
               />
             </div>
           </div>
@@ -664,7 +697,9 @@ const GroupDetail = () => {
           )}
 
           {/* Members Tab */}
-          {activeTab === 'members' && <GroupMembersTab group={group} />}
+          {activeTab === 'members' && (
+            <GroupMembersTab group={group} currentUserId={currentUser.id} onMembersUpdated={handleMembersUpdated} />
+          )}
 
           {/* Photos Tab */}
           {activeTab === 'photos' && <GroupPhotosTab posts={posts} onImageClick={openImageViewer} />}
