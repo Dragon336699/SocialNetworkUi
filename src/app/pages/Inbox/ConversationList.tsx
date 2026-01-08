@@ -95,8 +95,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
               <div
                 key={conversation.id}
                 onClick={() => onConversationClick(conversation.id)}
-                className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 ${
-                  conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-gray-50' : ''
+                className={`flex items-center gap-3 cursor-pointer hover:bg-gray-200 ${
+                  conversation.id.toLowerCase() === conversationId?.toLowerCase() ? 'bg-gray-200' : ''
                 } rounded-[12px] py-[12px] px-[16px] transition-colors`}
               >
                 {conversation && conversation.type === 'Personal' ? (

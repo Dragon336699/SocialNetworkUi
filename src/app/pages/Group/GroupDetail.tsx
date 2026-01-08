@@ -479,56 +479,33 @@ const GroupDetail = () => {
                 {group.isPublic ? 'Public Group' : 'Private Group'}
               </Tag>
 
-              <div className='flex items-center gap-2'>
-                <div className='flex -space-x-2'>
-                  {group.groupUsers
-                    ?.filter(
-                      (gu) =>
-                        gu.roleName !== GroupRole.Pending &&
-                        gu.roleName !== GroupRole.Inviting &&
-                        gu.roleName !== GroupRole.Banned
-                    )
-                    .slice(0, 10)
-                    .map((member, index) => (
-                      <Avatar
-                        key={member.userId}
-                        size={28}
-                        src={member.user?.avatarUrl}
-                        className='border-2 border-gray-200'
-                        style={{ zIndex: 10 - index }}
-                      >
-                        {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
-                      </Avatar>
-                    ))}
-                </div>
-                <Text type='secondary' className='text-sm'>
-                  {group.memberCount} members
-                </Text>
-              </div>
-
               <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
                 <div className='flex items-center gap-2'>
                   <div className='flex -space-x-2'>
                     {group.groupUsers
-                      ?.filter((gu) => gu.roleName !== GroupRole.Pending && gu.roleName !== GroupRole.Inviting)
-                      .slice(0, 5)
+                      ?.filter(
+                        (gu) =>
+                          gu.roleName !== GroupRole.Pending &&
+                          gu.roleName !== GroupRole.Inviting &&
+                          gu.roleName !== GroupRole.Banned
+                      )
+                      .slice(0, 10)
                       .map((member, index) => (
                         <Avatar
                           key={member.userId}
                           size={28}
                           src={member.user?.avatarUrl}
-                          className='border-2 border-white dark:border-gray-800'
+                          className='border-2 border-gray-200'
                           style={{ zIndex: 10 - index }}
                         >
                           {member.user?.firstName?.[0]?.toUpperCase() || 'U'}
                         </Avatar>
                       ))}
                   </div>
-                  <Text type='secondary' className='text-sm whitespace-nowrap'>
+                  <Text type='secondary' className='text-sm'>
                     {group.memberCount} members
                   </Text>
                 </div>
-
                 <div className='flex items-center gap-4 border-l-0 sm:border-l sm:pl-4 border-gray-200'>
                   <Space size='small' className='whitespace-nowrap'>
                     <UserOutlined className='text-gray-400' />

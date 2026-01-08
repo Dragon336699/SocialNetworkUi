@@ -1,4 +1,4 @@
-import { Avatar, Button, Col, Row, Upload, Image, message, Empty } from 'antd'
+import { Avatar, Button, Col, Row, Upload, Image, message, Empty, Modal } from 'antd'
 import {
   HeartOutlined,
   EnvironmentOutlined,
@@ -11,7 +11,8 @@ import {
   UserOutlined,
   CameraOutlined,
   HeartFilled,
-  CloseOutlined
+  CloseOutlined,
+  MoreOutlined
 } from '@ant-design/icons'
 import CreatePostModal from '@/app/common/Modals/CreatePostModal'
 import { useEffect, useState } from 'react'
@@ -36,6 +37,8 @@ import { conversationService } from '@/app/services/conversation.service'
 import { BaseResponse } from '@/app/types/Base/Responses/baseResponse'
 import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import useDevice from '@/app/hook/useDeivce'
+import ProfileDropdownMenu from '@/app/pages/Profile/ProfileDropdownMenu'
+import BlockedUsersModal from '@/app/common/Modals/Profile/BlockedUsersModal'
 
 const profile = {
   name: 'Nguyễn Văn A',
@@ -100,6 +103,8 @@ const ProfileView = ({
   const [loading, setLoading] = useState<boolean>(false)
   const [loadingRequestFriend, setLoadingRequestFriend] = useState<boolean>(false)
   const [isFollowing, setIsFollowing] = useState<boolean>(false)
+  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false)
+  const [isBlockedUsersModalOpen, setIsBlockedUsersModalOpen] = useState<boolean>(false)
 
   useEffect(() => {
     if (!user || !userInfo) return
@@ -127,6 +132,20 @@ const ProfileView = ({
   useEffect(() => {
     if (!isMe) interactionService.viewUser(userInfo.id)
   }, [])
+
+  const handleBlockUser = async () => {
+    try {
+      const res = await relationService.blockUser(userInfo.id)
+      if (res.status === 200) {
+        message.success('User blocked successfully')
+        await refreshData()
+        navigate('/home')
+      }
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Unable to block user'
+      message.error(errorMessage)
+    }
+  }
 
   const handleContactClick = async (friendId: string) => {
     try {
@@ -448,6 +467,11 @@ const ProfileView = ({
           await refreshData()
         }}
       />
+      <BlockedUsersModal
+        isModalOpen={isBlockedUsersModalOpen}
+        handleCancel={() => setIsBlockedUsersModalOpen(false)}
+        onUsersUpdated={refreshData}
+      />
 
       <div className='max-w-5xl mx-auto p-4 md:p-6'>
         <div className='rounded-xl p-6 md:p-8 shadow-sm border border-gray-200 mb-8 bg-white'>
@@ -498,13 +522,30 @@ const ProfileView = ({
                 <Col>
                   <h1 className='text-xl md:text-xl font-bold text-gray-900'>{`${userInfo.lastName} ${userInfo.firstName}`}</h1>
                 </Col>
-                {isMe && (
-                  <Col>
-                    <Button onClick={onEdit} type='primary' size='large' className='px-6 font-medium'>
-                      {isMobile ? ' Edit' : 'Edit Profile'}
-                    </Button>
-                  </Col>
-                )}
+                <Col>
+                  <div className='flex items-center gap-3'>
+                    {isMe && (              
+                      <Button onClick={onEdit} type='primary' size='large' className='px-6 font-medium'>
+                        {isMobile ? ' Edit' : 'Edit Profile'}
+                      </Button>               
+                    )}
+                    <div className='relative'>
+                      <Button
+                        icon={<MoreOutlined />}
+                        size='large'
+                        onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                        className='flex items-center justify-center'
+                      />
+                      <ProfileDropdownMenu
+                        isOpen={showProfileDropdown}
+                        onClose={() => setShowProfileDropdown(false)}
+                        isMe={isMe}
+                        onViewBlockedUsers={isMe ? () => setIsBlockedUsersModalOpen(true) : undefined}
+                        onBlockUser={!isMe ? handleBlockUser : undefined}
+                      />
+                    </div>
+                  </div>
+                </Col>
               </Row>
 
               <p className='text-lg text-gray-700 mb-6'>{userInfo.description}</p>

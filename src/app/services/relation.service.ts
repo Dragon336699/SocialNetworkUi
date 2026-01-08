@@ -167,5 +167,35 @@ export const relationService = {
       withCredentials: true
     })
     return { data: response.data, status: response.status }
+  },
+
+  async blockUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/block`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async unblockUser(userId: string): Promise<{ data: BaseResponse; status: number }> {
+    const response = await apiClient.post<BaseResponse>(
+      `user-relation/unblock`,
+      { targetUserId: userId },
+      {
+        withCredentials: true
+      }
+    )
+    return { data: response.data, status: response.status }
+  },
+
+  async getBlockedUsers(skip?: number, take?: number): Promise<{ data: ResponseHasData<UserDto[]>; status: number }> {
+    const response = await apiClient.get<ResponseHasData<UserDto[]>>(`user-relation/blocked-users`, {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return { data: response.data, status: response.status }
   }
 }

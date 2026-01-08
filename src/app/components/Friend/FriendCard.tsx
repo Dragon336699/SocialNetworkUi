@@ -1,7 +1,7 @@
 import React from 'react'
 import { Dropdown, Button, MenuProps, Avatar, message } from 'antd'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEllipsisVertical, faComment, faUserXmark } from '@fortawesome/free-solid-svg-icons'
+import { faEllipsisVertical, faComment, faUserXmark, faBan } from '@fortawesome/free-solid-svg-icons'
 import { ActionType } from '@/app/types/Common'
 import { useNavigate } from 'react-router-dom'
 import { UserDto } from '@/app/types/User/user.dto'
@@ -52,14 +52,14 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onAction }) => {
       label: 'Unfriend',
       danger: true,
       onClick: () => onAction('unfriend', friend)
+    },
+    {
+      key: 'block',
+      icon: <FontAwesomeIcon icon={faBan} />,
+      label: 'Block',
+      danger: true,
+      onClick: () => onAction('block', friend)
     }
-    // {
-    //   key: 'block',
-    //   icon: <FontAwesomeIcon icon={faBan} />,
-    //   label: 'Block',
-    //   danger: true,
-    //   onClick: () => onAction('block', friend)
-    // }
   ]
 
   return (
