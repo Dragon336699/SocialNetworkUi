@@ -42,7 +42,7 @@ const Home = () => {
     try {
       const res = await relationService.getFriendsList()
       if (res.status === 200) {
-        const resData = res.data as ResponseHasData<UserDto[]>      
+        const resData = res.data as ResponseHasData<UserDto[]>
         setFriendsList(resData.data as UserDto[])
       }
     } catch {
@@ -349,43 +349,29 @@ const Home = () => {
                             <h4 className='font-semibold text-[15px] truncate m-0'>
                               {req.user.lastName + ' ' + req.user.firstName}
                             </h4>
-                            <Text type='secondary' className='text-[12px]'>
+                            <Text type='secondary' className='text-[12px] block truncate'>
                               {req.mutualFriendCount} mutual friends
                             </Text>
                           </div>
                         </div>
+
                         <Button
                           type={isRequested ? 'default' : 'primary'}
                           shape='circle'
+                          size='small'
                           icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
                           disabled={isRequested}
                           onClick={() => handleAddFriend(req.user.id)}
                           className={isRequested ? 'bg-green-50 text-green-600' : ''}
                         />
-                        <div className='overflow-hidden'>
-                          <h4 className='font-semibold text-[15px] truncate m-0'>
-                            {req.user.lastName + ' ' + req.user.firstName}
-                          </h4>
-                          <Text type='secondary' className='text-[12px] block truncate'>
-                            {req.mutualFriendCount} mutual friends
-                          </Text>
-                        </div>
                       </div>
-                      <Button
-                        type={isRequested ? 'default' : 'primary'}
-                        shape='circle'
-                        size='small'
-                        icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
-                        disabled={isRequested}
-                        onClick={() => handleAddFriend(req.user.id)}
-                        className={isRequested ? 'bg-green-50 text-green-600' : ''}
-                      />
-                    </div>
-                  )
-                })}
-                {suggestUsers.length === 0 && (
-                  <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
+                    )
+                  })}
+
+                  {suggestUsers.length === 0 && (
+                    <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  )}
+                </div>
               </div>
             </div>
           </div>
