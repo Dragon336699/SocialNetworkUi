@@ -503,13 +503,7 @@ const GroupDetail = () => {
                           </Avatar>
                         ))}
                     </div>
-                    <Text type='secondary' className='text-sm'>
-                      {group.memberCount} members
-                    </Text>
                   </div>
-                  <Text type='secondary' className='text-sm whitespace-nowrap'>
-                    {group.memberCount} members
-                  </Text>
                 </div>
 
                 <div className='flex items-center gap-4 border-l-0 sm:border-l sm:pl-4 border-gray-200'>
