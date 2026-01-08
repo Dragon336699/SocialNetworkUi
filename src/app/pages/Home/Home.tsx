@@ -216,27 +216,29 @@ const Home = () => {
       />
 
       <div className='pt-6 px-4'>
-        <div className='flex justify-between max-w-[1200px] mx-auto'>
-          <div className='flex-1 flex justify-center'>
-            <div className='w-full max-w-[680px]'>
-              <div className='bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
-                <div className='flex items-center gap-3 mb-3'>
-                  <Avatar
-                    size={40}
-                    src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
-                    className='border-2 border-gray-200'
-                  />
-                  <div
-                    onClick={() => setIsOpenCreatePost(true)}
-                    className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] text-[17px] cursor-pointer transition-colors'
-                  >
-                    What's on your mind, {userInfo?.firstName}?
-                  </div>
+        <div className='max-w-[1200px] mx-auto flex gap-6'>
+          {/* Main content - Posts */}
+          <div className='flex-1 max-w-[680px]'>
+            {/* Create Post Box */}
+            <div className='bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
+              <div className='flex items-center gap-3'>
+                <Avatar
+                  size={40}
+                  src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
+                  className='border-2 border-gray-200'
+                />
+                <div
+                  onClick={() => setIsOpenCreatePost(true)}
+                  className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] text-[17px] cursor-pointer transition-colors'
+                >
+                  What's on your mind, {userInfo?.firstName}?
                 </div>
               </div>
-              <Divider className='my-0' />
             </div>
 
+            <Divider className='my-0 mb-4' />
+
+            {/* Posts List */}
             <div className='space-y-4 pb-10'>
               {posts.length > 0 ? (
                 <>
@@ -272,7 +274,7 @@ const Home = () => {
 
                   {!hasMore && (
                     <div className='text-center py-8'>
-                      <Text type='secondary'>🎉 You’ve reached the end of all posts!</Text>
+                      <Text type='secondary'>🎉 You've reached the end of all posts!</Text>
                     </div>
                   )}
                 </>
@@ -296,44 +298,51 @@ const Home = () => {
               )}
             </div>
           </div>
-        </div>
 
-        <div className='hidden lg:block w-[320px] sticky top-[12px] self-start pr-4'>
-          <div className='flex flex-col h-[calc(100vh-20px)]'>
-            <div className='px-2'>
-              <div className='flex justify-between items-center mb-4 px-2'>
-                <Text className='font-semibold text-[#65676B] text-[17px]'>Contacts</Text>
+          {/* Right Sidebar - Contacts & Suggestions */}
+          <div className='hidden lg:block w-[320px] sticky top-[76px] self-start h-[calc(100vh-100px)]'>
+            <div className='flex flex-col h-full overflow-y-auto custom-scrollbar px-2'>
+              {/* Contacts Section */}
+              <div className='mb-6'>
+                <div className='flex justify-between items-center mb-4 px-2'>
+                  <Text className='font-semibold text-[#65676B] text-[17px]'>Contacts</Text>
+                </div>
+
+                <div className='space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar'>
+                  {friendsList.map((friend) => (
+                    <div
+                      key={friend.id}
+                      className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
+                      onClick={() => handleContactClick(friend.id)}
+                    >
+                      <Badge dot status={friend.status === 'Online' ? 'success' : 'default'} offset={[-4, 28]}>
+                        <Avatar
+                          size={36}
+                          src={friend.avatarUrl || DEFAULT_AVATAR_URL}
+                          className='border-2 border-gray-200'
+                        />
+                      </Badge>
+                      <span className='font-semibold text-[15px] text-[#050505]'>
+                        {friend.lastName} {friend.firstName}
+                      </span>
+                    </div>
+                  ))}
+                  {friendsList.length === 0 && (
+                    <div className='px-2'>
+                      <Empty description='No friends' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className='space-y-1 flex-1 overflow-y-auto h-[calc(100vh-420px)] custom-scrollbar px-2'>
-                {friendsList.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
-                    onClick={() => handleContactClick(friend.id)}
-                  >
-                    <Badge dot status={friend.status === 'Online' ? 'success' : 'default'} offset={[-4, 28]}>
-                      <Avatar
-                        size={36}
-                        src={friend.avatarUrl || DEFAULT_AVATAR_URL}
-                        className='border-2 border-gray-200'
-                      />
-                    </Badge>
-                    <span className='font-semibold text-[15px] text-[#050505]'>
-                      {friend.lastName} {friend.firstName}
-                    </span>
-                  </div>
-                ))}
-                {friendsList.length === 0 && <Empty description='No friends' image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-              </div>
+              <Divider className='my-4' />
 
-              <Divider className='my-4 mx-2' />
+              {/* Suggestions Section */}
+              <div>
+                <div className='flex justify-between items-center mb-4 px-2'>
+                  <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
+                </div>
 
-              <div className='flex justify-between items-center mb-4 px-2'>
-                <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
-              </div>
-
-              <div className='space-y-1'>
                 <div className='space-y-4'>
                   {suggestUsers.map((req) => {
                     const isRequested = requestedSuggestIds.includes(req.user.id)
@@ -369,7 +378,9 @@ const Home = () => {
                   })}
 
                   {suggestUsers.length === 0 && (
-                    <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                    <div className='px-2'>
+                      <Empty description='No suggestions' image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                    </div>
                   )}
                 </div>
               </div>
