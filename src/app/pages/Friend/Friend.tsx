@@ -72,14 +72,25 @@ const FriendsList: React.FC = () => {
     setGlobalLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 800))
 
-    if (currentAction === 'unfriend') {
-      await relationService.unFriend(selectedFriend.id)
-      message.success('Unfriended successfully')
-      getFriends()
+    try {
+      if (currentAction === 'unfriend') {
+        await relationService.unFriend(selectedFriend.id)
+        message.success('Unfriended successfully')
+        getFriends()
+      } else if (currentAction === 'block') {
+        await relationService.blockUser(selectedFriend.id)
+        message.success('User blocked successfully')
+        getFriends()
+        getSuggestFriends()
+      }
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Action failed'
+      message.error(errorMessage)
+    } finally {
+      setGlobalLoading(false)
+      setModalOpen(false)
+      setSelectedFriend(null)
     }
-    setGlobalLoading(false)
-    setModalOpen(false)
-    setSelectedFriend(null)
   }
 
   const getFriends = async () => {
