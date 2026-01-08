@@ -39,7 +39,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ show, onClose }) => {
     }
   }, [show])
 
-  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

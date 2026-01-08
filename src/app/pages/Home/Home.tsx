@@ -42,7 +42,7 @@ const Home = () => {
     try {
       const res = await relationService.getFriendsList()
       if (res.status === 200) {
-        const resData = res.data as ResponseHasData<UserDto[]>
+        const resData = res.data as ResponseHasData<UserDto[]>      
         setFriendsList(resData.data as UserDto[])
       }
     } catch {
@@ -214,21 +214,24 @@ const Home = () => {
         onCreatePostSuccess={handleCreatePostSuccess}
         currentUser={userInfo}
       />
-      <div className='pt-6 max-xs:pt-4 px-2 sm:px-4 lg:pl-8 lg:pr-0 flex justify-center lg:justify-between items-start'>
-        <div className='w-full lg:flex-1 flex justify-center'>
-          <div className='w-full max-w-[680px]'>
-            <div className='bg-white sm:rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
-              <div className='flex items-center gap-3 mb-3'>
-                <Avatar
-                  size={40}
-                  src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
-                  className='border-2 border-gray-200'
-                />
-                <div
-                  onClick={() => setIsOpenCreatePost(true)}
-                  className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2.5 text-[#65676B] text-[17px] cursor-pointer transition-colors'
-                >
-                  What's on your mind, {userInfo?.firstName}?
+
+      <div className='pt-6 px-4'>
+        <div className='flex justify-between max-w-[1200px] mx-auto'>
+          <div className='flex-1 flex justify-center'>
+            <div className='w-full max-w-[680px]'>
+              <div className='bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-200'>
+                <div className='flex items-center gap-3 mb-3'>
+                  <Avatar
+                    size={40}
+                    src={userInfo?.avatarUrl || DEFAULT_AVATAR_URL}
+                    className='border-2 border-gray-200'
+                  />
+                  <div
+                    onClick={() => setIsOpenCreatePost(true)}
+                    className='flex-1 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full px-4 py-2 text-[#65676B] text-[17px] cursor-pointer transition-colors'
+                  >
+                    What's on your mind, {userInfo?.firstName}?
+                  </div>
                 </div>
               </div>
               <Divider className='my-0' />
@@ -309,7 +312,7 @@ const Home = () => {
                     className='flex items-center gap-3 p-2 hover:bg-[#E4E6EB] rounded-lg cursor-pointer transition-colors'
                     onClick={() => handleContactClick(friend.id)}
                   >
-                    <Badge dot status={friend.status === 'online' ? 'success' : 'default'} offset={[-4, 28]}>
+                    <Badge dot status={friend.status === 'Online' ? 'success' : 'default'} offset={[-4, 28]}>
                       <Avatar
                         size={36}
                         src={friend.avatarUrl || DEFAULT_AVATAR_URL}
@@ -330,19 +333,34 @@ const Home = () => {
                 <Text className='font-semibold text-[#65676B] text-[17px]'>Suggestions</Text>
               </div>
 
-              <div className='space-y-4 flex-1 overflow-y-auto h-[calc(100vh-480px)] custom-scrollbar px-2'>
-                {suggestUsers.map((req) => {
-                  const isRequested = requestedSuggestIds.includes(req.user.id)
-                  return (
-                    <div key={req.user.id} className='flex items-center justify-between group'>
-                      <div
-                        className='flex gap-3 items-center overflow-hidden cursor-pointer'
-                        onClick={() => navigate(`/profile/${req.user.userName}`)}
-                      >
-                        <Avatar
-                          size={40}
-                          src={req.user.avatarUrl || DEFAULT_AVATAR_URL}
-                          className='border-2 border-gray-200 flex-shrink-0'
+              <div className='space-y-1'>
+                <div className='space-y-4'>
+                  {suggestUsers.map((req) => {
+                    const isRequested = requestedSuggestIds.includes(req.user.id)
+                    return (
+                      <div key={req.user.id} className='flex items-center justify-between group px-2'>
+                        <div className='flex gap-3 items-center overflow-hidden'>
+                          <Avatar
+                            size={40}
+                            src={req.user.avatarUrl || DEFAULT_AVATAR_URL}
+                            className='border-2 border-gray-200'
+                          />
+                          <div className='overflow-hidden'>
+                            <h4 className='font-semibold text-[15px] truncate m-0'>
+                              {req.user.lastName + ' ' + req.user.firstName}
+                            </h4>
+                            <Text type='secondary' className='text-[12px]'>
+                              {req.mutualFriendCount} mutual friends
+                            </Text>
+                          </div>
+                        </div>
+                        <Button
+                          type={isRequested ? 'default' : 'primary'}
+                          shape='circle'
+                          icon={isRequested ? <CheckOutlined /> : <UserAddOutlined />}
+                          disabled={isRequested}
+                          onClick={() => handleAddFriend(req.user.id)}
+                          className={isRequested ? 'bg-green-50 text-green-600' : ''}
                         />
                         <div className='overflow-hidden'>
                           <h4 className='font-semibold text-[15px] truncate m-0'>

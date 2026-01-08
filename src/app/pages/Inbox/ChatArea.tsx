@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, Skeleton, Tooltip, Image, message, Dropdown, Modal } from 'antd'
-import { PhoneOutlined, SearchOutlined, SendOutlined, PlusOutlined, CloseOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import {
+  PhoneOutlined,
+  SearchOutlined,
+  SendOutlined,
+  PlusOutlined,
+  CloseOutlined,
+  ArrowDownOutlined
+} from '@ant-design/icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCheck,
@@ -20,7 +27,8 @@ import {
   faXmark,
   faTrash,
   faEdit,
-  faSignature
+  faSignature,
+  faCircleInfo
 } from '@fortawesome/free-solid-svg-icons'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
 import data from '@emoji-mart/data'
@@ -71,6 +79,8 @@ interface ChatAreaProps {
   onConversationDeleted?: () => void
   onNicknameChanged?: (userId: string, newNickname: string) => void
   onGroupNameChanged?: (newName: string) => void
+  showChatDetails?: boolean
+  setShowChatDetails?: (show: boolean) => void
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
@@ -90,11 +100,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   setImagesPreview,
   audioUrl,
   setAudioUrl,
-  audioBlob,
   setAudioBlob,
   isRecording,
   setIsRecording,
-  isInputFocused,
   setIsInputFocused,
   firstMessageRef,
   newestMessageRef,
@@ -103,14 +111,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   streamRef,
   hasMore,
   isLoadingMore,
-  loadMoreMessage,
   handleSendMessage,
   handleSendReaction,
   onConversationDeleted,
   onNicknameChanged,
-  onGroupNameChanged
+  onGroupNameChanged,
+  showChatDetails,
+  setShowChatDetails
 }) => {
-  // States
   const waveformRef = useRef(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [previewVoicePlaying, setPreviewVoicePlaying] = useState(false)
@@ -131,7 +139,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const navigate = useNavigate()
 
-  // Modal states
   const [isNicknameModalVisible, setIsNicknameModalVisible] = useState(false)
   const [isGroupNameModalVisible, setIsGroupNameModalVisible] = useState(false)
   const [newNickname, setNewNickname] = useState('')
@@ -217,33 +224,52 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   // Menu items
   const menuItems = [
-    ...(conversation?.type === 'Personal' ? [{
-      key: 'nickname',
+    {
+      key: 'chatDetails',
       label: (
         <div className='flex items-center gap-2'>
-          <FontAwesomeIcon icon={faEdit} />
-          <span>Change Nickname</span>
+          <FontAwesomeIcon icon={faCircleInfo} className={showChatDetails ? 'text-sky-500' : ''} />
+          <span>{showChatDetails ? 'Hide Chat Details' : 'Show Chat Details'}</span>
         </div>
       ),
-      onClick: () => {
-        const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
-        setNewNickname(otherUser?.nickName || '')
-        setIsNicknameModalVisible(true)
-      }
-    }] : []),
-    ...(conversation?.type === 'Group' ? [{
-      key: 'groupname',
-      label: (
-        <div className='flex items-center gap-2'>
-          <FontAwesomeIcon icon={faSignature} />
-          <span>Change Group Name</span>
-        </div>
-      ),
-      onClick: () => {
-        setNewGroupName(conversation?.conversationName || '')
-        setIsGroupNameModalVisible(true)
-      }
-    }] : []),
+      onClick: () => setShowChatDetails?.(!showChatDetails)
+    },
+    { type: 'divider' as const },
+    ...(conversation?.type === 'Personal'
+      ? [
+          {
+            key: 'nickname',
+            label: (
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faEdit} />
+                <span>Change Nickname</span>
+              </div>
+            ),
+            onClick: () => {
+              const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
+              setNewNickname(otherUser?.nickName || '')
+              setIsNicknameModalVisible(true)
+            }
+          }
+        ]
+      : []),
+    ...(conversation?.type === 'Group'
+      ? [
+          {
+            key: 'groupname',
+            label: (
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faSignature} />
+                <span>Change Group Name</span>
+              </div>
+            ),
+            onClick: () => {
+              setNewGroupName(conversation?.conversationName || '')
+              setIsGroupNameModalVisible(true)
+            }
+          }
+        ]
+      : []),
     { type: 'divider' as const },
     {
       key: 'delete',
@@ -271,9 +297,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       setIsRecording(true)
       setRecordingDuration(0)
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1)
+        setRecordingDuration((prev) => prev + 1)
       }, 1000)
-    } catch (error) {
+    } catch {
       message.error('Cannot access microphone')
     }
   }
@@ -318,7 +344,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleFileChange = (e: any) => {
+  const handleFileChange = () => {
     message.info('File attachment coming soon!')
   }
 
@@ -365,13 +391,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       })
     }
   }
- 
+
   useEffect(() => {
     const scrollableDiv = document.getElementById('scrollableDiv')
     if (!scrollableDiv) return
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv     
+      const { scrollTop, scrollHeight, clientHeight } = scrollableDiv
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 300
       setShowScrollToBottom(!isNearBottom)
     }
@@ -392,7 +418,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
-      if (messageReactionBar && reactionBarRef.current && !reactionBarRef.current.contains(target) && !fullyReactionSelection) {
+      if (
+        messageReactionBar &&
+        reactionBarRef.current &&
+        !reactionBarRef.current.contains(target) &&
+        !fullyReactionSelection
+      ) {
         setMessageReactionBar(null)
       }
       if (fullyReactionSelection && pickerEmotionRef.current && !pickerEmotionRef.current.contains(target)) {
@@ -571,54 +602,50 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       {/* Body - Messages List */}
       {conversationId && (
         <div className='relative flex-1 overflow-hidden'>
-          <div 
-            id='scrollableDiv' 
-            className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'
-          >
-
-          {/* Loading indicator at top */}
-          {isLoadingMore && (
-            <div className='text-center py-3 text-gray-500'>
-              <div className='inline-flex items-center gap-2'>
-                <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
-                <span className='text-sm'>Loading older messages...</span>
+          <div id='scrollableDiv' className='h-full overflow-y-auto px-[20px] pb-4 flex flex-col'>
+            {/* Loading indicator at top */}
+            {isLoadingMore && (
+              <div className='text-center py-3 text-gray-500'>
+                <div className='inline-flex items-center gap-2'>
+                  <div className='w-4 h-4 border-2 border-gray-300 border-t-sky-500 rounded-full animate-spin'></div>
+                  <span className='text-sm'>Loading older messages...</span>
+                </div>
               </div>
-            </div>
-          )}
-          {!isLoadingMore && hasMore && (
-            <div className='text-center py-2 text-gray-400'>
-              <span className='text-sm'>↑ Scroll up to see older messages</span>
-            </div>
-          )}
-          {!hasMore && messages.length > 0 && (
-            <Divider plain>No more messages 🤐</Divider>
-          )}
-          
-          <List
-            className='w-full'
-            dataSource={messages}
-            renderItem={(item, index) => {
-              const isMe = item.sender?.id == userInfo?.id
-              const isFirst = index === 18
-              return (
-                <div
-                  id={`msg-${item.id}`}
-                  ref={isFirst ? firstMessageRef : null}
-                  className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
-                  key={item.id}
-                >
-                  {!isMe && (
-                    <a href='#' className='mr-2'>
-                      <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
-                    </a>
-                  )}
+            )}
+            {!isLoadingMore && hasMore && (
+              <div className='text-center py-2 text-gray-400'>
+                <span className='text-sm'>↑ Scroll up to see older messages</span>
+              </div>
+            )}
+            {!hasMore && messages.length > 0 && <Divider plain>No more messages 🤐</Divider>}
 
-                  <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
-                    <div className='flex items-center'>
-                      <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
-                        {item.repliedMessage && (
-                          item.repliedMessage.content !== '' ? (
-                            <p className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}>
+            <List
+              className='w-full'
+              dataSource={messages}
+              renderItem={(item, index) => {
+                const isMe = item.sender?.id == userInfo?.id
+                const isFirst = index === 18
+                return (
+                  <div
+                    id={`msg-${item.id}`}
+                    ref={isFirst ? firstMessageRef : null}
+                    className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-end mb-[12px] mt-[16px]`}
+                    key={item.id}
+                  >
+                    {!isMe && (
+                      <a href='#' className='mr-2'>
+                        <Avatar src={item.sender?.avatarUrl} className='border-2 border-gray-200'></Avatar>
+                      </a>
+                    )}
+
+                    <div className={`flex gap-1 ${item.content === '' ? '' : 'flex-col-reverse'} max-w-[70%]`}>
+                      <div className='flex items-center'>
+                        <div className={`flex ${isMe ? 'items-end' : 'items-start'} flex-col gap-1`}>
+                          {item.repliedMessage &&
+                            (item.repliedMessage.content !== '' ? (
+                              <p
+                                className={`${isMe ? 'bg-gray-500 bg-opacity-20' : 'bg-gray-300 bg-opacity-60'} inline-block p-[12px] rounded-[20px] break-all cursor-default text-[#0000007a]`}
+                              >
                                 {item.repliedMessage.content}
                               </p>
                             ) : item.repliedMessage.messageAttachments[0]?.fileType === 'Image' ? (
@@ -803,7 +830,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               }}
             />
           </div>
-          
+
           {/* Scroll to bottom button */}
           {showScrollToBottom && (
             <button
@@ -887,16 +914,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           /* Container chính: Thêm px-2 sm:px-0 để không bị sát mép trên mobile */
           <div className='flex items-end gap-1.5 sm:gap-2 p-2 sm:p-0'>
             {isRecording ? (
-              /* CHẾ ĐỘ GHI ÂM */
-              <div className='flex-1 flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-[24px] px-3 sm:px-4 py-2 sm:py-3 border border-gray-200'>
-                <div className='flex items-center gap-2 sm:gap-3 flex-1 min-w-0'>
-                  <div className='w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse flex-shrink-0'></div>
-                  <span className='text-xs sm:text-sm font-medium text-gray-700 flex-shrink-0'>
-                    {formatDuration(recordingDuration)}
-                  </span>
-
-                  {/* Progress bar: Ẩn trên mobile cực nhỏ, hiện từ sm trở lên để tiết kiệm chỗ */}
-                  <div className='hidden sm:block flex-1 h-6 sm:h-8 bg-gray-200 rounded-full overflow-hidden relative'>
+              <div className='flex-1 flex items-center gap-3 bg-gray-50 rounded-[24px] px-4 py-3 border border-gray-200'>
+                <div className='flex items-center gap-3 flex-1'>
+                  <div className='w-3 h-3 bg-red-500 rounded-full animate-pulse'></div>
+                  <span className='text-sm font-medium text-gray-700'>{formatDuration(recordingDuration)}</span>
+                  <div className='flex-1 h-8 bg-gray-200 rounded-full overflow-hidden relative'>
                     <div
                       className='h-full bg-blue-500 rounded-full transition-all duration-300'
                       style={{ width: `${Math.min((recordingDuration / 60) * 100, 100)}%` }}
@@ -914,9 +936,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 </button>
                 <button
                   onClick={stopRecording}
-                  className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-blue-500 text-white flex-shrink-0'
+                  className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'
                 >
-                  <FontAwesomeIcon icon={faCircleStop} className='text-sm sm:text-base' />
+                  <FontAwesomeIcon icon={faCircleStop} />
                 </button>
               </div>
             ) : (
@@ -928,12 +950,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                     <input ref={attachFileInputRef} hidden type='file' onChange={handleFileChange} />
                     <button
                       onClick={() => attachFileInputRef.current?.click()}
-                      className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100'
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
                     >
-                      <FontAwesomeIcon icon={faPaperclip} className='text-base sm:text-lg' />
+                      <FontAwesomeIcon icon={faPaperclip} className='text-lg' />
                     </button>
-
-                    {/* Ẩn bớt 1 icon trên mobile cực nhỏ nếu cần, ở đây giữ nguyên nhưng thu nhỏ size */}
                     <input
                       ref={fileInputRef}
                       hidden
@@ -944,15 +964,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100'
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
                     >
-                      <FontAwesomeIcon icon={faImage} className='text-base sm:text-lg' />
+                      <FontAwesomeIcon icon={faImage} className='text-lg' />
                     </button>
                     <button
                       onClick={startRecording}
-                      className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100'
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100'
                     >
-                      <FontAwesomeIcon icon={faMicrophone} className='text-base sm:text-lg' />
+                      <FontAwesomeIcon icon={faMicrophone} className='text-lg' />
                     </button>
                   </div>
                 )}
@@ -962,18 +982,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   <div className='relative' ref={attachMenuRef}>
                     <button
                       onClick={() => setShowAttachMenu(!showAttachMenu)}
-                      className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-50'
+                      className='w-10 h-10 flex items-center justify-center rounded-full text-blue-500 hover:bg-blue-50'
                     >
                       <PlusOutlined className='text-lg' />
                     </button>
                     {showAttachMenu && (
-                      <div className='absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden w-36 sm:w-40 z-[100]'>
+                      <div className='absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden w-40 z-50'>
                         <button
                           onClick={() => {
                             document.getElementById('attachFileInputMenu')?.click()
                             setShowAttachMenu(false)
                           }}
-                          className='w-full px-3 py-2 sm:px-4 sm:py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
                         >
                           <FontAwesomeIcon icon={faPaperclip} className='w-4' />
                           <span>File</span>
@@ -983,7 +1003,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                             fileInputRef.current?.click()
                             setShowAttachMenu(false)
                           }}
-                          className='w-full px-3 py-2 sm:px-4 sm:py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
                         >
                           <FontAwesomeIcon icon={faImage} className='w-4' />
                           <span>Image</span>
@@ -993,7 +1013,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                             startRecording()
                             setShowAttachMenu(false)
                           }}
-                          className='w-full px-3 py-2 sm:px-4 sm:py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
+                          className='w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700 text-sm'
                         >
                           <FontAwesomeIcon icon={faMicrophone} className='w-4' />
                           <span>Voice</span>
@@ -1022,25 +1042,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                       }}
                       rows={1}
                     />
-
-                    {/* Emoji Picker: Xử lý z-index và vị trí trên mobile */}
-                    <div className='flex-shrink-0 ml-1 sm:ml-2' ref={emojiPickerRef}>
+                    <div className='flex-shrink-0 ml-2' ref={emojiPickerRef}>
                       <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className='text-gray-400 hover:text-gray-600 p-1'
+                        className='text-gray-600 hover:text-gray-800 p-1'
                       >
-                        <FontAwesomeIcon icon={faFaceSmile} className='text-lg sm:text-base' />
+                        <FontAwesomeIcon icon={faFaceSmile} className='text-base' />
                       </button>
                       {showEmojiPicker && (
-                        /* Trên mobile có thể bảng emoji sẽ bị tràn, thêm max-w-screen nếu cần */
-                        <div className='absolute bottom-full right-0 mb-2 z-[100] max-w-[calc(100vw-40px)]'>
+                        <div className='absolute bottom-full right-0 mb-2 z-50'>
                           <Picker
                             data={data}
                             onEmojiSelect={handleEmojiSelect}
                             previewPosition='none'
                             theme='light'
-                            perLine={window.innerWidth < 640 ? 7 : 8}
-                            emojiSize={window.innerWidth < 640 ? 18 : 20}
+                            perLine={8}
+                            emojiSize={20}
                           />
                         </div>
                       )}
@@ -1048,12 +1065,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   </div>
                 </div>
 
-                {/* Nút Gửi */}
                 <button
                   onClick={handleSendMessage}
-                  className='w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white flex-shrink-0 transition-transform active:scale-95'
+                  className='w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white'
                 >
-                  <SendOutlined className='text-base sm:text-lg' />
+                  <SendOutlined className='text-lg' />
                 </button>
               </>
             )}

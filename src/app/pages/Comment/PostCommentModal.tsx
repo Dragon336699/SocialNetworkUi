@@ -11,6 +11,7 @@ import { UserDto } from '@/app/types/User/user.dto'
 import PostDropdownMenu from '../Post/PostDropdownMenu'
 import EditPostModal from '../Post/EditPostModal'
 import DeletePostModal from '../Post/DeletePostModal'
+import ReactionUsersModal from '@/app/common/Modals/ReactionUsersModal'
 import { PostData } from '@/app/types/Post/Post'
 import { getTimeAgo } from '@/app/helper'
 import useDevice from '@/app/hook/useDeivce'
@@ -96,6 +97,7 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
   const [showDropdown, setShowDropdown] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showReactionUsersModal, setShowReactionUsersModal] = useState(false)
 
   const emojiWrapperRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -435,8 +437,11 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
     return (
       <div className='flex'>
         {hasReactions && (
-          <div className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 min-w-0 max-w-full'>
-            <div className='flex items-center -space-x-1 flex-shrink-0'>
+          <div 
+            className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 cursor-pointer hover:bg-gray-200 transition-colors'
+            onClick={() => setShowReactionUsersModal(true)}
+          >
+            <div className='flex items-center -space-x-1'>
               {uniqueReactions.slice(0, 3).map((reactionEmoji, index) => (
                 <div
                   key={index}
@@ -817,6 +822,13 @@ const PostCommentModal: React.FC<PostCommentModalProps> = ({
         onClose={() => setShowDeleteModal(false)}
         onDeleteSuccess={handleDeleteSuccess}
         postId={postId}
+      />
+
+      <ReactionUsersModal
+        isOpen={showReactionUsersModal}
+        onClose={() => setShowReactionUsersModal(false)}
+        reactions={postReactionUsers}
+        totalLiked={postReactionUsers?.length || 0}
       />
     </>
   )

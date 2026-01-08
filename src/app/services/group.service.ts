@@ -18,7 +18,10 @@ import {
   InviteMemberResponse,
   AcceptGroupInviteResponse,
   RejectGroupInviteResponse,
-  GetMyGroupInvitationsResponse
+  GetMyGroupInvitationsResponse,
+  BanMemberResponse,
+  UnbanMemberResponse,
+  GetBannedMembersResponse
 } from '../types/Group/GroupResponse'
 import { CreateGroupRequest, UpdateGroupRequest } from '../types/Group/GroupRequest'
 
@@ -224,6 +227,32 @@ export const groupService = {
 
   async getMyGroupInvitations(skip: number = 0, take: number = 10): Promise<GetMyGroupInvitationsResponse> {
     const { data } = await apiClient.get<GetMyGroupInvitationsResponse>('group/my-invitations', {
+      params: { skip, take },
+      withCredentials: true
+    })
+    return data
+  },
+
+  async banMember(groupId: string, targetUserId: string): Promise<BanMemberResponse> {
+    const { data } = await apiClient.post<BanMemberResponse>(
+      `group/${groupId}/ban-member`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async unbanMember(groupId: string, targetUserId: string): Promise<UnbanMemberResponse> {
+    const { data } = await apiClient.post<UnbanMemberResponse>(
+      `group/${groupId}/unban-member`,
+      { targetUserId },
+      { withCredentials: true }
+    )
+    return data
+  },
+
+  async getBannedMembers(groupId: string, skip: number = 0, take: number = 10): Promise<GetBannedMembersResponse> {
+    const { data } = await apiClient.get<GetBannedMembersResponse>(`group/${groupId}/banned-members`, {
       params: { skip, take },
       withCredentials: true
     })
