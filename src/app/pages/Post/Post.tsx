@@ -22,7 +22,6 @@ import { ResponseHasData } from '@/app/types/Base/Responses/ResponseHasData'
 import useDevice from '@/app/hook/useDeivce'
 
 interface PostProps extends PostData {
-  feedId?: string
   feedCreatedAt?: number
   onToggleLike?: (postId: string) => void
   onPostUpdated?: (updatedPost: PostData) => void
@@ -40,7 +39,6 @@ const Post: React.FC<PostProps> = ({
   totalLiked,
   totalComment,
   createdAt,
-  feedId,
   feedCreatedAt,
   user,
   postImages,
@@ -96,9 +94,8 @@ const Post: React.FC<PostProps> = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!feedId || !feedCreatedAt) return
+          if (!feedCreatedAt) return
           const seenPostObject: SeenPost = {
-            feedId,
             createdAt: feedCreatedAt,
             postId: id
           }
@@ -111,7 +108,7 @@ const Post: React.FC<PostProps> = ({
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [id, onSeen, feedId, feedCreatedAt])
+  }, [id, onSeen, feedCreatedAt])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

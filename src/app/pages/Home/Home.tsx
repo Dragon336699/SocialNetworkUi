@@ -239,9 +239,8 @@ const Home = () => {
                 <>
                   {posts.map((feed) => (
                     <Post
-                      key={feed.feedId}
+                      key={feed.post.id}
                       {...feed.post}
-                      feedId={feed.feedId}
                       feedCreatedAt={feed.createdAt}
                       currentUserId={userInfo?.id || ''}
                       onPostUpdated={handlePostUpdated}

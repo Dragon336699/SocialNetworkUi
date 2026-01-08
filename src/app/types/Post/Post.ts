@@ -84,7 +84,6 @@ export interface PostReactionResponse extends BaseResponse {
 }
 
 export type SeenPost = {
-  feedId: string
   createdAt: number
   postId: string
 }
