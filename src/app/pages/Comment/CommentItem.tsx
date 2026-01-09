@@ -33,6 +33,8 @@ interface CommentItemProps {
   onNewReply?: (parentCommentId: string, newComment: CommentDto) => void
 }
 
+const MAX_REPLY_LEVEL = 5
+
 const CommentItem: React.FC<CommentItemProps> = ({
   comment,
   currentUserId,
@@ -434,10 +436,14 @@ const CommentItem: React.FC<CommentItemProps> = ({
               )}
             </div>
           </div>
-
-          <button onClick={() => handleReply(comment.id, fullName)} className='hover:underline flex items-center gap-1'>
-            Reply
-          </button>
+          {level < MAX_REPLY_LEVEL && (
+            <button
+              onClick={() => handleReply(comment.id, fullName)}
+              className='hover:underline flex items-center gap-1'
+            >
+              Reply
+            </button>
+          )}
         </div>
 
         {totalReplyCount > 0 && (

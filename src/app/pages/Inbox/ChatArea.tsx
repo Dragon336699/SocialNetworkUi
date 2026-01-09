@@ -27,7 +27,6 @@ import {
   faXmark,
   faTrash,
   faEdit,
-  faSignature,
   faCircleInfo
 } from '@fortawesome/free-solid-svg-icons'
 import RecordRTC, { StereoAudioRecorder } from 'recordrtc'
@@ -40,6 +39,7 @@ import { ConversationDto } from '@/app/types/Conversation/conversation.dto'
 import { ConversationUserDto } from '@/app/types/ConversationUser/conversationUser.dto'
 import { conversationService } from '@/app/services/conversation.service'
 import VoiceWave from '@/app/common/VoiceWave/VoiceWave'
+import { relationService } from '@/app/services/relation.service'
 
 interface ChatAreaProps {
   conversation: ConversationDto | null
@@ -144,8 +144,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [newNickname, setNewNickname] = useState('')
   const [newGroupName, setNewGroupName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [blockedUsers, setBlockedUsers] = useState<string[]>([])
 
-  const handleAvatarClick = (userName: string) => {
+  const handleAvatarClick = async (userName: string, userId: string) => {
+    if (blockedUsers.includes(userId)) {
+      message.warning('You have blocked this user')
+      return
+    }
     navigate(`/profile/${userName}`)
   }
 
@@ -259,7 +264,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             key: 'groupname',
             label: (
               <div className='flex items-center gap-2'>
-                <FontAwesomeIcon icon={faSignature} />
+                <FontAwesomeIcon icon={faEdit} />
                 <span>Change Group Name</span>
               </div>
             ),
@@ -393,6 +398,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }
 
   useEffect(() => {
+    const loadBlockedUsers = async () => {
+      try {
+        const response = await relationService.getBlockedUsers(0, 100)
+        if (response.status === 200) {
+          const blockedList = response.data.data as UserDto[]
+          setBlockedUsers(blockedList.map(u => u.id))
+        }
+      } catch (error) {
+        console.error('Error loading blocked users:', error)
+      }
+    }
+
+    if (userInfo) {
+      loadBlockedUsers()
+    }
+  }, [userInfo])
+  
+  useEffect(() => {
     const scrollableDiv = document.getElementById('scrollableDiv')
     if (!scrollableDiv) return
 
@@ -515,7 +538,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               className='cursor-pointer hover:opacity-80 transition-opacity'
               onClick={() => {
                 const otherUser = conversationUsers.find((u) => u.userId !== userInfo?.id)
-                if (otherUser) handleAvatarClick(otherUser.user.userName)
+                if (otherUser) handleAvatarClick(otherUser.user.userName, otherUser.userId)
               }}
             >
               <Avatar
@@ -543,7 +566,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                   className='cursor-pointer hover:opacity-80 transition-opacity inline-block'
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleAvatarClick(cu.user.userName)
+                    handleAvatarClick(cu.user.userName, cu.userId)
                   }}
                 >
                   <Avatar size={40} src={cu.user.avatarUrl} className='border-2 border-gray-200' />
