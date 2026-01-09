@@ -408,7 +408,7 @@ const Post: React.FC<PostProps> = ({
                     size={40}
                     className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
                   >
-                    {user.lastName?.[0] || user.firstName?.[0] || ''}
+                    {(user.lastName || '') + ' ' + (user.firstName || '')}
                   </Avatar>
                 </div>
               </div>
@@ -514,7 +514,7 @@ const Post: React.FC<PostProps> = ({
               {/* Reactions Info - Bên phải */}
               <div className='flex items-center gap-2 min-w-0 w-full overflow-hidden justify-end'>
                 {postReactionUsers && postReactionUsers.length > 0 && (
-                  <div 
+                  <div
                     className='flex items-center gap-2 rounded-full px-3 font-medium bg-gray-100 border border-gray-300 text-gray-900 text-sm h-10 cursor-pointer hover:bg-gray-200 transition-colors'
                     onClick={() => setShowReactionUsersModal(true)}
                   >
