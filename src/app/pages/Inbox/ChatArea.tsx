@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, ConfigProvider, Divider, Input, List, Skeleton, Tooltip, Image, message, Dropdown, Modal } from 'antd'
 import {
-  PhoneOutlined,
-  SearchOutlined,
   SendOutlined,
   PlusOutlined,
   CloseOutlined,
@@ -610,8 +608,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </div>
         {conversationId && (
           <div className='flex gap-[20px] items-center'>
-            <SearchOutlined className='text-xl cursor-pointer text-gray-600 hover:text-gray-800' />
-            <PhoneOutlined className='text-xl cursor-pointer text-gray-600 hover:text-gray-800' />
             <Dropdown menu={{ items: menuItems }} trigger={['click']} placement='bottomRight'>
               <FontAwesomeIcon
                 icon={faEllipsisVertical}

@@ -408,7 +408,7 @@ const Post: React.FC<PostProps> = ({
                     size={40}
                     className='rounded-full object-cover w-10 h-10 min-w-10 min-h-10'
                   >
-                    {user.firstName?.[0] || user.lastName?.[0] || ''}
+                    {user.lastName?.[0] || user.firstName?.[0] || ''}
                   </Avatar>
                 </div>
               </div>
