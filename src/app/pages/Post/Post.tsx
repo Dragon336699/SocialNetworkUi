@@ -78,7 +78,7 @@ const Post: React.FC<PostProps> = ({
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [showReactionUsersModal, setShowReactionUsersModal] = useState(false)
 
-  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+  const fullName = `${user.lastName || ''} ${user.firstName || ''}`.trim()
 
   useEffect(() => {
     setReactions(postReactionUsers)
