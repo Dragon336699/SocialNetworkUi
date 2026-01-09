@@ -489,7 +489,7 @@ const GroupDetail = () => {
                           gu.roleName !== GroupRole.Inviting &&
                           gu.roleName !== GroupRole.Banned
                       )
-                      .slice(0, 10)
+                      .slice(0, 4)
                       .map((member, index) => (
                         <Avatar
                           key={member.userId}
